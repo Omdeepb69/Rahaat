@@ -47,7 +47,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
   - [x] 4.3 Tamper-Evident Append-Only Audit Logging
   - [x] 4.4 Live Event Streaming (SSE / WebSocket)
-  - [ ] 4.5 Speech Recognizer & Telephony Callback Boundaries
+  - [x] 4.5 Speech Recognizer & Telephony Callback Boundaries
   - [ ] 4.6 Operator Console Web Application
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
   - [ ] 5.1 Fault Injection & Chaos Recovery Scenarios
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.5 — Speech Recognizer & Telephony Callback Boundaries
+**Task ID:** 4.6 — Operator Console Web Application
 
-**Goal:** Implement `SpeechRecognizer` protocol with Whisper-base local adapter, Gnani Prisma client adapter stub, Piper TTS adapter, and outbound callback scheduler behind a telephony provider interface.
+**Goal:** Build the operator console frontend with four distinct workspaces: 1. Incoming Reports Feed, 2. Situation Map (MapLibre + OSM with distinct visual encoding for confirmed, candidate, approximate, stale, and contradictory locations), 3. Incident Investigation (transcripts, evidence spans, merge review), 4. Operations (resources, assignments, approvals).
 
-**Inputs:** IVR requirements from 1.6, domain contracts from `ARCHITECTURE.md`.
+**Inputs:** API routes from 1.5, 3.3, 4.2, and streaming from 4.4.
 
-**Output:** Speech and telephony infrastructure adapters in `src/raahat/infrastructure/speech/` and `src/raahat/infrastructure/telephony/`.
+**Output:** Single-page web console in `operator_console/`.
 
-**Constraints:** Core logic isolated from provider SDKs; retry limits and consent checks on automated callbacks; no infinite redial loops.
+**Constraints:** Critical UI safety rule: map markers must never display unverified candidate locations as confirmed rescue pins; explicit display of unknown fields and evidence provenance.
 
-**Verification:** Unit and integration tests for speech adapter protocol compliance, audio transcription, TTS audio generation, and callback scheduler state machine; `mypy` and `ruff` clean.
+**Verification:** End-to-end component / static bundle tests or server route verification, responsive layout verification, and policy compliance inspection; `mypy` and `ruff` clean.
 
-**Depends on:** 1.3.
+**Depends on:** 4.2, 4.4.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.6 — Operator Console Web Application
+**Task ID:** 5.1 — Fault Injection & Chaos Recovery Scenarios
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.5 complete
+- Changed: Implemented speech recognition adapters, Piper TTS engine abstraction, and outbound telephony callback boundary with consent and retry controls. Extended speech protocol in `src/raahat/infrastructure/speech/protocol.py` with `TTSSynthesizer`, `SynthesisInput`, and `SynthesisOutput`; implemented `WhisperRecognizer` local adapter in `src/raahat/infrastructure/speech/whisper.py` with decoupled lazy loading of `openai-whisper`; implemented `PrismaRecognizer` client adapter stub in `src/raahat/infrastructure/speech/prisma.py` parsing Gnani Prisma word/segment timing and confidence; implemented `PiperTTS` and `MockTTSSynthesizer` in `src/raahat/infrastructure/speech/piper_tts.py`; created `TelephonyProvider` protocol and `StubTelephonyProvider` in `src/raahat/infrastructure/telephony/provider.py`; defined callback domain models (`CallbackJob`, `CallbackStatus`, `CallStatus`, `DialResult`) in `src/raahat/infrastructure/telephony/models.py`; defined `CallbackJobRepository` protocol in `src/raahat/infrastructure/telephony/repository.py`; implemented `CallbackJobModel` in `src/raahat/infrastructure/database/models/callback.py` with Alembic migration `7b9d3f1a2c4e_add_callback_jobs_table.py`; implemented `PostgresCallbackJobRepository` and `InMemoryCallbackJobRepository` in `src/raahat/infrastructure/database/repositories/callback.py`; built `CallbackScheduler` in `src/raahat/infrastructure/telephony/scheduler.py` enforcing consent checks (immediate transition to `CANCELLED_NO_CONSENT`), exponential backoff on retryable failures, and a strict retry cap transitioning to `EXHAUSTED` (zero infinite redial loops); implemented `CallbackWorker` in `src/raahat/workers/callback_worker.py`; wired `get_callback_scheduler` in `src/raahat/api/dependencies.py`.
+- Files: `src/raahat/infrastructure/speech/protocol.py` (updated), `src/raahat/infrastructure/speech/whisper.py` (new), `src/raahat/infrastructure/speech/prisma.py` (new), `src/raahat/infrastructure/speech/piper_tts.py` (new), `src/raahat/infrastructure/speech/__init__.py` (updated), `src/raahat/infrastructure/telephony/models.py` (new), `src/raahat/infrastructure/telephony/provider.py` (new), `src/raahat/infrastructure/telephony/repository.py` (new), `src/raahat/infrastructure/telephony/scheduler.py` (new), `src/raahat/infrastructure/telephony/__init__.py` (new), `src/raahat/infrastructure/database/models/callback.py` (new), `src/raahat/infrastructure/database/models/__init__.py` (updated), `src/raahat/infrastructure/database/migrations/versions/7b9d3f1a2c4e_add_callback_jobs_table.py` (new), `src/raahat/infrastructure/database/repositories/callback.py` (new), `src/raahat/infrastructure/database/repositories/__init__.py` (updated), `src/raahat/workers/callback_worker.py` (new), `src/raahat/workers/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `tests/unit/infrastructure/test_speech_adapters.py` (new), `tests/unit/infrastructure/test_callback_scheduler.py` (new), `tests/integration/test_callback_postgres.py` (new), `LESSONS.md` (updated).
+- Verified: 380 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 363 prior + 17 new: 8 speech unit tests, 7 callback scheduler unit tests, 2 PostgreSQL callback integration tests against Docker container); `mypy src/raahat field_app tests` — 0 errors across 214 source files; `ruff check .` — 0 errors.
+- Limitations: Telephony provider currently uses `StubTelephonyProvider` for offline testing; external Twilio / Exotel SIP trunk credentials will be hooked up via environment configuration in Phase 5 deployment.
 
 ### 2026-11-07 — Task 4.4 complete
 - Changed: Implemented real-time Server-Sent Events (SSE) live event streaming for dispatcher consoles. Created `LiveEvent` model and recursive `sanitize_payload()` masking phone numbers and stripping sensitive tokens in `src/raahat/application/events/models.py`; implemented `EventBroadcaster` pub/sub engine in `src/raahat/application/events/broadcaster.py` with subscriber lifecycle management, disaster ID filtering, keep-alive heartbeat comments, non-blocking asynchronous streaming, client disconnect cleanup, and outbox job relaying (`publish_from_outbox`); wired singleton `get_event_broadcaster` in `src/raahat/api/dependencies.py`; added SSE streaming route (`GET /api/v1/events/stream`) in `src/raahat/api/routes/events.py` with `X-Dispatcher-Id` authentication and `X-Accel-Buffering: no`; registered `events_router` in `src/raahat/api/app.py`.

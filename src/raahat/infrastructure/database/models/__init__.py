@@ -1,6 +1,7 @@
 """SQLAlchemy database models for Raahat."""
 from ..base import Base
 from .audit import AuditEventModel
+from .callback import CallbackJobModel
 from .disaster import DisasterModel
 from .evidence import EvidenceItemModel, EvidenceSpanModel
 from .household import HouseholdModel, PersonModel
@@ -31,6 +32,7 @@ __all__ = [
     "OperationEventModel",
     "OutboxEventModel",
     "AuditEventModel",
+    "CallbackJobModel",
     "SyncCursorModel",
     "EntityMergeEventModel",
 ]

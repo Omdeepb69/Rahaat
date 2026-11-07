@@ -1,4 +1,4 @@
-"""Speech recognition protocols and value objects."""
+"""Speech recognition and TTS protocols and value objects."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -35,6 +35,25 @@ class Transcript:
     segments: tuple[TranscriptSegment, ...] = field(default_factory=tuple)
 
 
+@dataclass(frozen=True)
+class SynthesisInput:
+    """Text to synthesise into speech."""
+
+    text: str
+    language: str = "hi"
+    speaking_rate: float = 1.0
+
+
+@dataclass(frozen=True)
+class SynthesisOutput:
+    """Raw audio produced by a TTS adapter."""
+
+    audio_bytes: bytes
+    # Encoding description e.g. "pcm_s16le_22050hz"
+    encoding: str
+    sample_rate: int
+
+
 class SpeechRecognizer(Protocol):
     """Protocol for speech-to-text models (Whisper, Gnani Prisma, etc.).
 
@@ -46,3 +65,12 @@ class SpeechRecognizer(Protocol):
         audio: AudioInput,
         language_hint: Optional[str] = None,
     ) -> Transcript: ...
+
+
+class TTSSynthesizer(Protocol):
+    """Protocol for text-to-speech engines (Piper, cloud TTS, etc.).
+
+    Implementations must be decoupled from core domain logic.
+    """
+
+    async def synthesize(self, request: SynthesisInput) -> SynthesisOutput: ...

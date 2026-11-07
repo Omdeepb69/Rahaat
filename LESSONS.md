@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Repository Protocols Belong in the Consuming Boundary, Not the Concrete Adapter
+- What happened: Defining a `CallbackJobRepository` protocol in `infrastructure/database/repositories/callback.py` caused a circular import when `telephony/scheduler.py` imported the repository protocol while the repository module imported domain entities from `telephony/models.py`.
+- Takeaway: Place repository and integration protocols in the consuming/domain layer (`src/.../telephony/repository.py`), letting concrete database adapters implement the protocol without creating backward dependency cycles.
+- Applies to: Python architecture following Dependency Inversion across domain and persistence layers.
+
 ## Testing Long-Lived Streaming Responses in ASGI/FastAPI Requires Bounded Iteration
 - What happened: `httpx.ASGITransport` runs ASGI applications to completion (`more_body=False`) before resolving the `Response` object in `AsyncClient.stream()` and `TestClient.get()`. Infinite streaming loops (such as SSE streams waiting on unbounded async pub/sub queues) hang in ASGI transports unless the generator explicitly supports terminating after a finite batch.
 - Takeaway: Supply an optional `max_events` / `timeout` parameter to SSE generator routes. In production, `max_events=None` streams indefinitely; in ASGI test environments, specifying `max_events=N` yields $N$ events and terminates gracefully without hanging the transport.

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from raahat.application.triage import IncidentTriageService
     from raahat.domain.evidence import EvidenceGraphService
     from raahat.infrastructure.audit import AuditService
+    from raahat.infrastructure.telephony import CallbackScheduler
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session, sessionmaker
@@ -183,6 +184,18 @@ def get_event_broadcaster() -> EventBroadcaster:
 
         _EVENT_BROADCASTER = EventBroadcaster()
     return _EVENT_BROADCASTER
+
+
+def get_callback_scheduler(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> CallbackScheduler:
+    """Provide CallbackScheduler instance backed by PostgreSQL."""
+    from raahat.infrastructure.database.repositories.callback import PostgresCallbackJobRepository
+    from raahat.infrastructure.telephony import CallbackScheduler, StubTelephonyProvider
+
+    repo = PostgresCallbackJobRepository(session_factory)
+    provider = StubTelephonyProvider()
+    return CallbackScheduler(repository=repo, provider=provider)
 
 
 def require_dispatcher_id(

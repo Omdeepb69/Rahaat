@@ -8,6 +8,11 @@ from .audit import (
     PostgresAuditRepository,
     compute_audit_hash,
 )
+from .callback import (
+    CallbackJobRepository,
+    InMemoryCallbackJobRepository,
+    PostgresCallbackJobRepository,
+)
 from .evidence import (
     EvidenceRepository,
     InMemoryEvidenceRepository,
@@ -32,14 +37,17 @@ __all__ = [
     "PostgresAssignmentRepository",
 
     "AuditRepository",
+    "CallbackJobRepository",
     "EvidenceRepository",
     "InMemoryAuditRepository",
+    "InMemoryCallbackJobRepository",
     "InMemoryEvidenceRepository",
     "InMemoryLandmarkRepository",
     "InMemoryLocationHypothesisRepository",
     "LandmarkRepository",
     "LocationHypothesisRepository",
     "PostgresAuditRepository",
+    "PostgresCallbackJobRepository",
     "PostgresEvidenceRepository",
     "PostgresLandmarkRepository",
     "PostgresLocationHypothesisRepository",
