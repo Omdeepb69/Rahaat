@@ -38,7 +38,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 2.4 Offline Field Client Storage & Protocol (SQLite)
   - [x] 2.5 Idempotent Synchronization Endpoint & Sync Worker
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
-  - [ ] 3.1 Evidence Provenance Graph & Contradiction Detection
+  - [x] 3.1 Evidence Provenance Graph & Contradiction Detection
   - [ ] 3.2 Conservative Entity Resolution & Incident Matcher
   - [ ] 3.3 Human Verification & Reversible Incident Linking Workflow
   - [ ] 3.4 Fact Extraction & Deterministic Safety Triage Policy
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 3.1
+**Task ID:** 3.2 — Conservative Entity Resolution & Incident Matcher
 
-**Goal:** Implement domain services and repositories to decompose reports into `EvidenceItem` and `EvidenceSpan` records, track source provenance, and detect contradictory claims (e.g. water level rising vs receded, varying headcounts).
+**Goal:** Implement `IncidentMatcher` evaluating candidate incidents for incoming reports based on spatial distance, household members, and contact numbers, using conservative thresholds that flag ambiguous merges for human review.
 
-**Inputs:** Report models from 1.3, DB tables from 1.2.
+**Inputs:** Evidence graph from 3.1, candidate matcher from 2.1.
 
-**Output:** Evidence graph service and conflict detection module in `src/raahat/domain/evidence/`.
+**Output:** Conservative incident matcher service in `src/raahat/application/incident_resolution/`.
 
-**Constraints:** Every evidence item must link back to its report and source text/audio span; contradictions must be flagged, never silently resolved.
+**Constraints:** Conservative matching: false merges are worse than duplicates. Ambiguous merges must be sent to review queue; automated links must remain reversible.
 
-**Verification:** Unit and integration tests verifying report evidence decomposition, provenance linking, contradiction detection across conflicting reports, and PostgreSQL persistence; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests verifying conservative scoring thresholds, false positive prevention, household member linking, ambiguous match routing to human review, and PostgreSQL candidate queries; `mypy` and `ruff` clean.
 
-**Depends on:** 1.3, 1.5.
+**Depends on:** 2.1, 3.1.
 
 ---
 
 ## Next Task
 
-**Task ID:** 3.2 — Conservative Entity Resolution & Incident Matcher.
+**Task ID:** 3.3 — Human Verification & Reversible Incident Linking Workflow.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 3.1 complete
+- Changed: Implemented evidence decomposition, source provenance tracking, and rule-based contradiction detection. Defined domain entities and value objects (`EvidenceSpan` with ID, `EvidenceItem`, `Contradiction`, `Corroboration`, `EvidenceProvenance`, `EvidenceGraph`) in `src/raahat/domain/evidence/evidence.py`; implemented `StructuredEvidenceExtractor` in `src/raahat/domain/evidence/extractor.py` decomposing structured and audio-turn payloads with Hindi/English concept keyword matching and trend normalization; implemented `RuleBasedContradictionDetector` in `src/raahat/domain/evidence/detector.py` flagging water level trend conflicts, headcount divergence, boolean status mismatches, numeric water depth discrepancies (>=50cm), and landmark divergence, plus corroboration detection; defined `EvidenceRepository` protocol and `InMemoryEvidenceRepository` in `src/raahat/domain/evidence/repository.py`; implemented `PostgresEvidenceRepository` in `src/raahat/infrastructure/database/repositories/evidence.py`; implemented `EvidenceGraphService` in `src/raahat/domain/evidence/service.py` coordinating decomposition, persistence, provenance tracing, and graph synthesis; added `get_evidence_graph_service` dependency provider in `src/raahat/api/dependencies.py`.
+- Files: `src/raahat/domain/evidence/evidence.py`, `src/raahat/domain/evidence/extractor.py`, `src/raahat/domain/evidence/detector.py`, `src/raahat/domain/evidence/repository.py`, `src/raahat/domain/evidence/service.py`, `src/raahat/domain/evidence/__init__.py`, `src/raahat/infrastructure/database/repositories/evidence.py`, `src/raahat/infrastructure/database/repositories/__init__.py`, `src/raahat/api/dependencies.py`, `tests/unit/domain/test_evidence_extractor.py`, `tests/unit/domain/test_contradiction_detector.py`, `tests/unit/domain/test_evidence_service.py`, `tests/integration/test_evidence_graph.py`, `LESSONS.md`.
+- Verified: 5 unit tests in `test_evidence_extractor.py`; 24 unit tests in `test_contradiction_detector.py`; 11 unit tests in `test_evidence_service.py`; 6 integration tests in `test_evidence_graph.py` against live PostgreSQL container (verifying report decomposition persistence, foreign key relationships, multi-report provenance, graph extraction, and contradiction detection); full test suite passes (235 passed, up from 189); `mypy src/raahat field_app tests` clean across 150 source files; `ruff check .` clean.
+- Limitations: Conservative incident matcher consuming evidence items will be implemented in Task 3.2.
 
 ### 2026-11-07 — Task 2.5 complete
 - Changed: Implemented idempotent device synchronization endpoint and background sync monitor worker. Built `VolunteerSyncAdapter` in `src/raahat/adapters/channels/volunteer/adapter.py` mapping `SyncReportItem` wire objects into `ReportSubmission` domain items with separate `client_created_at` and `received_at` timestamps; built `DeviceSyncService` in `src/raahat/adapters/channels/volunteer/service.py` coordinating batch report ingestion, atomic `sync_cursors` sequence advancement, and transactional outbox event publishing (`raahat.device.synced`); built REST endpoints `POST /api/v1/devices/sync` and `GET /api/v1/devices/{device_id}/cursor` with `require_device_id` header authentication (`X-Device-Id`); implemented `SyncWorker` in `src/raahat/workers/sync_worker.py` monitoring device connectivity, staleness thresholds, and sequence continuity gap detection.

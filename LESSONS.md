@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Domain Protocol Location for Dependency Inversion and Circular Import Prevention
+- What happened: Placing repository interface protocols in `infrastructure/` caused circular imports when `domain/` services imported the interface and `infrastructure/` imported domain entities from the domain package `__init__.py`.
+- Takeaway: By strict dependency inversion, repository Protocols and pure-Python in-memory implementations belong in the `domain/` layer (e.g. `domain/evidence/repository.py`). The `infrastructure/` layer implements the protocol and can re-export it. Domain services never import from `infrastructure/`.
+- Applies to: Clean Architecture / DDD Python codebases, protocol definitions, and test doubles.
+
 ## Preserving Client Event Timestamps Distinctly in Offline-First Sync Ingestion
 - What happened: In offline synchronization protocols, batch events arrive with delay or out of order relative to wall-clock server receipt time. Overwriting or conflating event generation time with server arrival time skews disaster intelligence timelines.
 - Takeaway: Maintain two distinct timestamp fields: `client_created_at` (immutable client-asserted observation timestamp) and `received_at` (server transaction receipt timestamp). Rely on monotonic sequence counters (`from_sequence..to_sequence`) and composite keys (`device_id:seq`) for idempotency rather than timestamps.

@@ -62,6 +62,17 @@ def get_device_sync_service(
     return DeviceSyncService(session_factory=session_factory)
 
 
+def get_evidence_graph_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+):
+    """Provide EvidenceGraphService instance."""
+    from raahat.domain.evidence import EvidenceGraphService
+    from raahat.infrastructure.database.repositories import PostgresEvidenceRepository
+
+    repo = PostgresEvidenceRepository(session_factory=session_factory)
+    return EvidenceGraphService(evidence_repo=repo, session_factory=session_factory)
+
+
 def require_dispatcher_id(
     x_dispatcher_id: Optional[str] = Header(None, alias="X-Dispatcher-Id"),
 ) -> uuid.UUID:

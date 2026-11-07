@@ -6,6 +6,13 @@ from .audit import (
     PostgresAuditRepository,
     compute_audit_hash,
 )
+from .evidence import (
+    EvidenceRepository,
+    InMemoryEvidenceRepository,
+    PostgresEvidenceRepository,
+    evidence_item_to_model,
+    model_to_evidence_item,
+)
 from .landmark import (
     InMemoryLandmarkRepository,
     LandmarkRepository,
@@ -20,13 +27,18 @@ from .location_hypothesis import (
 
 __all__ = [
     "AuditRepository",
+    "EvidenceRepository",
+    "InMemoryEvidenceRepository",
     "InMemoryLandmarkRepository",
     "InMemoryLocationHypothesisRepository",
     "LandmarkRepository",
     "LocationHypothesisRepository",
     "PostgresAuditRepository",
+    "PostgresEvidenceRepository",
     "PostgresLandmarkRepository",
     "PostgresLocationHypothesisRepository",
     "compute_audit_hash",
+    "evidence_item_to_model",
+    "model_to_evidence_item",
     "trigram_similarity",
 ]
