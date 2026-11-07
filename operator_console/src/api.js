@@ -141,8 +141,7 @@ export class RaahatAPI {
 
   // SSE Stream
   connectEventStream(onEvent, onError) {
-    const url = `${this.baseUrl}/events/stream`;
-    // Standard EventSource does not support custom headers, but route supports dispatcher auth or local session
+    const url = `${this.baseUrl}/events/stream?dispatcher_id=${encodeURIComponent(this.dispatcherId)}`;
     const sse = new EventSource(url);
     sse.onmessage = (e) => {
       try {

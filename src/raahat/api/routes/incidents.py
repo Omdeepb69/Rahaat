@@ -247,15 +247,42 @@ def list_incident_links(
     summary="List incidents for a disaster",
 )
 def list_incidents(
-    disaster_id: uuid.UUID = Query(..., description="Disaster ID"),
-    status_filter: Optional[IncidentStatus] = Query(None, alias="status"),
+    disaster_id: Optional[uuid.UUID] = Query(None, description="Disaster ID"),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(50, ge=1, le=200, description="Max results"),
     session_factory=Depends(get_session_factory),
 ) -> list[Incident]:
     """List active incidents for situational awareness and review queues."""
     with session_factory() as session:
-        stmt = select(IncidentModel).where(IncidentModel.disaster_id == disaster_id)
+        stmt = select(IncidentModel)
+        if disaster_id is not None:
+            stmt = stmt.where(IncidentModel.disaster_id == disaster_id)
+        else:
+            from raahat.infrastructure.database.models.disaster import DisasterModel
+
+            latest_disaster = session.scalars(
+                select(DisasterModel).order_by(DisasterModel.created_at.desc()).limit(1)
+            ).first()
+            if latest_disaster:
+                stmt = stmt.where(IncidentModel.disaster_id == latest_disaster.id)
+
         if status_filter:
-            stmt = stmt.where(IncidentModel.status == status_filter.value)
+            if status_filter.lower() == "open":
+                stmt = stmt.where(
+                    IncidentModel.status.in_([
+                        IncidentStatus.UNVERIFIED.value,
+                        IncidentStatus.VERIFIED.value,
+                        IncidentStatus.IN_PROGRESS.value,
+                    ])
+                )
+            else:
+                try:
+                    enum_val = IncidentStatus(status_filter.lower()).value
+                    stmt = stmt.where(IncidentModel.status == enum_val)
+                except ValueError:
+                    stmt = stmt.where(IncidentModel.status == status_filter)
+
+        stmt = stmt.order_by(IncidentModel.created_at.desc()).limit(limit)
         inc_models = session.scalars(stmt).all()
 
         return [

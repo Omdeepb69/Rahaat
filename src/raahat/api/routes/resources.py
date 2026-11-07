@@ -7,8 +7,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
 
-from raahat.api.dependencies import get_resource_service, require_dispatcher_id
+from raahat.api.dependencies import (
+    get_resource_service,
+    get_session_factory,
+    require_dispatcher_id,
+)
 from raahat.application.resources import ResourceService
 from raahat.domain.operations.operation import Resource
 from raahat.domain.shared.coordinates import PointCoordinates
@@ -107,20 +112,35 @@ def register_resource(
     summary="Query resources with optional spatial proximity filtering",
 )
 def list_resources(
-    disaster_id: uuid.UUID = Query(..., description="Target disaster ID"),
+    disaster_id: Optional[uuid.UUID] = Query(None, description="Target disaster ID"),
     resource_type: Optional[ResourceType] = Query(None, description="Filter by asset type"),
     resource_status: Optional[ResourceStatus] = Query(None, alias="status", description="Filter by availability status"),
     lat: Optional[float] = Query(None, ge=-90.0, le=90.0, description="Query latitude for proximity search"),
     lon: Optional[float] = Query(None, ge=-180.0, le=180.0, description="Query longitude for proximity search"),
     radius_meters: Optional[float] = Query(None, gt=0, description="Search radius in meters"),
     limit: int = Query(50, ge=1, le=200, description="Max results"),
+    session_factory=Depends(get_session_factory),
     service: ResourceService = Depends(get_resource_service),
 ) -> list[ResourceResponse]:
     """Query resources. If lat, lon, and radius_meters are provided, performs PostGIS spatial search."""
+    target_disaster_id = disaster_id
+    if target_disaster_id is None:
+        with session_factory() as session:
+            from raahat.infrastructure.database.models.disaster import DisasterModel
+
+            latest = session.scalars(
+                select(DisasterModel).order_by(DisasterModel.created_at.desc()).limit(1)
+            ).first()
+            if latest:
+                target_disaster_id = latest.id
+
+    if target_disaster_id is None:
+        return []
+
     if lat is not None and lon is not None and radius_meters is not None:
         coords = PointCoordinates(latitude=lat, longitude=lon)
         nearby = service.find_nearby_resources(
-            disaster_id=disaster_id,
+            disaster_id=target_disaster_id,
             coordinates=coords,
             radius_meters=radius_meters,
             resource_type=resource_type,
@@ -130,7 +150,7 @@ def list_resources(
         return [_to_response(item.resource, distance_meters=item.distance_meters) for item in nearby]
 
     resources = service.list_resources(
-        disaster_id=disaster_id,
+        disaster_id=target_disaster_id,
         resource_type=resource_type,
         status=resource_status,
     )

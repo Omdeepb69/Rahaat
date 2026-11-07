@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Browser EventSource Lacks Custom Header Support; Authenticate SSE via Query Parameter
+- What happened: The web console failed to establish a live event stream because `new EventSource("/api/v1/events/stream")` cannot set custom HTTP headers (`X-Dispatcher-Id`), triggering a 401 Unauthorized rejection from the backend.
+- Takeaway: Standard browser `EventSource` (and WebSocket) APIs cannot transmit arbitrary request headers. Endpoints using dependency injection for authentication must accept credentials from either HTTP headers or URL query parameters (`?dispatcher_id=...` or `?token=...`).
+- Applies to: Server-Sent Events (SSE), WebSockets, and any browser-native streaming APIs.
+
 ## Compute Pairwise Clustering Metrics via Cluster Contingency Counters, Not $O(N^2)$ Loops
 - What happened: Computing pairwise false merge and missed duplicate rates using nested $O(N^2)$ loops across $N=1,000$ reports scaled to $5 \times 10^8$ operations inside a $B=1,000$ paired bootstrap loop, hanging the evaluation runner.
 - Takeaway: Calculate pairwise cluster combinations using cluster size contingency tables ($\binom{n}{2} = n(n-1)/2$). Intra- and inter-cluster pairs count in $O(N)$ time, reducing bootstrap runtime from minutes to milliseconds.

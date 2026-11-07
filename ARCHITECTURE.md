@@ -70,12 +70,22 @@ src/raahat/
 
 field_app/                   — Offline-first field client (SQLite storage + sync queue).
 operator_console/            — Dispatcher UI (Reports inbox, Situation map, Investigation, Ops).
+citizen_portal/              — Mobile-first Citizen Web SOS & voice recording portal (/sos/).
+demo/                        — Interactive scenario orchestrator and sample Indic emergency audio.
 tests/                       — Unit, integration, concurrency, fault injection, and evaluation tests.
 evaluation/                  — RaahatBench datasets, baselines, ablation runner, and reports.
 deployment/                  — Docker Compose, Prometheus, Grafana configs, and runbooks.
 ```
 
 ## Interfaces / Contracts
+
+### `DispatcherAuthentication` (Contract)
+- Handlers validate dispatcher UUID from `X-Dispatcher-Id` HTTP header, with fallback to `dispatcher_id` query parameter for environments (such as browser `EventSource` SSE streams) where custom HTTP headers cannot be supplied.
+
+### `AutomatedAudioTriageWorkflow` (Contract)
+- `async def run(audio_input: AudioInput, disaster_id: uuid.UUID) -> WorkflowResult`
+- Guarantees: Takes incoming voice/audio -> executes VAD and Indic speech transcription (Whisper/Prisma/Mock) -> extracts acoustic distress features -> parses location and severity facts -> resolves landmarks with PostGIS spatial bounds -> creates or merges canonical Incident -> deterministically evaluates safety priority assessment (P0-P3) -> selects nearest capable rescue unit -> commits assignment and publishes real-time SSE event broadcast.
+- Consumed by: automated demo runners, IVR voice ingestion, and citizen voice upload routes.
 
 ### `SpeechRecognizer` (Protocol)
 - `async def transcribe(audio: AudioInput, language_hint: str | None = None) -> Transcript`
@@ -157,3 +167,12 @@ deployment/                  — Docker Compose, Prometheus, Grafana configs, an
 - **Alternatives considered**:
   - *Microservices with Kafka/NATS*: Rejected for MVP. Adds distributed system failure modes and deployment complexity without operational benefit for the single-district scenario.
   - *Direct LLM-to-incident dispatch*: Rejected. Autonomous AI dispatch in disaster environments is unsafe; human dispatchers must verify and approve every operational action.
+
+### 2026-11-08 — Citizen SOS Portal, SSE Query Auth & Audio-to-Dispatch Demo Pipeline
+- **Context**: Operator console failed to establish SSE connection due to browser EventSource header restrictions; incident and resource query endpoints failed when no disaster filter was supplied; user requested a dedicated citizen-facing emergency portal with audio recording and an automated audio-to-dispatch demonstration pipeline.
+- **Decision**:
+  1. Support both `X-Dispatcher-Id` HTTP header and `dispatcher_id` query parameter for dispatcher authentication.
+  2. Allow `disaster_id` to be optional in operator querying endpoints, defaulting to the latest active disaster.
+  3. Create `/sos/` citizen emergency portal supporting in-browser voice note recording (`MediaRecorder`) and one-click geolocation.
+  4. Implement `AutomatedAudioTriageWorkflow` orchestrating voice ingestion, speech transcription, acoustic distress analysis, landmark resolution, deterministic triage, and nearest-unit dispatch.
+- **Reasoning**: Standard web platform constraints (EventSource lacks custom header support) require query-based auth; citizens in distress require low-friction voice reporting; evaluators and dispatch leaders require an end-to-end demonstrable pipeline showing voice input flowing through to automated rescue unit dispatch.

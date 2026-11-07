@@ -20,7 +20,7 @@ acceptance criteria in `RAAHAT_SPEC.md` §14:
 
 ## Current Phase
 
-Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
+Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Status
 
@@ -55,6 +55,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 5.3 Ablation Studies & Research Evaluation Runner
   - [x] 5.4 Docker Compose Stack & Infrastructure Scaffolding
   - [x] 5.5 Observability Dashboards, Runbook & Limitations Documentation
+- [ ] Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
+  - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
+  - [ ] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
+  - [ ] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
+  - [ ] 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
+  - [ ] 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
 
 ---
 
@@ -259,17 +265,63 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ---
 
+## Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
+
+### 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
+- Objective: Fix REST query parameters and authentication fallbacks so web applications and EventSource SSE clients operate without 401/422 errors. Update `require_dispatcher_id` to accept credentials from `X-Dispatcher-Id` HTTP header OR `dispatcher_id` query parameter (for standard browser `EventSource` which cannot set headers). Update `list_incidents` and `list_resources` to make `disaster_id` optional, defaulting to the latest active disaster if omitted. Add demo dispatcher UUID fallback in development environments.
+- Inputs: `src/raahat/api/dependencies.py`, `src/raahat/api/routes/events.py`, `src/raahat/api/routes/incidents.py`, `src/raahat/api/routes/resources.py`.
+- Output: Resilient API routes supporting query-based browser streams and un-scoped disaster dashboard queries.
+- Constraints: Maintain strict types; 100% backward compatibility with existing tests; maintain audit logging of dispatcher identity.
+- Depends on: 1.5, 4.4, 4.6.
+
+### 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
+- Objective: Build a dedicated, responsive, mobile-first Citizen Emergency Portal mounted at `/sos/` where disaster victims can trigger a 1-tap SOS, select distress type, record or upload voice distress notes in-browser using the MediaRecorder API, share high-accuracy geolocation (`navigator.geolocation`), and view live emergency ticket status tracking (`/sos/track?report_id=...`). Add backend endpoint `POST /api/v1/reports/channels/web/voice` accepting multipart voice recordings, persisting the audio payload, and submitting into the ingestion and audio processing pipeline.
+- Inputs: `src/raahat/api/app.py`, `src/raahat/adapters/channels/web/`, `operator_console/`.
+- Output: Citizen emergency web portal at `/sos/` and multipart voice submission adapter.
+- Constraints: Zero heavy npm/node bundling required; accessible on low-bandwidth mobile browsers; robust audio format handling (`audio/webm`, `audio/wav`, `audio/ogg`).
+- Depends on: 6.1.
+
+### 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
+- Objective: Upgrade the Operator Console (`/console/`) into a modern tactical emergency command center. Implement a dark tactical theme with high-contrast priority indicators (P0 pulsing red, P1 amber, P2 yellow, P3 blue), enhanced Leaflet map with custom icons (incident types, rescue units, coverage circles, cluster badges), active disaster switcher, live SSE stream with audio alert and visual pulse on critical reports, and rich drill-down inspection modal showing evidence provenance, audio waveform/playback, deterministic triage rule breakdown, and 1-click resource dispatch selector.
+- Inputs: `operator_console/public/`, `operator_console/src/`.
+- Output: Modernized, reliable operator console web application.
+- Constraints: Pure ES6 modules without fragile bundling steps; zero uncaught JavaScript console errors; responsive layout for dispatch operations.
+- Depends on: 6.1.
+
+### 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
+- Objective: Implement an automated end-to-end orchestration service `AutomatedAudioTriageWorkflow` that connects: `Voice Ingestion -> VAD & Indic Speech Recognition -> Acoustic Distress Classifier -> Severity/Location Fact Extraction -> PostGIS Landmark Resolution -> Canonical Incident Merge/Create -> Deterministic Safety Triage (P0-P3) -> Nearest Rescue Unit Propose/Dispatch -> Real-Time SSE Event Broadcast`. Build realistic demo data seed script (`scripts/seed_demo_data.py`) with Pune/Mumbai flood landmarks and standby rescue teams (NDRF boats, ambulances), pre-packaged Indic emergency audio samples, and an interactive CLI/API demo runner (`demo/run_demo.py` and `POST /api/v1/demo/run-scenario`).
+- Inputs: Speech adapters (`infrastructure/speech`), Triage (`application/triage`), Dispatch (`application/dispatch`), Ingestion (`application/ingestion`).
+- Output: End-to-end automated audio-to-dispatch workflow service, seeded demo dataset, and interactive demo runner.
+- Constraints: Deterministic execution; robust fallback to fast mock recognizer when heavyweight GPU models are absent; clear console logs explaining each architectural stage.
+- Depends on: 6.1, 6.2, 6.3.
+
+### 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
+- Objective: Author a comprehensive presentation guide and interactive feature showcase in `docs/demo_guide.md` and update `README.md`. Provide a step-by-step speaker script for live demonstrations walking through: 1. Citizen voice SOS submission, 2. Automated audio-to-dispatch pipeline execution, 3. Real-time operator console visualization, and 4. Guided explanations of all key architectural differentiators (offline CRDT field sync, reversible unmerge, active landmark disambiguation, cryptographic audit log, and RaahatBench research benchmarks).
+- Inputs: `docs/`, `RAAHAT_SPEC.md`, `ARCHITECTURE.md`, completed Phase 6 components.
+- Output: `docs/demo_guide.md` and updated `README.md` with demo commands and talking points.
+- Constraints: Grounded in verifiable commands; clear distinction between automated demo actions and human-in-the-loop operational safety rules.
+- Depends on: 6.4.
+
+---
+
 ## Current Task
 
-**Task ID:** Complete — All Project Tasks Shipped & Verified
-
-**Status:** All five phases (Tasks 1.1 through 5.5) have been implemented, verified with 427 passing tests, full mypy type checking, and ruff linting.
+### Task 6.2: Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
+- **Objective**: Build a dedicated, responsive, mobile-first Citizen Emergency Portal mounted at `/sos/` where disaster victims can trigger a 1-tap SOS, select distress type, record or upload voice distress notes in-browser using the MediaRecorder API, share high-accuracy geolocation (`navigator.geolocation`), and view live emergency ticket status tracking (`/sos/track?report_id=...`). Add backend endpoint `POST /api/v1/reports/channels/web/voice` accepting multipart voice recordings, persisting the audio payload, and submitting into the ingestion and audio processing pipeline.
+- **Inputs**: `src/raahat/api/app.py`, `src/raahat/adapters/channels/web/`, `operator_console/`.
+- **Output**: Citizen emergency web portal at `/sos/` and multipart voice submission adapter.
+- **Constraints**: Zero heavy npm/node bundling required; accessible on low-bandwidth mobile browsers; robust audio format handling (`audio/webm`, `audio/wav`, `audio/ogg`).
+- **Verification Criterion**:
+  1. `GET /sos/` returns 200 with responsive citizen HTML interface.
+  2. In-browser audio recording captures voice input and transmits via `POST /api/v1/reports/channels/web/voice`.
+  3. `POST /api/v1/reports/channels/web/voice` validates multipart input and returns 201 Created with report ID.
+  4. Ticket status query returns real-time progress (`received -> processing -> triaged -> dispatched`).
 
 ---
 
 ## Next Task
 
-**Task ID:** None — Project Complete
+**Task ID:** 6.3 — Modernized Operator Console UI & Real-Time Situational Awareness
 
 ---
 
@@ -285,6 +337,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.1 complete
+- Changed: Implemented API ergonomics, query parameter filtering, and SSE authentication fallbacks. Updated `require_dispatcher_id` in `src/raahat/api/dependencies.py` to validate credentials from either `X-Dispatcher-Id` HTTP header or `dispatcher_id` query parameter (enabling standard browser `EventSource` connections) with development `DEMO_MODE` fallback to default dispatcher UUID; updated `list_incidents` in `src/raahat/api/routes/incidents.py` so `disaster_id` is optional (defaulting to the latest active disaster if omitted) and added support for `status=open` filtering unverified/verified/in-progress incidents; updated `list_resources` in `src/raahat/api/routes/resources.py` making `disaster_id` optional and defaulting to the latest active disaster; updated `operator_console/src/api.js` to supply `?dispatcher_id=` query param in `connectEventStream()`; created integration tests in `tests/integration/test_api_ergonomics.py`.
+- Files: `src/raahat/api/dependencies.py` (updated), `src/raahat/api/routes/incidents.py` (updated), `src/raahat/api/routes/resources.py` (updated), `operator_console/src/api.js` (updated), `tests/integration/test_api_ergonomics.py` (new), `PROJECT_PLAN.md` (updated), `LESSONS.md` (updated).
+- Verified: 433 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 427 prior + 6 new integration tests in `test_api_ergonomics.py`); `mypy src/raahat field_app evaluation tests` — 0 errors across 237 source files; `ruff check .` — 0 errors.
+- Limitations: Next task builds the user-facing Citizen Web SOS & voice recording portal at `/sos/`.
 
 ### 2026-11-08 — Task 5.5 complete
 - Changed: Configured end-to-end observability, Prometheus telemetry exposition, Grafana dashboards, and authored comprehensive operational documentation per RAAHAT_SPEC §11, §15. Implemented `MetricsRegistry` in `src/raahat/infrastructure/observability/metrics.py` tracking multi-channel report ingestion rates, processing duration histograms, outbox pending lease queue lag, active incidents by priority, offline device sync counts, sequence gap anomalies, live dispatcher SSE streams, and callback status metrics; exposed standard Prometheus text exposition format via `/metrics` and `/api/v1/metrics` in `src/raahat/api/routes/metrics.py` and `app.py`; authored Grafana dashboard provisioning in `deployment/grafana/provisioning/dashboards/dashboards.yml` and dashboard JSON in `deployment/grafana/dashboards/raahat_overview.json` (and `provisioning/dashboards/json/`); authored operational runbook in `docs/operations_runbook.md` (startup procedures, crash recovery, DB failover, carrier outages, reversible unmerge, and backup/restore with audit chain validation); authored security architecture and threat model in `docs/security.md` (zero autonomous dispatch enforcement, cryptographic audit chaining, non-root execution, DB port isolation, and PII masking); authored explicit limitations document in `docs/limitations.md` (synthetic benchmark boundaries, single-instance database scaling limits, Indic speech dialect acoustic constraints, and absence of direct government 112 / HAM radio hardware).
