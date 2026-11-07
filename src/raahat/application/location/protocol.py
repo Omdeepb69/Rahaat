@@ -11,3 +11,4 @@ class LocationResolver(Protocol):
     """Evaluates location observations and produces candidate hypotheses with clarification questions."""
 
     async def resolve(self, observation: LocationObservation) -> LocationResolution: ...
+

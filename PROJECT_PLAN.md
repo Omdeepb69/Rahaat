@@ -34,7 +34,7 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 2.1 PostGIS Landmark Index & Candidate Matcher
   - [x] 2.2 Active Clarification & Question Selection Engine
-  - [ ] 2.3 Location Verification API & Hypotheses History
+  - [x] 2.3 Location Verification API & Hypotheses History
   - [ ] 2.4 Offline Field Client Storage & Protocol (SQLite)
   - [ ] 2.5 Idempotent Synchronization Endpoint & Sync Worker
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
@@ -261,25 +261,25 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 
 ## Current Task
 
-**Task ID:** 2.3
+**Task ID:** 2.4
 
-**Goal:** Implement `POST /api/v1/incidents/{id}/location/verify` endpoint, preserving all historical candidate hypotheses while recording dispatcher confirmation decisions and generating audit events.
+**Goal:** Implement the offline field app data layer (`field_app/`) with SQLite storage, monotonic device sequence numbering, UUID event IDs, `client_created_at`, and an outbound sync queue.
 
-**Inputs:** Location engine from 2.2, API framework from 1.5.
+**Inputs:** Domain report models from 1.3.
 
-**Output:** Location verification route and hypothesis history repository.
+**Output:** SQLite database schema and sync client queue in `field_app/`.
 
-**Constraints:** Never erase earlier location hypotheses upon verification; require authenticated dispatcher identity.
+**Constraints:** Zero internet dependency for report entry; local atomic persistence; clean separation of `locally_saved` vs `server_synchronized` statuses.
 
-**Verification:** Unit and integration tests verifying location verification endpoint, hypothesis status update without deletion of older hypotheses, and audit logging; `mypy` and `ruff` clean.
+**Verification:** Unit tests verifying SQLite offline schema migrations, report drafting and queueing, atomic sequence number generation, and sync queue status transitions.
 
-**Depends on:** 2.2, 1.5.
+**Depends on:** 1.3.
 
 ---
 
 ## Next Task
 
-**Task ID:** 2.4 — Offline Field Client Storage & Protocol (SQLite).
+**Task ID:** 2.5 — Idempotent Synchronization Endpoint & Sync Worker.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 ---
 
 ## Log
+
+### 2026-11-07 — Task 2.3 complete
+- Changed: Implemented location verification API and historical hypothesis tracking. Implemented `AuditRepository` and `PostgresAuditRepository` with cryptographic SHA-256 hash chaining; implemented `LocationHypothesisRepository`, `PostgresLocationHypothesisRepository`, and `InMemoryLocationHypothesisRepository` with pure-Python EWKB Point parser (`parse_wkb_point`); implemented `LocationVerificationService` enforcing authenticated dispatcher confirmation, updating incident `last_confirmed_at` and `status`, recording audit events, and preserving earlier hypotheses without deletion; implemented REST endpoints `POST /api/v1/incidents/{incident_id}/location/verify` and `GET /api/v1/incidents/{incident_id}/location/hypotheses` with `require_dispatcher_id` authentication.
+- Files: `src/raahat/infrastructure/database/repositories/audit.py`, `src/raahat/infrastructure/database/repositories/location_hypothesis.py`, `src/raahat/infrastructure/database/repositories/__init__.py`, `src/raahat/application/location/verification.py`, `src/raahat/application/location/__init__.py`, `src/raahat/api/routes/locations.py`, `src/raahat/api/routes/__init__.py`, `src/raahat/api/app.py`, `src/raahat/api/dependencies.py`, `tests/unit/application/test_location_verification_service.py`, `tests/unit/api/test_location_verification_api.py`, `tests/integration/test_location_verification_api.py`, `LESSONS.md`.
+- Verified: 3 unit tests in `test_location_verification_service.py` (existing hypothesis confirmation, new coordinates confirmation, error cases); 6 unit tests in `test_location_verification_api.py` (dispatcher header requirement 401/400, validation 422, incident 404, successful verify 200, hypotheses history 200); 3 integration tests in `test_location_verification_api.py` against live PostgreSQL+PostGIS (verifying hypothesis update, non-deletion of prior hypotheses, incident confirmation timestamp, and tamper-evident audit hash chaining); full test suite passes (170 tests); `mypy src/raahat tests` clean across 125 files; `ruff check .` clean.
+- Limitations: Offline field client data layer and sync queue will be implemented in Task 2.4.
 
 ### 2026-11-07 — Task 2.2 complete
 - Changed: Implemented active clarification and question selection engine. Defined domain models `ClarificationAnswer`, `ClarificationQuestion`, `LocationObservation`, and `LocationResolution` in `src/raahat/application/location/models.py`; defined `LocationResolver` protocol in `src/raahat/application/location/protocol.py`; implemented `PostGISGazetteerResolver` in `src/raahat/application/location/resolver.py` supporting direct GPS pins, fuzzy landmark text matching via `LandmarkRepository`, Expected Information Gain (EIG) calculation for spatial ambiguity, adaptive question selection ("mandir ke samne ya peeche?" vs landmark disambiguation), ward filtering, prior answer evaluation, and explicit uncertainty bounding (`probability=None` strictly enforced per specification).

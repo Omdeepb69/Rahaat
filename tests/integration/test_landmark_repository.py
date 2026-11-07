@@ -8,11 +8,12 @@ from typing import Generator
 import pytest
 from sqlalchemy.orm import Session, sessionmaker
 
-from raahat.adapters.maps import LandmarkIndexer, PostgresLandmarkRepository
+from raahat.adapters.maps import LandmarkIndexer
 from raahat.domain.geospatial.gazetteer import City
 from raahat.domain.geospatial.landmark import BoundingBox
 from raahat.domain.shared.coordinates import PointCoordinates
 from raahat.infrastructure.database.models.location import LandmarkModel
+from raahat.infrastructure.database.repositories import PostgresLandmarkRepository
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
 
 TEST_DB_URL = os.getenv(

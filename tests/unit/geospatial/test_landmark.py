@@ -7,13 +7,15 @@ import pytest
 from pydantic import ValidationError
 
 from raahat.adapters.maps import (
-    InMemoryLandmarkRepository,
     generate_query_variants,
     normalize_transliteration,
-    trigram_similarity,
 )
 from raahat.domain.geospatial.landmark import BoundingBox, Landmark
 from raahat.domain.shared.coordinates import PointCoordinates
+from raahat.infrastructure.database.repositories import (
+    InMemoryLandmarkRepository,
+    trigram_similarity,
+)
 
 
 def test_bounding_box_contains() -> None:

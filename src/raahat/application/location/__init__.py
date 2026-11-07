@@ -9,6 +9,10 @@ from .models import (
 )
 from .protocol import LocationResolver
 from .resolver import PostGISGazetteerResolver
+from .verification import (
+    LocationVerificationResult,
+    LocationVerificationService,
+)
 
 __all__ = [
     "ClarificationAnswer",
@@ -16,5 +20,7 @@ __all__ = [
     "LocationObservation",
     "LocationResolution",
     "LocationResolver",
+    "LocationVerificationResult",
+    "LocationVerificationService",
     "PostGISGazetteerResolver",
 ]

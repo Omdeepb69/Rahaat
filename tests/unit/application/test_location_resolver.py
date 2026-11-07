@@ -5,7 +5,6 @@ import uuid
 
 import pytest
 
-from raahat.adapters.maps import InMemoryLandmarkRepository
 from raahat.application.location import (
     ClarificationAnswer,
     LocationObservation,
@@ -14,6 +13,7 @@ from raahat.application.location import (
 )
 from raahat.domain.geospatial.landmark import BoundingBox, Landmark
 from raahat.domain.shared.coordinates import PointCoordinates
+from raahat.infrastructure.database.repositories import InMemoryLandmarkRepository
 
 
 @pytest.fixture

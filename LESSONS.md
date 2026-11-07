@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Parsing PostGIS EWKB Points in Pure Python without Shapely
+- What happened: `geoalchemy2.shape.to_shape()` raises `ModuleNotFoundError: No module named 'shapely'` unless `shapely` is installed as an optional dependency.
+- Takeaway: For extracting latitude/longitude from PostGIS `geography(Point, 4326)` columns, parse EWKB bytes using Python's standard library `struct.unpack(endian + 'dd', raw[offset:offset+16])` (where `offset = 9` if SRID flag `0x20000000` is present, else `5`), avoiding heavy C-extension dependencies.
+- Applies to: Python applications reading PostGIS point geometries via SQLAlchemy / GeoAlchemy2.
+
 ## PostGIS Geography vs Geometry for Bounding Box Containment
 - What happened: `ST_Within` operates on `geometry` with matching SRIDs and does not accept `geography` directly (`function st_geometry(geography) does not exist`). `ST_MakeEnvelope` returns a `geometry(Polygon, 4326)`.
 - Takeaway: For bounding box checks on a `geography(Point, 4326)` column, cast the column to geometry: `ST_Within(location::geometry, ST_MakeEnvelope(min_lon, min_lat, max_lon, max_lat, 4326))` which uses the spatial index and exact polygon containment. For distance-radius checks in metres, use `ST_DWithin(location, ST_MakePoint(lon, lat)::geography, radius_m)`.

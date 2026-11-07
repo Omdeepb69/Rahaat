@@ -65,3 +65,4 @@ class LocationResolution(BaseModel):
     uncertainty_radius_m: float = Field(..., ge=0.0)
     clarification_question: Optional[ClarificationQuestion] = None
     resolved_landmark: Optional[Landmark] = None
+

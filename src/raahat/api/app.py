@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from raahat.api.routes.locations import router as locations_router
 from raahat.api.routes.reports import router as reports_router
 
 
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
 
     # Register API routers
     app.include_router(reports_router, prefix="/api/v1")
+    app.include_router(locations_router, prefix="/api/v1")
 
     return app
 

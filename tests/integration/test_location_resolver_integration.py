@@ -8,7 +8,6 @@ from typing import Generator
 import pytest
 from sqlalchemy.orm import Session, sessionmaker
 
-from raahat.adapters.maps import PostgresLandmarkRepository
 from raahat.application.location import (
     ClarificationAnswer,
     LocationObservation,
@@ -16,6 +15,7 @@ from raahat.application.location import (
 )
 from raahat.domain.shared.coordinates import PointCoordinates
 from raahat.infrastructure.database.models.location import LandmarkModel
+from raahat.infrastructure.database.repositories import PostgresLandmarkRepository
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
 
 TEST_DB_URL = os.getenv(
@@ -159,3 +159,4 @@ async def test_postgis_resolver_disambiguation_flow(
     assert res2.resolved_landmark.id == id_map["Shiv Mandir_east"]
     assert res2.clarification_question is not None
     assert res2.clarification_question.question_type == "relative_direction"
+
