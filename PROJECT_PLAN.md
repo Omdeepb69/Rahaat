@@ -50,7 +50,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 4.5 Speech Recognizer & Telephony Callback Boundaries
   - [x] 4.6 Operator Console Web Application
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
-  - [ ] 5.1 Fault Injection & Chaos Recovery Scenarios
+  - [x] 5.1 Fault Injection & Chaos Recovery Scenarios
   - [ ] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
   - [ ] 5.3 Ablation Studies & Research Evaluation Runner
   - [ ] 5.4 Docker Compose Stack & Infrastructure Scaffolding
@@ -261,25 +261,13 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 5.1 — Fault Injection & Chaos Recovery Scenarios
-
-**Goal:** Implement automated fault injection test suite verifying system behavior during speech worker crashes, database disconnections, LLM unavailability, worker lease timeouts, duplicate sync attempts, and operator disconnects.
-
-**Inputs:** Ingestion from 1.5, outbox worker from 1.4, sync worker from 2.5, operations from 4.2.
-
-**Output:** Chaos test suite in `tests/fault_injection/`.
-
-**Constraints:** Failures must be diagnosable; zero lost reports; expired leases must safely recover without duplicate processing.
-
-**Verification:** Automated chaos test suite execution validating failure containment and recovery invariants; `mypy` and `ruff` clean.
-
-**Depends on:** 1.4, 2.5, 4.2.
+**Task ID:** 5.2 — RaahatBench Benchmark Dataset & Ground Truth Generator
 
 ---
 
 ## Next Task
 
-**Task ID:** 5.2 — RaahatBench Benchmark Dataset & Ground Truth Generator
+**Task ID:** 5.3 — End-to-End Pipeline Evaluation Harness
 
 ---
 
@@ -295,6 +283,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 5.1 complete
+- Changed: Implemented automated fault injection and chaos recovery test suite covering speech worker crashes, database disconnections, LLM unavailability, worker lease timeouts, duplicate sync attempts, and operator disconnects. Created `tests/fault_injection/test_worker_lease_chaos.py` (simulating worker crash mid-processing with automatic lease expiration and reclaim, fencing token protection rejecting zombie worker writes, dead-letter accumulation on repeated crash without report loss, and telephony gateway crash with backoff and recovery), `tests/fault_injection/test_database_and_network_chaos.py` (verifying critical safety invariant that DB disconnection rejects ingestion diagnosably without false acknowledgments, offline field queue durability across power cycles, duplicate sync batch idempotency suppression, and monotonic sync sequence gap detection), and `tests/fault_injection/test_llm_operator_and_reversibility_chaos.py` (simulating speech recognizer worker process death triggering IVR keypad DTMF fallback, LLM fact extraction outage preserving safe triage priority with explicit unknown fields, operator disconnect preserving proposed rescue assignment state for secondary dispatcher approval, and reversible unmerge recovering from human linking errors with complete audit trail).
+- Files: `tests/fault_injection/__init__.py` (new), `tests/fault_injection/test_worker_lease_chaos.py` (new), `tests/fault_injection/test_database_and_network_chaos.py` (new), `tests/fault_injection/test_llm_operator_and_reversibility_chaos.py` (new).
+- Verified: 397 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 385 prior + 12 new chaos recovery tests); `mypy src/raahat field_app tests` — 0 errors across 218 source files; `ruff check .` — 0 errors.
+- Limitations: Live network partitions and packet drops tested via mock adapters and transaction boundaries; physical multi-node container kill-signals will run during deployment staging.
 
 ### 2026-11-07 — Task 4.6 complete
 - Changed: Implemented the operator console web application with four distinct workspaces: 1. Incoming Reports Feed (with multi-channel filtering, live SSE ingestion indicators, and search), 2. Situation Map (strict visual encodings enforcing the critical UI safety rule: confirmed ground truth pins, candidate hypothesis pins with dashed uncertainty radii, approximate area polygons, stale coordinates >2h old, and contradictory alert markers), 3. Incident Investigation (explicit UNKNOWN display preserving uncertainty, supporting report provenance graph, candidate location hypotheses, and deduplication review with approve/reject merge links and unmerge), 4. Operations & Rescue Dispatch (active incident priority queue, resource registry for boats/medical/vehicles, assignment proposal, authenticated human approval workflow, operation lifecycle state progression, and cryptographic audit hash chain verification). Created single-page web console in `operator_console/` (`package.json`, `public/index.html`, `public/favicon.svg`, `public/css/console.css`, `public/css/map.css`, `src/api.js`, `src/state.js`, `src/app.js`, and components `reports_feed.js`, `situation_map.js`, `investigation.js`, `operations.js`); mounted console in FastAPI `src/raahat/api/app.py` at `/console` and redirected root `/` to `/console/`.
