@@ -57,3 +57,4 @@ class OperationEvent(BaseModel):
     notes: Optional[str] = None
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=utc_now)
+

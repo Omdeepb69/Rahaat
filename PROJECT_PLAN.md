@@ -28,7 +28,7 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
   - [x] 1.1 Repository & Workspace Foundation
   - [x] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
   - [x] 1.3 Core Domain Entities & Value Objects
-  - [ ] 1.4 Transactional Outbox & Background Worker Runtime
+  - [x] 1.4 Transactional Outbox & Background Worker Runtime
   - [ ] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
   - [ ] 1.6 IVR Pipeline Adapter Integration
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
@@ -261,25 +261,25 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Current Task
 
-**Task ID:** 1.4
+**Task ID:** 1.5
 
-**Goal:** Implement the transactional outbox pattern and a database-backed background worker runner with row-level leasing (`FOR UPDATE SKIP LOCKED`), fencing tokens, and job lifecycle (`PENDING → CLAIMED → PROCESSING → SUCCEEDED / RETRYABLE_FAILURE / DEAD_LETTER`).
+**Goal:** Build `ReportIngestionService` and REST endpoints `POST /api/v1/reports`, enforcing idempotency `(disaster_id, idempotency_key)`, atomic outbox publishing, and channel adapters for Web SOS, SMS, and Radio Console manual submissions.
 
-**Inputs:** Outbox table schema (`outbox_events`) from 1.2, domain events from 1.3.
+**Inputs:** Outbox service from 1.4, report models from 1.3, database models from 1.2.
 
-**Output:** Outbox publisher protocol and DB-backed background worker loop in `src/raahat/workers/runner.py`.
+**Output:** Ingestion application service, API routes, and channel payload adapters in `src/raahat/application/ingestion/`, `src/raahat/adapters/channels/`, and `src/raahat/api/routes/reports.py`.
 
-**Constraints:** Short transactions; no open DB transactions during long-running tasks; worker lease expiration recovery; deterministic dead-letter promotion after configurable retry limit.
+**Constraints:** Ingestion must acknowledge only after durable PostgreSQL persistence; atomic outbox write in same transaction; never directly mutate incidents from ingestion.
 
-**Verification:** Unit tests verifying lease claiming, fencing, dead-letter promotion, and idempotent lease recovery; `mypy` and `ruff` pass cleanly.
+**Verification:** Unit and integration tests verifying idempotent report ingestion, outbox event generation, rejection of duplicate keys, and channel payload parsing; `mypy` and `ruff` pass cleanly.
 
-**Depends on:** 1.2, 1.3
+**Depends on:** 1.2, 1.3, 1.4
 
 ---
 
 ## Next Task
 
-**Task ID:** 1.4 — Transactional Outbox & Background Worker Runtime.
+**Task ID:** 1.6 — IVR Pipeline Adapter Integration.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 ---
 
 ## Log
+
+### 2026-11-07 — Task 1.4 complete
+- Changed: Implemented transactional outbox pattern and database-backed worker runtime. Added `DomainEvent` value object, `OutboxJobStatus` enum, `EventOutbox` protocol with `PostgresEventOutbox` publisher in `src/raahat/infrastructure/outbox/`; implemented `PostgresOutboxRepository` using `SELECT … FOR UPDATE SKIP LOCKED` with row-level leasing, fencing tokens, and configurable retry/dead-letter settling; implemented `OutboxWorker` in `src/raahat/workers/runner.py` executing handlers outside open DB transactions.
+- Files: `src/raahat/infrastructure/outbox/events.py`, `src/raahat/infrastructure/outbox/publisher.py`, `src/raahat/infrastructure/outbox/repository.py`, `src/raahat/infrastructure/outbox/__init__.py`, `src/raahat/workers/runner.py`, `src/raahat/workers/__init__.py`, `tests/unit/workers/test_outbox_worker.py`, `tests/integration/test_outbox.py`, `LESSONS.md`.
+- Verified: 10 unit tests in `tests/unit/workers/test_outbox_worker.py` verifying lease claiming, fencing token rejection on stale settle, retry increment, dead-letter promotion, and expired lease recovery with pure-Python fake repository; 5 integration tests in `tests/integration/test_outbox.py` validating real PostgreSQL operations with `FOR UPDATE SKIP LOCKED`; full test suite passes (99 tests); `mypy src/raahat tests` clean across 88 source files; `ruff check .` clean.
+- Limitations: Ingestion API routes and background worker process CLI entrypoint will be wired in Tasks 1.5 and Phase 5.
 
 ### 2026-11-07 — Task 1.3 complete
 - Changed: Implemented all core domain entities and value objects as frozen Pydantic v2 models with zero database/framework dependencies: `PointCoordinates` (with Haversine `distance_to`, WKT round-trip), `Report`/`ReportSubmission` (with idempotency key derivation), `EvidenceItem`/`EvidenceSpan`, `Household`/`Person`, `Incident`/`IncidentLink`/`IncidentReportLink`, `LocationHypothesis`, `PriorityAssessment`, and `Resource`/`Assignment`/`OperationEvent` in `src/raahat/domain/operations/`.
