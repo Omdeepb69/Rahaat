@@ -20,17 +20,17 @@ acceptance criteria in `RAAHAT_SPEC.md` §14:
 
 ## Current Phase
 
-Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
+Phase 2 — Geospatial Intelligence & Offline Field Resilience
 
 ## Status
 
-- [ ] Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
+- [x] Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
   - [x] 1.1 Repository & Workspace Foundation
   - [x] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
   - [x] 1.3 Core Domain Entities & Value Objects
   - [x] 1.4 Transactional Outbox & Background Worker Runtime
   - [x] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
-  - [ ] 1.6 IVR Pipeline Adapter Integration
+  - [x] 1.6 IVR Pipeline Adapter Integration
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [ ] 2.1 PostGIS Landmark Index & Candidate Matcher
   - [ ] 2.2 Active Clarification & Question Selection Engine
@@ -261,25 +261,25 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Current Task
 
-**Task ID:** 1.6
+**Task ID:** 2.1
 
-**Goal:** Adapt the voice call session (Silero VAD, speech transcription, keypad fallback, number read-back) to emit structured `ReportSubmission` records into `ReportIngestionService` rather than mutating incidents directly.
+**Goal:** Implement PostGIS-backed landmark repository with spatial queries, trigram fuzzy matching (`pg_trgm`), and candidate location retrieval based on spoken/textual landmark descriptions.
 
-**Inputs:** Ingestion gateway from 1.5, speech contracts from `ARCHITECTURE.md`.
+**Inputs:** PostGIS gazetteer schema from 1.2.
 
-**Output:** IVR channel adapter in `src/raahat/adapters/channels/ivr/`.
+**Output:** PostGIS landmark repository and candidate spatial query engine in `src/raahat/adapters/maps/` and `src/raahat/infrastructure/database/repositories/`.
 
-**Constraints:** Preserve call session state and keypad/read-back fallbacks; call agent must never directly assign resources or merge incidents.
+**Constraints:** Transliteration-tolerant fuzzy lookup; spatial bounding to disaster zone.
 
-**Verification:** Unit tests verifying IVR session transition, fallback behavior, transcription handling, and structured ReportSubmission emission; `mypy` and `ruff` pass cleanly.
+**Verification:** Unit and integration tests verifying landmark spatial queries, trigram similarity thresholds, and bounding box filtering against PostgreSQL+PostGIS; `mypy` and `ruff` pass cleanly.
 
-**Depends on:** 1.5
+**Depends on:** 1.2, 1.3
 
 ---
 
 ## Next Task
 
-**Task ID:** 2.1 — PostGIS Landmark Index & Candidate Matcher.
+**Task ID:** 2.2 — Active Clarification & Question Selection Engine.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 ---
 
 ## Log
+
+### 2026-11-07 — Task 1.6 complete
+- Changed: Implemented IVR voice call pipeline adapter in `src/raahat/adapters/channels/ivr/`. Built `IVRCallSession` tracking multi-turn dialog state and turn cap (`max_turns`); built `IVRCallAgent` managing state machine transitions (`AWAITING_LOCATION`, `AWAITING_LOCATION_KEYPAD`, `AWAITING_PEOPLE_COUNT`, `AWAITING_PEOPLE_COUNT_READBACK`, `AWAITING_NEEDS`, `COMPLETED`); implemented speech recognition protocol & mock in `src/raahat/infrastructure/speech/`, VAD detection (`EnergyVADDetector` and `SileroVADDetector`), number read-back generator and confirmation evaluator (`evaluate_readback_confirmation`), keypad fallback on repeated recognition failures, and structured `ReportSubmission` generation into `ReportIngestionService`.
+- Files: `src/raahat/infrastructure/speech/protocol.py`, `src/raahat/infrastructure/speech/mock.py`, `src/raahat/infrastructure/speech/__init__.py`, `src/raahat/adapters/channels/ivr/session.py`, `src/raahat/adapters/channels/ivr/vad.py`, `src/raahat/adapters/channels/ivr/readback.py`, `src/raahat/adapters/channels/ivr/agent.py`, `src/raahat/adapters/channels/ivr/__init__.py`, `src/raahat/adapters/channels/__init__.py`, `tests/unit/adapters/test_ivr_adapter.py`, `LESSONS.md`.
+- Verified: 12 unit tests in `tests/unit/adapters/test_ivr_adapter.py` verifying full conversational turn flow, keypad fallback after repeated low confidence / silence, direct DTMF headcount entry, number read-back rejection and correction, and turn cap enforcement; all 130 test suite tests pass; `mypy src/raahat tests` clean across 105 files; `ruff check .` clean.
+- Limitations: Live telephony provider SIP/Twilio trunking callback scheduler will be connected in Task 4.5.
 
 ### 2026-11-07 — Task 1.5 complete
 - Changed: Implemented `ReportIngestionService` enforcing `(disaster_id, idempotency_key)` uniqueness and atomic outbox event publishing (`raahat.report.received`) in the same database transaction; built channel payload adapters for Web SOS (`WebSOSAdapter`), SMS (`SMSAdapter`), and Radio Console (`RadioConsoleAdapter`); built FastAPI application (`create_app`) with REST endpoints `POST /api/v1/reports`, channel-specific routes (`POST /api/v1/reports/channels/{web|sms|radio}`), and report query endpoints (`GET /api/v1/reports/{id}`, `GET /api/v1/reports`).

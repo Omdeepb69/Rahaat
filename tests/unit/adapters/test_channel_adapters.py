@@ -113,3 +113,4 @@ class TestRadioConsoleAdapter:
         assert sub.idempotency_key == "radio-ENTRY-9988"
         assert sub.raw_payload["people_count"] == 10
         assert sub.raw_payload["operator_callsign"] == "VU2NIX"
+

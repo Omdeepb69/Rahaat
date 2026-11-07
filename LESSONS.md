@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Python stdlib `audioop` deprecation in 3.11+ (removal in 3.13)
+- What happened: `import audioop` triggers a `DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13` on modern Python versions.
+- Takeaway: For RMS or amplitude calculation on 16-bit linear PCM audio, use `struct.unpack(f"<{n}h", bytes)` with `math.sqrt(sum(s*s for s in samples)/n)` instead of `audioop.rms` for future-proof, warning-free stdlib code.
+- Applies to: Any Python project handling raw PCM audio processing without heavy external dependencies.
+
 ## SQLAlchemy 2.0 `CursorResult.rowcount` typing with mypy
 - What happened: In SQLAlchemy 2.0, `session.execute(update(...))` is statically typed as returning `Result[Any]`, which does not expose `rowcount` under strict mypy checks (`"Result[Any]" has no attribute "rowcount"`).
 - Takeaway: Import `from sqlalchemy.engine import CursorResult` and assert `isinstance(result, CursorResult)` to safely access `result.rowcount`.

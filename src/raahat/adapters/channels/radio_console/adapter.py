@@ -69,3 +69,4 @@ class RadioConsoleAdapter:
             language_code=None,
             idempotency_key=idempotency_key,
         )
+

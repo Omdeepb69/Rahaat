@@ -39,3 +39,4 @@ def get_db() -> Generator[Session, None, None]:
 def get_ingestion_service() -> ReportIngestionService:
     """Provide ReportIngestionService instance."""
     return ReportIngestionService(session_factory=get_session_factory())
+

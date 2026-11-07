@@ -155,3 +155,4 @@ class TestReportIngestionServiceUnit:
         assert result.is_duplicate is True
         assert result.report_id == existing_id
         session.rollback.assert_called_once()
+
