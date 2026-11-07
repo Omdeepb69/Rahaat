@@ -1,6 +1,7 @@
 """Database repository implementations."""
 from __future__ import annotations
 
+from .assignment import PostgresAssignmentRepository
 from .audit import (
     AuditRepository,
     InMemoryAuditRepository,
@@ -28,6 +29,8 @@ from .location_hypothesis import (
 from .resource import PostgresResourceRepository
 
 __all__ = [
+    "PostgresAssignmentRepository",
+
     "AuditRepository",
     "EvidenceRepository",
     "InMemoryAuditRepository",

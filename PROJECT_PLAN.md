@@ -44,7 +44,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.4 Fact Extraction & Deterministic Safety Triage Policy
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
   - [x] 4.1 Resource Registry & Availability Management
-  - [ ] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
+  - [x] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
   - [ ] 4.3 Tamper-Evident Append-Only Audit Logging
   - [ ] 4.4 Live Event Streaming (SSE / WebSocket)
   - [ ] 4.5 Speech Recognizer & Telephony Callback Boundaries
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.2 — Human-Approved Rescue Assignment & Operation Lifecycle
+**Task ID:** 4.3 — Tamper-Evident Append-Only Audit Logging
 
-**Goal:** Implement rescue assignment and operation tracking (`POST /api/v1/incidents/{id}/assignments`, `POST /api/v1/operations/{id}/events`), enforcing human dispatcher approval and state transitions (`proposed -> approved -> acknowledged -> en_route -> on_scene -> rescued -> closed`).
+**Goal:** Implement audit service writing to `audit_events` with SHA-256 cryptographic hash chaining (`prev_hash || event_payload -> current_hash`), tamper verification routine, and read-only inspection API.
 
-**Inputs:** Resource registry from 4.1, triage assessments from 3.4.
+**Inputs:** Database schema from 1.2.
 
-**Output:** Operations application service and assignment API routes in `src/raahat/application/dispatch/` and `src/raahat/api/routes/operations.py`.
+**Output:** Audit repository and hash chain verification service in `src/raahat/infrastructure/audit/`.
 
-**Constraints:** Strict zero autonomous dispatch rule: assignment fails without valid dispatcher authentication; audit event emitted on every transition.
+**Constraints:** Append-only; no UPDATE or DELETE queries permitted on table; hash chain verification detects modified or omitted records.
 
-**Verification:** Unit and integration tests for assignment creation, dispatcher authorization, state machine transitions, and outbox/audit event generation; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests for hash calculation, chain verification, tamper detection, and query endpoints; `mypy` and `ruff` clean.
 
-**Depends on:** 4.1, 3.4.
+**Depends on:** 1.2, 1.3.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.3 — Tamper-Evident Append-Only Audit Logging
+**Task ID:** 4.4 — Live Event Streaming (SSE / WebSocket)
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.2 complete
+- Changed: Implemented human-approved rescue assignment and operation lifecycle management. Defined `AssignmentRepository` protocol, `InMemoryAssignmentRepository`, and state machine transition rules (`validate_event_transition`, `next_status_for_event`) in `src/raahat/domain/operations/repository.py`; exported models and transition validators from `src/raahat/domain/operations/__init__.py`; implemented `PostgresAssignmentRepository` in `src/raahat/infrastructure/database/repositories/assignment.py`; implemented `DispatchService` in `src/raahat/application/dispatch/service.py` enforcing strict dispatcher authorization (`X-Dispatcher-Id`), state machine progression (`proposed -> approved -> acknowledged -> en_route -> on_scene -> rescued -> closed`), and tamper-evident audit logging for each transition; wired `get_dispatch_service` in `src/raahat/api/dependencies.py`; added operations REST routes (`POST /incidents/{id}/assignments`, `GET /incidents/{id}/assignments`, `GET /incidents/{id}/assignments/{assignment_id}`, `POST /incidents/{id}/assignments/{assignment_id}/events`, `GET /incidents/{id}/assignments/{assignment_id}/events`) in `src/raahat/api/routes/operations.py`; registered `operations_router` in `src/raahat/api/app.py`.
+- Files: `src/raahat/domain/operations/repository.py` (new), `src/raahat/domain/operations/__init__.py` (updated), `src/raahat/infrastructure/database/repositories/assignment.py` (new), `src/raahat/infrastructure/database/repositories/__init__.py` (updated), `src/raahat/application/dispatch/service.py` (new), `src/raahat/application/dispatch/__init__.py` (updated), `src/raahat/api/routes/operations.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/api/app.py` (updated), `tests/unit/application/test_dispatch_service.py` (new), `tests/integration/test_operations_api.py` (new).
+- Verified: 334 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 319 prior + 15 new: 8 unit tests in `test_dispatch_service.py` + 7 integration tests in `test_operations_api.py` validating authorization check, proposal creation, full lifecycle transitions, 409 conflict on invalid state transitions, and audit logging); `mypy src/raahat field_app tests` — 0 errors across 187 source files; `ruff check .` — 0 errors.
+- Limitations: Audit logging currently writes to `audit_events` via `PostgresAuditRepository`; full hash-chain verification routine and inspection API will be implemented in Task 4.3.
 
 ### 2026-11-07 — Task 4.1 complete
 - Changed: Implemented resource registry, PostGIS spatial queries, and availability management. Defined `ResourceRepository` protocol and `InMemoryResourceRepository` with spatial distance scoring in `src/raahat/domain/resources/repository.py`; re-exported domain models in `src/raahat/domain/resources/__init__.py`; implemented `PostgresResourceRepository` with PostGIS `ST_DWithin` and `ST_Distance` indexing in `src/raahat/infrastructure/database/repositories/resource.py`; updated WKB parser in `location_hypothesis.py` to handle both `WKTElement` and `WKBElement`; implemented `ResourceService` in `src/raahat/application/resources/service.py` with registration, spatial proximity lookups, status transitions, and SHA-256 chained audit events (`resource.registered`, `resource.status_updated`); wired `get_resource_service` in `src/raahat/api/dependencies.py`; added resource REST endpoints (`POST /resources`, `GET /resources`, `GET /resources/{id}`, `PATCH /resources/{id}/status`) in `src/raahat/api/routes/resources.py`; registered `resources_router` in `src/raahat/api/app.py`.

@@ -5,6 +5,7 @@ import uuid
 from typing import TYPE_CHECKING, Generator, Optional
 
 if TYPE_CHECKING:
+    from raahat.application.dispatch import DispatchService
     from raahat.application.incident_resolution import (
         IncidentResolutionService,
         IncidentReviewService,
@@ -122,6 +123,23 @@ def get_incident_triage_service(
     audit_repo = PostgresAuditRepository(session_factory)
     return IncidentTriageService(
         evidence_repo=evidence_repo,
+        audit_repo=audit_repo,
+        session_factory=session_factory,
+    )
+
+
+def get_dispatch_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> "DispatchService":
+    """Provide DispatchService instance."""
+    from raahat.application.dispatch import DispatchService
+    from raahat.infrastructure.database.repositories.assignment import PostgresAssignmentRepository
+    from raahat.infrastructure.database.repositories.audit import PostgresAuditRepository
+
+    assignment_repo = PostgresAssignmentRepository(session_factory)
+    audit_repo = PostgresAuditRepository(session_factory)
+    return DispatchService(
+        assignment_repo=assignment_repo,
         audit_repo=audit_repo,
         session_factory=session_factory,
     )
