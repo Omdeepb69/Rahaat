@@ -46,7 +46,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 4.1 Resource Registry & Availability Management
   - [x] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
   - [x] 4.3 Tamper-Evident Append-Only Audit Logging
-  - [ ] 4.4 Live Event Streaming (SSE / WebSocket)
+  - [x] 4.4 Live Event Streaming (SSE / WebSocket)
   - [ ] 4.5 Speech Recognizer & Telephony Callback Boundaries
   - [ ] 4.6 Operator Console Web Application
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.4 — Live Event Streaming (SSE / WebSocket)
+**Task ID:** 4.5 — Speech Recognizer & Telephony Callback Boundaries
 
-**Goal:** Implement `GET /api/v1/events/stream` providing real-time Server-Sent Events (SSE) to dispatcher consoles, streaming sanitized incident updates, new reports, and operational status changes published by the outbox.
+**Goal:** Implement `SpeechRecognizer` protocol with Whisper-base local adapter, Gnani Prisma client adapter stub, Piper TTS adapter, and outbound callback scheduler behind a telephony provider interface.
 
-**Inputs:** Outbox engine from 1.4, operations events from 4.2.
+**Inputs:** IVR requirements from 1.6, domain contracts from `ARCHITECTURE.md`.
 
-**Output:** Real-time event streaming route in `src/raahat/api/routes/events.py`.
+**Output:** Speech and telephony infrastructure adapters in `src/raahat/infrastructure/speech/` and `src/raahat/infrastructure/telephony/`.
 
-**Constraints:** Non-blocking asynchronous streaming; connection disconnect handling; event filtering by disaster ID.
+**Constraints:** Core logic isolated from provider SDKs; retry limits and consent checks on automated callbacks; no infinite redial loops.
 
-**Verification:** Unit and integration tests for SSE connection lifecycle, disaster ID filtering, client disconnection, and event payload formatting; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests for speech adapter protocol compliance, audio transcription, TTS audio generation, and callback scheduler state machine; `mypy` and `ruff` clean.
 
-**Depends on:** 1.4, 4.2.
+**Depends on:** 1.3.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.5 — Speech Recognizer & Telephony Callback Boundaries
+**Task ID:** 4.6 — Operator Console Web Application
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.4 complete
+- Changed: Implemented real-time Server-Sent Events (SSE) live event streaming for dispatcher consoles. Created `LiveEvent` model and recursive `sanitize_payload()` masking phone numbers and stripping sensitive tokens in `src/raahat/application/events/models.py`; implemented `EventBroadcaster` pub/sub engine in `src/raahat/application/events/broadcaster.py` with subscriber lifecycle management, disaster ID filtering, keep-alive heartbeat comments, non-blocking asynchronous streaming, client disconnect cleanup, and outbox job relaying (`publish_from_outbox`); wired singleton `get_event_broadcaster` in `src/raahat/api/dependencies.py`; added SSE streaming route (`GET /api/v1/events/stream`) in `src/raahat/api/routes/events.py` with `X-Dispatcher-Id` authentication and `X-Accel-Buffering: no`; registered `events_router` in `src/raahat/api/app.py`.
+- Files: `src/raahat/application/events/models.py` (new), `src/raahat/application/events/broadcaster.py` (new), `src/raahat/application/events/__init__.py` (new), `src/raahat/api/routes/events.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/api/app.py` (updated), `tests/unit/application/test_event_broadcaster.py` (new), `tests/integration/test_events_stream_api.py` (new), `LESSONS.md` (updated).
+- Verified: 363 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 352 prior + 11 new: 7 unit tests in `test_event_broadcaster.py` + 4 integration tests in `test_events_stream_api.py` validating payload sanitization, W3C SSE formatting, subscriber registration and cleanup, live event delivery, disaster ID filtering, outbox job relay, and 401 unauthorized enforcement); `mypy src/raahat field_app tests` — 0 errors across 199 source files; `ruff check .` — 0 errors.
+- Limitations: Streaming currently uses in-process asyncio pub/sub; multi-worker cross-process fanout across multiple API instances will utilize Redis pub/sub or PostgreSQL LISTEN/NOTIFY if scaled horizontally in Phase 5.
 
 ### 2026-11-07 — Task 4.3 complete
 - Changed: Implemented tamper-evident append-only audit logging with SHA-256 cryptographic hash chaining and verification routine. Extended `AuditRepository` protocol, `PostgresAuditRepository`, and `InMemoryAuditRepository` in `src/raahat/infrastructure/database/repositories/audit.py` with `get_event_by_id()`, `get_entity_chain()`, `query_events()`, `count_events()`, and `list_distinct_entities()`; implemented `AuditVerifier` in `src/raahat/infrastructure/audit/verifier.py` providing `verify_entity_chain()` and `verify_all_chains()` detecting payload tampering, attribute changes, omitted/deleted intermediate records, and forged genesis records; implemented `AuditService` in `src/raahat/infrastructure/audit/service.py` orchestrating event recording, querying, and verification; exported public interfaces in `src/raahat/infrastructure/audit/__init__.py`; wired `get_audit_service` in `src/raahat/api/dependencies.py`; implemented read-only inspection and verification endpoints (`GET /api/v1/audit/events`, `GET /api/v1/audit/events/{id}`, `GET /api/v1/audit/verify`) in `src/raahat/api/routes/audit.py`; registered `audit_router` in `src/raahat/api/app.py`.

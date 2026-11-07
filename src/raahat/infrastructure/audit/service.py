@@ -101,3 +101,4 @@ class AuditService:
     def verify_all_chains(self) -> GlobalVerificationResult:
         """Inspect and verify all entity chains in the audit repository."""
         return self._verifier.verify_all_chains(self._audit_repo)
+

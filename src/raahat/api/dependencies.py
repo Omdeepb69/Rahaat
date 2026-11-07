@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Generator, Optional
 
 if TYPE_CHECKING:
     from raahat.application.dispatch import DispatchService
+    from raahat.application.events import EventBroadcaster
     from raahat.application.incident_resolution import (
         IncidentResolutionService,
         IncidentReviewService,
@@ -28,6 +29,7 @@ from raahat.infrastructure.database.session import (
 
 _ENGINE = None
 _SESSIONMAKER = None
+_EVENT_BROADCASTER = None
 
 
 def get_engine():
@@ -171,6 +173,16 @@ def get_audit_service(
 
     audit_repo = PostgresAuditRepository(session_factory)
     return AuditService(audit_repo=audit_repo, session_factory=session_factory)
+
+
+def get_event_broadcaster() -> EventBroadcaster:
+    """Provide singleton EventBroadcaster instance."""
+    global _EVENT_BROADCASTER
+    if _EVENT_BROADCASTER is None:
+        from raahat.application.events import EventBroadcaster
+
+        _EVENT_BROADCASTER = EventBroadcaster()
+    return _EVENT_BROADCASTER
 
 
 def require_dispatcher_id(

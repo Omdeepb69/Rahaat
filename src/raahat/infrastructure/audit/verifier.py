@@ -169,3 +169,4 @@ class AuditVerifier:
             total_events=total_events,
             corrupted_chains=corrupted_chains,
         )
+

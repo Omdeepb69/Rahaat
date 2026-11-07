@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Testing Long-Lived Streaming Responses in ASGI/FastAPI Requires Bounded Iteration
+- What happened: `httpx.ASGITransport` runs ASGI applications to completion (`more_body=False`) before resolving the `Response` object in `AsyncClient.stream()` and `TestClient.get()`. Infinite streaming loops (such as SSE streams waiting on unbounded async pub/sub queues) hang in ASGI transports unless the generator explicitly supports terminating after a finite batch.
+- Takeaway: Supply an optional `max_events` / `timeout` parameter to SSE generator routes. In production, `max_events=None` streams indefinitely; in ASGI test environments, specifying `max_events=N` yields $N$ events and terminates gracefully without hanging the transport.
+- Applies to: FastAPI / Starlette SSE streaming, pub/sub broadcaster testing, and `httpx.ASGITransport`.
+
 ## In-Memory Test Doubles Must Not Tie-Break Chronological Order by Random UUIDs
 - What happened: Sorting events in an in-memory repository by `(created_at, str(id))` scrambled the sequence of events recorded in rapid succession (with identical sub-millisecond timestamps), causing cryptographic hash chains to appear broken because the genesis event was sorted after subsequent events.
 - Takeaway: For in-memory repositories testing sequential or chained event logs, preserve list insertion order (or assign an explicit monotonic sequence) rather than sorting on `(created_at, uuid)` where timestamps can collide.

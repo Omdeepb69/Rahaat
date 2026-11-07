@@ -33,3 +33,4 @@ class GlobalVerificationResult(BaseModel):
     total_entities: int
     total_events: int
     corrupted_chains: list[ChainVerificationResult] = Field(default_factory=list)
+

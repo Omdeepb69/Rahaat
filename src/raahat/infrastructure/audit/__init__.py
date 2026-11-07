@@ -22,3 +22,4 @@ __all__ = [
     "PostgresAuditRepository",
     "compute_audit_hash",
 ]
+
