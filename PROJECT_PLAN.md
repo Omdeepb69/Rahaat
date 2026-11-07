@@ -49,12 +49,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 4.4 Live Event Streaming (SSE / WebSocket)
   - [x] 4.5 Speech Recognizer & Telephony Callback Boundaries
   - [x] 4.6 Operator Console Web Application
-- [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
+- [x] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
   - [x] 5.1 Fault Injection & Chaos Recovery Scenarios
   - [x] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
   - [x] 5.3 Ablation Studies & Research Evaluation Runner
   - [x] 5.4 Docker Compose Stack & Infrastructure Scaffolding
-  - [ ] 5.5 Observability Dashboards, Runbook & Limitations Documentation
+  - [x] 5.5 Observability Dashboards, Runbook & Limitations Documentation
 
 ---
 
@@ -261,25 +261,15 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 5.5 — Observability Dashboards, Runbook & Limitations Documentation
+**Task ID:** Complete — All Project Tasks Shipped & Verified
 
-**Goal:** Configure Prometheus scraping and Grafana dashboards for report throughput, processing latencies, worker queue lag, and sync metrics; author operational runbook, security documentation, and explicit limitations report.
-
-**Inputs:** Prometheus metrics from services, deployment stack from 5.4.
-
-**Output:** Dashboard configs, operational runbook, security architecture doc, and `docs/limitations.md`.
-
-**Constraints:** Honest documentation of limitations (synthetic dataset, single-instance scaling boundaries, speech recognizer requirements).
-
-**Verification:** Validated dashboard JSON files; documentation completeness review; `mypy` and `ruff` clean.
-
-**Depends on:** 5.4, 5.3.
+**Status:** All five phases (Tasks 1.1 through 5.5) have been implemented, verified with 427 passing tests, full mypy type checking, and ruff linting.
 
 ---
 
 ## Next Task
 
-**Task ID:** None — Final Review & Verification
+**Task ID:** None — Project Complete
 
 ---
 
@@ -295,6 +285,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-08 — Task 5.5 complete
+- Changed: Configured end-to-end observability, Prometheus telemetry exposition, Grafana dashboards, and authored comprehensive operational documentation per RAAHAT_SPEC §11, §15. Implemented `MetricsRegistry` in `src/raahat/infrastructure/observability/metrics.py` tracking multi-channel report ingestion rates, processing duration histograms, outbox pending lease queue lag, active incidents by priority, offline device sync counts, sequence gap anomalies, live dispatcher SSE streams, and callback status metrics; exposed standard Prometheus text exposition format via `/metrics` and `/api/v1/metrics` in `src/raahat/api/routes/metrics.py` and `app.py`; authored Grafana dashboard provisioning in `deployment/grafana/provisioning/dashboards/dashboards.yml` and dashboard JSON in `deployment/grafana/dashboards/raahat_overview.json` (and `provisioning/dashboards/json/`); authored operational runbook in `docs/operations_runbook.md` (startup procedures, crash recovery, DB failover, carrier outages, reversible unmerge, and backup/restore with audit chain validation); authored security architecture and threat model in `docs/security.md` (zero autonomous dispatch enforcement, cryptographic audit chaining, non-root execution, DB port isolation, and PII masking); authored explicit limitations document in `docs/limitations.md` (synthetic benchmark boundaries, single-instance database scaling limits, Indic speech dialect acoustic constraints, and absence of direct government 112 / HAM radio hardware).
+- Files: `src/raahat/infrastructure/observability/metrics.py` (new), `src/raahat/infrastructure/observability/__init__.py` (updated), `src/raahat/api/routes/metrics.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/app.py` (updated), `deployment/grafana/provisioning/dashboards/dashboards.yml` (new), `deployment/grafana/provisioning/dashboards/json/raahat_overview.json` (new), `deployment/grafana/dashboards/raahat_overview.json` (new), `docs/operations_runbook.md` (new), `docs/security.md` (new), `docs/limitations.md` (new), `tests/unit/api/test_metrics_endpoint.py` (new), `tests/unit/deployment/test_observability_and_docs.py` (new).
+- Verified: 427 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 421 prior + 6 new metrics and documentation unit tests); `mypy src/raahat field_app evaluation tests` — 0 errors across 236 source files; `ruff check .` — 0 errors; Grafana dashboard JSON schema validated; documentation length and structure validated.
+- Limitations: Multi-instance distributed tracing (OpenTelemetry / Jaeger) is a post-MVP consideration.
 
 ### 2026-11-08 — Task 5.4 complete
 - Changed: Implemented production-grade Docker Compose stack, multi-stage Dockerfile, Nginx reverse proxy gateway, and background worker entrypoint per RAAHAT_SPEC §11. Created `Dockerfile` with multi-stage build, C-extension build isolation, and dedicated non-root execution user (`raahat`, uid/gid 10001); created `compose.yaml` orchestrating 6 services (`db` with PostGIS 16-3.4, `api` FastAPI service, `worker` background processor, `proxy` Nginx gateway, `prometheus` metrics scraper, and `grafana` dashboards); configured `deployment/nginx/nginx.conf` with dedicated non-buffering SSE proxying for `/api/v1/events/stream`, REST routing, and operator console serving; configured `deployment/prometheus/prometheus.yml` and `deployment/grafana/provisioning/datasources/prometheus.yml`; created `.env.example` documenting all deployment parameters; implemented production background worker entrypoint in `src/raahat/workers/main.py` coordinating outbox leasing, sync audits, and callback workers with liveness heartbeats; implemented integration tests in `tests/integration/test_compose_stack.py` verifying compose schema, service health checks, persistent volumes, non-root Dockerfile execution, and zero public database port exposures.
