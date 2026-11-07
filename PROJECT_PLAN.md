@@ -20,7 +20,7 @@ acceptance criteria in `RAAHAT_SPEC.md` §14:
 
 ## Current Phase
 
-Phase 2 — Geospatial Intelligence & Offline Field Resilience
+Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Status
 
@@ -31,12 +31,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 1.4 Transactional Outbox & Background Worker Runtime
   - [x] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
   - [x] 1.6 IVR Pipeline Adapter Integration
-- [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
+- [x] Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 2.1 PostGIS Landmark Index & Candidate Matcher
   - [x] 2.2 Active Clarification & Question Selection Engine
   - [x] 2.3 Location Verification API & Hypotheses History
   - [x] 2.4 Offline Field Client Storage & Protocol (SQLite)
-  - [ ] 2.5 Idempotent Synchronization Endpoint & Sync Worker
+  - [x] 2.5 Idempotent Synchronization Endpoint & Sync Worker
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [ ] 3.1 Evidence Provenance Graph & Contradiction Detection
   - [ ] 3.2 Conservative Entity Resolution & Incident Matcher
@@ -261,25 +261,25 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 
 ## Current Task
 
-**Task ID:** 2.5
+**Task ID:** 3.1
 
-**Goal:** Build `POST /api/v1/devices/sync` endpoint and server-side sync processor to ingest batches of offline reports with device authentication, sequence tracking in `sync_cursors`, and duplicate suppression.
+**Goal:** Implement domain services and repositories to decompose reports into `EvidenceItem` and `EvidenceSpan` records, track source provenance, and detect contradictory claims (e.g. water level rising vs receded, varying headcounts).
 
-**Inputs:** Field app sync format from 2.4, Ingestion gateway from 1.5.
+**Inputs:** Report models from 1.3, DB tables from 1.2.
 
-**Output:** Device sync API endpoint and background sync worker in `src/raahat/workers/sync_worker.py`.
+**Output:** Evidence graph service and conflict detection module in `src/raahat/domain/evidence/`.
 
-**Constraints:** 100% idempotent handling of retransmitted batches; server receipt timestamps recorded distinctly from client event timestamps.
+**Constraints:** Every evidence item must link back to its report and source text/audio span; contradictions must be flagged, never silently resolved.
 
-**Verification:** Unit and integration tests verifying idempotent batch ingestion, duplicate suppression without error, `sync_cursors` sequence advancement, and atomic outbox event publishing; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests verifying report evidence decomposition, provenance linking, contradiction detection across conflicting reports, and PostgreSQL persistence; `mypy` and `ruff` clean.
 
-**Depends on:** 1.5, 2.4.
+**Depends on:** 1.3, 1.5.
 
 ---
 
 ## Next Task
 
-**Task ID:** 3.1 — Evidence Provenance Graph & Contradiction Detection.
+**Task ID:** 3.2 — Conservative Entity Resolution & Incident Matcher.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 ---
 
 ## Log
+
+### 2026-11-07 — Task 2.5 complete
+- Changed: Implemented idempotent device synchronization endpoint and background sync monitor worker. Built `VolunteerSyncAdapter` in `src/raahat/adapters/channels/volunteer/adapter.py` mapping `SyncReportItem` wire objects into `ReportSubmission` domain items with separate `client_created_at` and `received_at` timestamps; built `DeviceSyncService` in `src/raahat/adapters/channels/volunteer/service.py` coordinating batch report ingestion, atomic `sync_cursors` sequence advancement, and transactional outbox event publishing (`raahat.device.synced`); built REST endpoints `POST /api/v1/devices/sync` and `GET /api/v1/devices/{device_id}/cursor` with `require_device_id` header authentication (`X-Device-Id`); implemented `SyncWorker` in `src/raahat/workers/sync_worker.py` monitoring device connectivity, staleness thresholds, and sequence continuity gap detection.
+- Files: `src/raahat/adapters/channels/volunteer/adapter.py`, `src/raahat/adapters/channels/volunteer/service.py`, `src/raahat/adapters/channels/volunteer/__init__.py`, `src/raahat/api/routes/devices.py`, `src/raahat/api/routes/__init__.py`, `src/raahat/api/app.py`, `src/raahat/api/dependencies.py`, `src/raahat/workers/sync_worker.py`, `src/raahat/workers/__init__.py`, `tests/unit/adapters/test_volunteer_adapter.py`, `tests/unit/workers/test_sync_worker.py`, `tests/integration/test_device_sync_api.py`, `LESSONS.md`.
+- Verified: 1 unit test in `test_volunteer_adapter.py` verifying model conversion and channel reference format; 2 unit tests in `test_sync_worker.py` verifying stale device identification and sequence gap detection; 7 integration tests in `test_device_sync_api.py` against PostgreSQL and FastAPI `TestClient` (happy-path batch ingestion, duplicate retransmission idempotency, partial sequence overlap, authentication failures 401/400/403, 404 disaster not found, device cursor retrieval, and end-to-end roundtrip from SQLite `field_app.OfflineSyncQueue` to PostgreSQL and back); full test suite passes (189 tests); `mypy src/raahat field_app tests` clean across 141 files; `ruff check .` clean.
+- Limitations: Evidence graph decomposition and contradiction detection will consume incoming reports in Task 3.1.
 
 ### 2026-11-07 — Task 2.4 complete
 - Changed: Implemented offline field client data layer and sync queue in `field_app/`. Defined domain models and sync protocols `SyncStatus` (`locally_saved`, `syncing`, `server_synchronized`, `failed`), `OfflineReportDraft`, `OfflineReport`, `SyncReportItem`, `SyncBatch`, and `SyncAck` in `field_app/models.py`; implemented SQLite database connection and schema manager in `field_app/database/` supporting WAL mode, atomic transactions (`BEGIN IMMEDIATE`), schema version tracking, and thread-safe serialized execution; implemented `OfflineSyncQueue` in `field_app/sync/queue.py` providing strictly monotonic device sequence numbering, event UUID generation, local atomic persistence, outbound batch creation, acknowledgement processing, and failure/retry recovery with zero internet dependency.

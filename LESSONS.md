@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Preserving Client Event Timestamps Distinctly in Offline-First Sync Ingestion
+- What happened: In offline synchronization protocols, batch events arrive with delay or out of order relative to wall-clock server receipt time. Overwriting or conflating event generation time with server arrival time skews disaster intelligence timelines.
+- Takeaway: Maintain two distinct timestamp fields: `client_created_at` (immutable client-asserted observation timestamp) and `received_at` (server transaction receipt timestamp). Rely on monotonic sequence counters (`from_sequence..to_sequence`) and composite keys (`device_id:seq`) for idempotency rather than timestamps.
+- Applies to: Offline-first data pipelines, mobile/field sync endpoints, and distributed event ingestion.
+
 ## SQLite In-Memory Shared Connection Concurrency in Python
 - What happened: When multiple worker threads begin transactions via `BEGIN IMMEDIATE;` on a shared in-memory SQLite connection (`check_same_thread=False`), SQLite raises `sqlite3.OperationalError: cannot start a transaction within a transaction`.
 - Takeaway: For thread-safe SQLite connection managers (especially with `:memory:` testing or multi-worker offline queues), guard transaction blocks with a `threading.Lock()` to serialize transaction boundaries across threads.
