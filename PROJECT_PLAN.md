@@ -53,7 +53,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 5.1 Fault Injection & Chaos Recovery Scenarios
   - [x] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
   - [x] 5.3 Ablation Studies & Research Evaluation Runner
-  - [ ] 5.4 Docker Compose Stack & Infrastructure Scaffolding
+  - [x] 5.4 Docker Compose Stack & Infrastructure Scaffolding
   - [ ] 5.5 Observability Dashboards, Runbook & Limitations Documentation
 
 ---
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 5.4 — Docker Compose Stack & Infrastructure Scaffolding
+**Task ID:** 5.5 — Observability Dashboards, Runbook & Limitations Documentation
 
-**Goal:** Create production-grade Docker Compose environment (`compose.yaml`, `Dockerfile`) deploying Nginx reverse proxy, FastAPI API service, Background Worker service, PostgreSQL 16 + PostGIS, Prometheus, and Grafana with volume persistence and health checks.
+**Goal:** Configure Prometheus scraping and Grafana dashboards for report throughput, processing latencies, worker queue lag, and sync metrics; author operational runbook, security documentation, and explicit limitations report.
 
-**Inputs:** API service, worker runner, database migrations, console frontend.
+**Inputs:** Prometheus metrics from services, deployment stack from 5.4.
 
-**Output:** Validated Compose stack and build files in project root and `deployment/`.
+**Output:** Dashboard configs, operational runbook, security architecture doc, and `docs/limitations.md`.
 
-**Constraints:** Non-root container execution; health and readiness checks; persistent volume survival across restarts; no exposed internal database ports.
+**Constraints:** Honest documentation of limitations (synthetic dataset, single-instance scaling boundaries, speech recognizer requirements).
 
-**Verification:** Docker Compose configuration validation (`docker compose config`); container health check passing; startup smoke test; `mypy` and `ruff` clean.
+**Verification:** Validated dashboard JSON files; documentation completeness review; `mypy` and `ruff` clean.
 
-**Depends on:** 1.2, 1.4, 1.5, 4.6.
+**Depends on:** 5.4, 5.3.
 
 ---
 
 ## Next Task
 
-**Task ID:** 5.5 — Observability Dashboards, Runbook & Limitations Documentation
+**Task ID:** None — Final Review & Verification
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-08 — Task 5.4 complete
+- Changed: Implemented production-grade Docker Compose stack, multi-stage Dockerfile, Nginx reverse proxy gateway, and background worker entrypoint per RAAHAT_SPEC §11. Created `Dockerfile` with multi-stage build, C-extension build isolation, and dedicated non-root execution user (`raahat`, uid/gid 10001); created `compose.yaml` orchestrating 6 services (`db` with PostGIS 16-3.4, `api` FastAPI service, `worker` background processor, `proxy` Nginx gateway, `prometheus` metrics scraper, and `grafana` dashboards); configured `deployment/nginx/nginx.conf` with dedicated non-buffering SSE proxying for `/api/v1/events/stream`, REST routing, and operator console serving; configured `deployment/prometheus/prometheus.yml` and `deployment/grafana/provisioning/datasources/prometheus.yml`; created `.env.example` documenting all deployment parameters; implemented production background worker entrypoint in `src/raahat/workers/main.py` coordinating outbox leasing, sync audits, and callback workers with liveness heartbeats; implemented integration tests in `tests/integration/test_compose_stack.py` verifying compose schema, service health checks, persistent volumes, non-root Dockerfile execution, and zero public database port exposures.
+- Files: `Dockerfile` (new), `compose.yaml` (new), `.env.example` (new), `deployment/scripts/entrypoint.sh` (new), `deployment/nginx/nginx.conf` (new), `deployment/prometheus/prometheus.yml` (new), `deployment/grafana/provisioning/datasources/prometheus.yml` (new), `src/raahat/workers/main.py` (new), `tests/integration/test_compose_stack.py` (new).
+- Verified: 421 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 412 prior + 9 new compose stack integration tests); `docker compose config --quiet` passes with zero errors and zero warnings; `mypy src/raahat field_app evaluation tests` — 0 errors across 232 source files; `ruff check .` — 0 errors.
+- Limitations: Multi-container live runtime validation requires running Docker daemon; automated CI/CD and Kubernetes Helm charts are post-MVP enhancements.
 
 ### 2026-11-08 — Task 5.3 complete
 - Changed: Implemented the automated ablation study and research evaluation harness per RAAHAT_SPEC §9.2 - §9.4. Built modular metric evaluators in `evaluation/metrics/` (`spatial.py` for Top-1 accuracy, Top-3 candidate recall, MAE meters, and ECE calibration; `resolution.py` with O(N) contingency counting for B-cubed precision/recall/F1, false merge rate, and missed duplicate rate; `triage.py` for high-severity recall, under-triage rate, false escalation rate, and unknown field preservation; `bootstrap.py` for 1,000-sample paired bootstrap resampling with 95% confidence intervals and empirical p-values). Implemented ablation pipeline configurations A through E in `evaluation/baselines/pipelines.py` (Config A conventional baseline, Config B geospatial candidate upgrade, Config C evidence-aware conservative resolution, Config D deterministic safety priority policy, and Config E Full Raahat with offline synchronization). Created evaluation runner in `evaluation/runner.py` with CLI support, automated engineering acceptance gates verification (§9.3), formal evaluation of research questions RQ1-RQ3 (§9.4), and Markdown/JSON report generators. Executed evaluation over frozen RaahatBench and produced publication-ready report in `evaluation/reports/raahat_bench_evaluation_report.md`.

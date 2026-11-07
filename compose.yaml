@@ -1,0 +1,170 @@
+# ==============================================================================
+# Raahat 2.0: Resilient Disaster Intelligence & Rescue Coordination Platform
+# Production-Grade Multi-Service Docker Compose Stack (RAAHAT_SPEC §11)
+# ==============================================================================
+
+name: raahat-platform
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Authoritative Persistent Relational & Geospatial Store (PostGIS)
+  # Security invariant: Internal port 5432 is NEVER exposed to the public host.
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: raahat-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-raahat}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-raahat}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - raahat-net
+
+  # ----------------------------------------------------------------------------
+  # 2. Ingestion & Operations API Service (FastAPI / REST / SSE)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: raahat-api
+    restart: unless-stopped
+    command: ["api"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-raahat}
+      DATABASE_URL_ASYNC: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-raahat}
+      PORT: "8000"
+      HOST: "0.0.0.0"
+      WEB_CONCURRENCY: "${WEB_CONCURRENCY:-2}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      ENVIRONMENT: "${ENVIRONMENT:-production}"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - raahat-net
+
+  # ----------------------------------------------------------------------------
+  # 3. Background Processing Worker (Outbox leasing, Sync audits, Callbacks)
+  # ----------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: raahat-worker
+    restart: unless-stopped
+    command: ["worker"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-raahat}
+      ENVIRONMENT: "${ENVIRONMENT:-production}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/worker_heartbeat || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - raahat-net
+
+  # ----------------------------------------------------------------------------
+  # 4. Nginx Reverse Proxy (Single Public Gateway for HTTP, SSE, and Web UI)
+  # ----------------------------------------------------------------------------
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: raahat-proxy
+    restart: unless-stopped
+    ports:
+      - "${PORT_HTTP:-8080}:80"
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - raahat-net
+
+  # ----------------------------------------------------------------------------
+  # 5. Prometheus Metrics Scraper
+  # ----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: raahat-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PORT_PROMETHEUS:-9090}:9090"
+    volumes:
+      - ./deployment/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - raahat-net
+
+  # ----------------------------------------------------------------------------
+  # 6. Grafana Operational Dashboards
+  # ----------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: raahat-grafana
+    restart: unless-stopped
+    ports:
+      - "${PORT_GRAFANA:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-raahat_admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./deployment/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - raahat-net
+
+volumes:
+  postgres_data:
+    name: raahat_postgres_data
+  prometheus_data:
+    name: raahat_prometheus_data
+  grafana_data:
+    name: raahat_grafana_data
+
+networks:
+  raahat-net:
+    name: raahat-network
+    driver: bridge
