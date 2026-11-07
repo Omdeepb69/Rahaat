@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## SQLite In-Memory Shared Connection Concurrency in Python
+- What happened: When multiple worker threads begin transactions via `BEGIN IMMEDIATE;` on a shared in-memory SQLite connection (`check_same_thread=False`), SQLite raises `sqlite3.OperationalError: cannot start a transaction within a transaction`.
+- Takeaway: For thread-safe SQLite connection managers (especially with `:memory:` testing or multi-worker offline queues), guard transaction blocks with a `threading.Lock()` to serialize transaction boundaries across threads.
+- Applies to: Any Python project using SQLite with multithreaded workers or shared in-memory test databases.
+
 ## Parsing PostGIS EWKB Points in Pure Python without Shapely
 - What happened: `geoalchemy2.shape.to_shape()` raises `ModuleNotFoundError: No module named 'shapely'` unless `shapely` is installed as an optional dependency.
 - Takeaway: For extracting latitude/longitude from PostGIS `geography(Point, 4326)` columns, parse EWKB bytes using Python's standard library `struct.unpack(endian + 'dd', raw[offset:offset+16])` (where `offset = 9` if SRID flag `0x20000000` is present, else `5`), avoiding heavy C-extension dependencies.

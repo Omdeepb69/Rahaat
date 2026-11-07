@@ -35,7 +35,7 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 2.1 PostGIS Landmark Index & Candidate Matcher
   - [x] 2.2 Active Clarification & Question Selection Engine
   - [x] 2.3 Location Verification API & Hypotheses History
-  - [ ] 2.4 Offline Field Client Storage & Protocol (SQLite)
+  - [x] 2.4 Offline Field Client Storage & Protocol (SQLite)
   - [ ] 2.5 Idempotent Synchronization Endpoint & Sync Worker
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [ ] 3.1 Evidence Provenance Graph & Contradiction Detection
@@ -261,25 +261,25 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 
 ## Current Task
 
-**Task ID:** 2.4
+**Task ID:** 2.5
 
-**Goal:** Implement the offline field app data layer (`field_app/`) with SQLite storage, monotonic device sequence numbering, UUID event IDs, `client_created_at`, and an outbound sync queue.
+**Goal:** Build `POST /api/v1/devices/sync` endpoint and server-side sync processor to ingest batches of offline reports with device authentication, sequence tracking in `sync_cursors`, and duplicate suppression.
 
-**Inputs:** Domain report models from 1.3.
+**Inputs:** Field app sync format from 2.4, Ingestion gateway from 1.5.
 
-**Output:** SQLite database schema and sync client queue in `field_app/`.
+**Output:** Device sync API endpoint and background sync worker in `src/raahat/workers/sync_worker.py`.
 
-**Constraints:** Zero internet dependency for report entry; local atomic persistence; clean separation of `locally_saved` vs `server_synchronized` statuses.
+**Constraints:** 100% idempotent handling of retransmitted batches; server receipt timestamps recorded distinctly from client event timestamps.
 
-**Verification:** Unit tests verifying SQLite offline schema migrations, report drafting and queueing, atomic sequence number generation, and sync queue status transitions.
+**Verification:** Unit and integration tests verifying idempotent batch ingestion, duplicate suppression without error, `sync_cursors` sequence advancement, and atomic outbox event publishing; `mypy` and `ruff` clean.
 
-**Depends on:** 1.3.
+**Depends on:** 1.5, 2.4.
 
 ---
 
 ## Next Task
 
-**Task ID:** 2.5 — Idempotent Synchronization Endpoint & Sync Worker.
+**Task ID:** 3.1 — Evidence Provenance Graph & Contradiction Detection.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 ---
 
 ## Log
+
+### 2026-11-07 — Task 2.4 complete
+- Changed: Implemented offline field client data layer and sync queue in `field_app/`. Defined domain models and sync protocols `SyncStatus` (`locally_saved`, `syncing`, `server_synchronized`, `failed`), `OfflineReportDraft`, `OfflineReport`, `SyncReportItem`, `SyncBatch`, and `SyncAck` in `field_app/models.py`; implemented SQLite database connection and schema manager in `field_app/database/` supporting WAL mode, atomic transactions (`BEGIN IMMEDIATE`), schema version tracking, and thread-safe serialized execution; implemented `OfflineSyncQueue` in `field_app/sync/queue.py` providing strictly monotonic device sequence numbering, event UUID generation, local atomic persistence, outbound batch creation, acknowledgement processing, and failure/retry recovery with zero internet dependency.
+- Files: `field_app/__init__.py`, `field_app/models.py`, `field_app/database/__init__.py`, `field_app/database/schema.py`, `field_app/database/connection.py`, `field_app/sync/__init__.py`, `field_app/sync/queue.py`, `pyproject.toml`, `tests/unit/field_app/test_database.py`, `tests/unit/field_app/test_offline_queue.py`, `LESSONS.md`.
+- Verified: 9 unit tests in `tests/unit/field_app/` (in-memory schema initialization, atomic transactions commit/rollback, file-based persistence, monotonic sequence assignment, batch status transitions, acknowledgement to `server_synchronized`, failure handling, empty queue, and concurrent multi-threaded drafting sequence integrity); full test suite passes (179 tests); `mypy src/raahat field_app tests` clean across 134 source files; `ruff check .` clean.
+- Limitations: Server-side synchronization endpoint `POST /api/v1/devices/sync` and background sync worker will be implemented in Task 2.5.
 
 ### 2026-11-07 — Task 2.3 complete
 - Changed: Implemented location verification API and historical hypothesis tracking. Implemented `AuditRepository` and `PostgresAuditRepository` with cryptographic SHA-256 hash chaining; implemented `LocationHypothesisRepository`, `PostgresLocationHypothesisRepository`, and `InMemoryLocationHypothesisRepository` with pure-Python EWKB Point parser (`parse_wkb_point`); implemented `LocationVerificationService` enforcing authenticated dispatcher confirmation, updating incident `last_confirmed_at` and `status`, recording audit events, and preserving earlier hypotheses without deletion; implemented REST endpoints `POST /api/v1/incidents/{incident_id}/location/verify` and `GET /api/v1/incidents/{incident_id}/location/hypotheses` with `require_dispatcher_id` authentication.
