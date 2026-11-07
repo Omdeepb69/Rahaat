@@ -60,9 +60,16 @@ def create_app() -> FastAPI:
             app.mount("/console/src", StaticFiles(directory=str(console_dir / "src")), name="console-src")
         app.mount("/console", StaticFiles(directory=str(console_dir / "public"), html=True), name="console")
 
-        @app.get("/", include_in_schema=False)
-        def root_redirect() -> RedirectResponse:
-            return RedirectResponse(url="/console/")
+    # Mount Citizen SOS portal
+    citizen_dir = Path(__file__).resolve().parent.parent.parent.parent / "citizen_portal"
+    if citizen_dir.exists() and (citizen_dir / "public").exists():
+        if (citizen_dir / "src").exists():
+            app.mount("/sos/src", StaticFiles(directory=str(citizen_dir / "src")), name="sos-src")
+        app.mount("/sos", StaticFiles(directory=str(citizen_dir / "public"), html=True), name="sos")
+
+    @app.get("/", include_in_schema=False)
+    def root_redirect() -> RedirectResponse:
+        return RedirectResponse(url="/console/")
 
     return app
 

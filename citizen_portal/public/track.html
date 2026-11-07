@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAAHAT — Rescue Ticket Status (स्थिति ट्रैक करें)</title>
+  <link rel="icon" type="image/svg+xml" href="/sos/favicon.svg">
+  <link rel="stylesheet" href="/sos/css/sos.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-badge">🛡️ RAAHAT LIVE RESCUE TRACKER</div>
+      <h1>राहत बचाव स्थिति ट्रैकर</h1>
+      <p class="sub-header">Live Emergency Response & Unit Dispatch Status</p>
+    </header>
+
+    <div class="tracking-header">
+      <div style="font-size: 0.9rem; color: var(--text-muted);">आपातकालीन टिकट संदर्भ (Emergency Ticket Ref):</div>
+      <div id="ticket-id-display" class="ticket-id">Loading ticket...</div>
+      <div id="priority-badge-container" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Live Status Message Card -->
+    <div class="card" style="border-left: 4px solid var(--accent-gold);">
+      <div class="card-title">
+        <span>📢 वर्तमान स्थिति (Current Operational Update)</span>
+      </div>
+      <div id="status-message" style="font-size: 1.05rem; font-weight: 600; color: #f8fafc;">
+        Connecting to emergency dispatch network...
+      </div>
+      <div id="assigned-units-box" style="margin-top: 10px; font-size: 0.9rem; color: #38bdf8;"></div>
+    </div>
+
+    <!-- Visual Stepper Timeline -->
+    <div class="card">
+      <div class="card-title">
+        <span>⏱️ बचाव प्रगति समयरेखा (Rescue Progress Timeline)</span>
+      </div>
+      <div class="stepper">
+        <div id="step-1" class="step">
+          <div class="step-circle">1</div>
+          <div class="step-title">1. रिपोर्ट दर्ज हुई (Report Received)</div>
+          <div class="step-desc">Distress signal logged into central server with timestamp.</div>
+        </div>
+
+        <div id="step-2" class="step">
+          <div class="step-circle">2</div>
+          <div class="step-title">2. विश्लेषण एवं भाषा पहचान (AI Processing & ASR)</div>
+          <div class="step-desc">Voice transcription, acoustic distress check, and landmark resolution.</div>
+        </div>
+
+        <div id="step-3" class="step">
+          <div class="step-circle">3</div>
+          <div class="step-title">3. प्राथमिकता तय की गई (Incident Triaged)</div>
+          <div class="step-desc">Safety triage policy evaluated urgency (P0 Critical / P1 Urgent).</div>
+        </div>
+
+        <div id="step-4" class="step">
+          <div class="step-circle">4</div>
+          <div class="step-title">4. बचाव दल रवाना (Rescue Unit Dispatched)</div>
+          <div class="step-desc">Field rescue unit assigned and moving towards your location.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Helplines Card -->
+    <div class="card" style="background-color: #0f172a; border-color: #3b82f6;">
+      <div class="card-title" style="color: #60a5fa;">
+        <span>📞 आपातकालीन हेल्पलाइन (Direct Helplines)</span>
+      </div>
+      <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 6px;">
+        यदि स्थिति अत्यंत गंभीर है, तो इन नंबरों पर सीधे संपर्क करें:
+      </p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+        <a href="tel:112" style="background-color: #2563eb; color: #fff; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold;">📞 112 (National Emergency)</a>
+        <a href="tel:1070" style="background-color: #059669; color: #fff; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold;">📞 1070 (Disaster Helpline)</a>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin: 20px 0;">
+      <a href="/sos/" style="color: #94a3b8; font-size: 0.9rem; text-decoration: underline;">
+        ← Submit another emergency report (नई रिपोर्ट भेजें)
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportId = urlParams.get("report_id");
+    const ticketDisplay = document.getElementById("ticket-id-display");
+    const statusMessage = document.getElementById("status-message");
+    const assignedBox = document.getElementById("assigned-units-box");
+    const priorityContainer = document.getElementById("priority-badge-container");
+
+    const step1 = document.getElementById("step-1");
+    const step2 = document.getElementById("step-2");
+    const step3 = document.getElementById("step-3");
+    const step4 = document.getElementById("step-4");
+
+    if (!reportId) {
+      ticketDisplay.textContent = "No Report ID specified.";
+      statusMessage.textContent = "Please submit an emergency report from the SOS portal.";
+    } else {
+      ticketDisplay.textContent = reportId;
+
+      async function pollStatus() {
+        try {
+          const res = await fetch(`/api/v1/reports/${encodeURIComponent(reportId)}/ticket`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+
+          statusMessage.textContent = data.message;
+
+          // Priority badge
+          if (data.priority) {
+            let badgeClass = "badge-p2";
+            if (data.priority === "critical_review") badgeClass = "badge-p0";
+            else if (data.priority === "urgent") badgeClass = "badge-p1";
+            priorityContainer.innerHTML = `<span class="status-badge ${badgeClass}">PRIORITY: ${data.priority.toUpperCase()}</span>`;
+          }
+
+          // Assigned resources
+          if (data.assigned_resources && data.assigned_resources.length > 0) {
+            assignedBox.innerHTML = `<strong>Assigned Units:</strong> ${data.assigned_resources.join(", ")}`;
+          } else {
+            assignedBox.innerHTML = "";
+          }
+
+          // Stepper update
+          updateStepper(data.stage);
+        } catch (err) {
+          console.warn("Poll failed", err);
+        }
+      }
+
+      function updateStepper(stage) {
+        // Reset
+        [step1, step2, step3, step4].forEach((s) => {
+          s.classList.remove("active", "completed");
+        });
+
+        if (stage === "received") {
+          step1.classList.add("completed");
+          step2.classList.add("active");
+        } else if (stage === "processing") {
+          step1.classList.add("completed");
+          step2.classList.add("completed");
+          step3.classList.add("active");
+        } else if (stage === "triaged") {
+          step1.classList.add("completed");
+          step2.classList.add("completed");
+          step3.classList.add("completed");
+          step4.classList.add("active");
+        } else if (stage === "dispatched" || stage === "resolved") {
+          step1.classList.add("completed");
+          step2.classList.add("completed");
+          step3.classList.add("completed");
+          step4.classList.add("completed");
+        }
+      }
+
+      pollStatus();
+      setInterval(pollStatus, 3000); // 3s polling
+    }
+  </script>
+</body>
+</html>
+

@@ -57,7 +57,7 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 5.5 Observability Dashboards, Runbook & Limitations Documentation
 - [ ] Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
-  - [ ] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
+  - [x] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
   - [ ] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
   - [ ] 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
   - [ ] 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
@@ -306,22 +306,22 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Current Task
 
-### Task 6.2: Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
-- **Objective**: Build a dedicated, responsive, mobile-first Citizen Emergency Portal mounted at `/sos/` where disaster victims can trigger a 1-tap SOS, select distress type, record or upload voice distress notes in-browser using the MediaRecorder API, share high-accuracy geolocation (`navigator.geolocation`), and view live emergency ticket status tracking (`/sos/track?report_id=...`). Add backend endpoint `POST /api/v1/reports/channels/web/voice` accepting multipart voice recordings, persisting the audio payload, and submitting into the ingestion and audio processing pipeline.
-- **Inputs**: `src/raahat/api/app.py`, `src/raahat/adapters/channels/web/`, `operator_console/`.
-- **Output**: Citizen emergency web portal at `/sos/` and multipart voice submission adapter.
-- **Constraints**: Zero heavy npm/node bundling required; accessible on low-bandwidth mobile browsers; robust audio format handling (`audio/webm`, `audio/wav`, `audio/ogg`).
+### Task 6.3: Modernized Operator Console UI & Real-Time Situational Awareness
+- **Objective**: Upgrade the Operator Console (`/console/`) into a modern tactical emergency command center. Implement a dark tactical theme with high-contrast priority indicators (P0 pulsing red, P1 amber, P2 yellow, P3 blue), enhanced Leaflet map with custom icons (incident types, rescue units, coverage circles, cluster badges), active disaster switcher, live SSE stream with visual pulse on critical reports, and rich drill-down inspection modal showing evidence provenance, deterministic triage rule breakdown, and 1-click resource dispatch selector.
+- **Inputs**: `operator_console/public/`, `operator_console/src/`.
+- **Output**: Modernized, reliable operator console web application.
+- **Constraints**: Pure ES6 modules without fragile bundling steps; zero uncaught JavaScript console errors; responsive layout for dispatch operations; all existing console integration tests must pass.
 - **Verification Criterion**:
-  1. `GET /sos/` returns 200 with responsive citizen HTML interface.
-  2. In-browser audio recording captures voice input and transmits via `POST /api/v1/reports/channels/web/voice`.
-  3. `POST /api/v1/reports/channels/web/voice` validates multipart input and returns 201 Created with report ID.
-  4. Ticket status query returns real-time progress (`received -> processing -> triaged -> dispatched`).
+  1. `GET /console/` returns 200 with updated HTML including disaster switcher and priority-colour classes.
+  2. All existing operator console integration tests in `tests/integration/test_operator_console.py` pass.
+  3. All JS files pass `node --check` syntax validation.
+  4. Full suite 438+ tests pass; mypy and ruff clean.
 
 ---
 
 ## Next Task
 
-**Task ID:** 6.3 — Modernized Operator Console UI & Real-Time Situational Awareness
+**Task ID:** 6.4 — Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
 
 ---
 
@@ -337,6 +337,12 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.2 complete
+- Changed: Implemented the Citizen Emergency Web SOS & Audio Recording Portal. Created `citizen_portal/` with bilingual (Hindi/English) mobile-first emergency web portal at `/sos/`; `citizen_portal/public/index.html` — 1-tap SOS form with in-browser `MediaRecorder` voice note recording, 1-click GPS geolocation sharing, distress-type checkboxes, and Hindi/English bilingual labelling; `citizen_portal/public/track.html` — live rescue ticket status tracker with 4-stage stepper (received → processing → triaged → dispatched) polling `GET /api/v1/reports/{id}/ticket` every 3 seconds; `citizen_portal/public/css/sos.css` — dark tactical mobile-responsive stylesheet with animated pulse recording button; `citizen_portal/src/recorder.js` — `AudioRecorder` class wrapping `MediaRecorder` with MIME negotiation (webm/ogg/mp4), 2-minute cap, and microphone release on stop; `citizen_portal/src/geolocation.js` — high-accuracy `getLiveLocation()` with descriptive error messages; `citizen_portal/src/sos_app.js` — form orchestration, multipart audio upload, and standard JSON fallback for text-only SOS. Backend additions: `POST /api/v1/reports/channels/web/voice` multipart upload endpoint in `src/raahat/api/routes/reports.py` accepting audio file + form fields, persisting audio to `storage/audio/`, injecting into `ReportIngestionService`; `GET /api/v1/reports/{id}/ticket` ticket status endpoint returning stage, priority, assigned units, and bilingual message; `TicketStatusResponse` Pydantic model; citizen portal mounted at `/sos` and `/sos/src` in `src/raahat/api/app.py`.
+- Files: `citizen_portal/public/index.html` (new), `citizen_portal/public/track.html` (new), `citizen_portal/public/css/sos.css` (new), `citizen_portal/public/favicon.svg` (new), `citizen_portal/src/recorder.js` (new), `citizen_portal/src/geolocation.js` (new), `citizen_portal/src/sos_app.js` (new), `src/raahat/api/routes/reports.py` (updated — voice endpoint + ticket status), `src/raahat/api/app.py` (updated — citizen portal mount + standalone root redirect), `tests/integration/test_citizen_portal.py` (new).
+- Verified: 438 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 433 prior + 5 new: portal HTML render, static assets serving, track.html render, voice upload 201, ticket status lifecycle triaged→dispatched); `mypy src/raahat field_app evaluation tests` — 0 errors across 238 source files; `ruff check .` — 0 errors; all JS files pass `node --check`.
+- Limitations: Audio processing pipeline (actual speech transcription) is deferred to task 6.4; audio files are persisted raw; ticket `processing` stage currently reflects DB `processing_status` column only.
 
 ### 2026-11-08 — Task 6.1 complete
 - Changed: Implemented API ergonomics, query parameter filtering, and SSE authentication fallbacks. Updated `require_dispatcher_id` in `src/raahat/api/dependencies.py` to validate credentials from either `X-Dispatcher-Id` HTTP header or `dispatcher_id` query parameter (enabling standard browser `EventSource` connections) with development `DEMO_MODE` fallback to default dispatcher UUID; updated `list_incidents` in `src/raahat/api/routes/incidents.py` so `disaster_id` is optional (defaulting to the latest active disaster if omitted) and added support for `status=open` filtering unverified/verified/in-progress incidents; updated `list_resources` in `src/raahat/api/routes/resources.py` making `disaster_id` optional and defaulting to the latest active disaster; updated `operator_console/src/api.js` to supply `?dispatcher_id=` query param in `connectEventStream()`; created integration tests in `tests/integration/test_api_ergonomics.py`.

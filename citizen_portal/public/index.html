@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAAHAT — Emergency SOS Portal (राहत आपातकालीन सेवा)</title>
+  <link rel="icon" type="image/svg+xml" href="/sos/favicon.svg">
+  <link rel="stylesheet" href="/sos/css/sos.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-badge">🚨 RAAHAT 2.0 EMERGENCY SOS</div>
+      <h1>आपातकालीन सहायता पोर्टल</h1>
+      <p class="sub-header">Direct Disaster Coordination & Rescue Dispatch System</p>
+    </header>
+
+    <div id="alert-container"></div>
+
+    <form id="sos-form">
+      <!-- 1. Voice Distress Recording -->
+      <div class="card">
+        <div class="card-title">
+          <span>🎤 1. आवाज़ संदेश रिकॉर्ड करें (Voice SOS Note)</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+          किसी भी भाषा (हिंदी, मराठी, अंग्रेजी) में बोलें। हमारा AI आपकी आवाज़ सुनकर तुरंत प्राथमिकता तय करेगा।
+        </p>
+        <div class="record-btn-container">
+          <button type="button" id="btn-record" class="btn-record" title="Tap to Record Voice">
+            🎤
+          </button>
+          <div id="record-status" class="record-status">Tap microphone to speak (माइक दबाकर बोलें)</div>
+          <audio id="audio-preview" class="audio-preview" controls></audio>
+        </div>
+      </div>
+
+      <!-- 2. Location Sharing -->
+      <div class="card">
+        <div class="card-title">
+          <span>📍 2. आपका स्थान (Your Location)</span>
+        </div>
+        <button type="button" id="btn-location" class="btn-location">
+          <span>🛰️ Share My GPS Location (मेरा स्थान साझा करें)</span>
+        </button>
+        <div id="location-details" class="location-details">GPS coordinates will be captured accurately.</div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="location_text">आस-पास का लैंडमार्क या पता (Nearby Landmark / Address)</label>
+          <input type="text" id="location_text" name="location_text" placeholder="उदा. गांधी चौक, मारुति मंदिर, सेक्टर 4">
+        </div>
+      </div>
+
+      <!-- 3. Situation & Needs -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚠️ 3. आपात स्थिति का प्रकार (Type of Emergency)</span>
+        </div>
+        <div class="checkbox-grid">
+          <label class="checkbox-item">
+            <input type="checkbox" name="needs" value="trapped_rescue">
+            <span><strong>मलबे / छत में फंसे हैं (Trapped under debris / roof)</strong></span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="needs" value="flood_water">
+            <span><strong>बाढ़ का पानी बढ़ रहा है (Rising flood water danger)</strong></span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="needs" value="medical_emergency">
+            <span><strong>गंभीर चिकित्सा / घायल व्यक्ति (Critical medical aid / injured)</strong></span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="needs" value="food_water">
+            <span><strong>पीने का पानी और भोजन चाहिए (Clean drinking water / food)</strong></span>
+          </label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+          <div class="form-group">
+            <label for="people_count">कुल व्यक्ति (People Count)</label>
+            <input type="number" id="people_count" name="people_count" min="1" max="100" value="1">
+          </div>
+          <div class="form-group">
+            <label for="phone_number">फोन नंबर (Phone)</label>
+            <input type="tel" id="phone_number" name="phone_number" placeholder="+91 9876543210">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="caller_name">आपका नाम (Your Name)</label>
+          <input type="text" id="caller_name" name="caller_name" placeholder="उदा. रमेश कुमार">
+        </div>
+
+        <div class="form-group">
+          <label for="situation_description">अतिरिक्त विवरण (Additional Details / Description)</label>
+          <textarea id="situation_description" rows="3" placeholder="मदद के लिए कोई अन्य महत्वपूर्ण जानकारी..."></textarea>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" id="btn-submit" class="btn-submit-sos">
+        <span>🚨 SEND DISTRESS CALL NOW (तत्काल मदद भेजें)</span>
+      </button>
+    </form>
+  </div>
+
+  <script type="module" src="/sos/src/sos_app.js"></script>
+</body>
+</html>
+
