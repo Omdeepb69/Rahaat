@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## PostGIS Geography vs Geometry for Bounding Box Containment
+- What happened: `ST_Within` operates on `geometry` with matching SRIDs and does not accept `geography` directly (`function st_geometry(geography) does not exist`). `ST_MakeEnvelope` returns a `geometry(Polygon, 4326)`.
+- Takeaway: For bounding box checks on a `geography(Point, 4326)` column, cast the column to geometry: `ST_Within(location::geometry, ST_MakeEnvelope(min_lon, min_lat, max_lon, max_lat, 4326))` which uses the spatial index and exact polygon containment. For distance-radius checks in metres, use `ST_DWithin(location, ST_MakePoint(lon, lat)::geography, radius_m)`.
+- Applies to: Any PostGIS project storing coordinates as `geography` while supporting spatial bounding boxes.
+
 ## Python stdlib `audioop` deprecation in 3.11+ (removal in 3.13)
 - What happened: `import audioop` triggers a `DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13` on modern Python versions.
 - Takeaway: For RMS or amplitude calculation on 16-bit linear PCM audio, use `struct.unpack(f"<{n}h", bytes)` with `math.sqrt(sum(s*s for s in samples)/n)` instead of `audioop.rms` for future-proof, warning-free stdlib code.

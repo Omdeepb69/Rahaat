@@ -32,7 +32,7 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
   - [x] 1.6 IVR Pipeline Adapter Integration
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
-  - [ ] 2.1 PostGIS Landmark Index & Candidate Matcher
+  - [x] 2.1 PostGIS Landmark Index & Candidate Matcher
   - [ ] 2.2 Active Clarification & Question Selection Engine
   - [ ] 2.3 Location Verification API & Hypotheses History
   - [ ] 2.4 Offline Field Client Storage & Protocol (SQLite)
@@ -295,6 +295,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 ---
 
 ## Log
+
+### 2026-11-07 — Task 2.1 complete
+- Changed: Implemented PostGIS-backed landmark repository and candidate matcher. Added Alembic migration `41e7e411f7ee` creating `pg_trgm` extension and GIN trigram index `landmarks_name_trgm_idx` on `landmarks.name`; defined domain value objects `BoundingBox`, `Landmark`, and `LandmarkCandidate` in `src/raahat/domain/geospatial/landmark.py`; created transliteration normalization and synonym expansion helpers in `src/raahat/adapters/maps/transliteration.py`; implemented `LandmarkRepository` protocol, `PostgresLandmarkRepository`, `InMemoryLandmarkRepository`, and `trigram_similarity` in `src/raahat/infrastructure/database/repositories/landmark.py`; implemented `LandmarkIndexer` in `src/raahat/adapters/maps/indexer.py` seeding synthetic `City` POIs into PostgreSQL/PostGIS.
+- Files: `src/raahat/domain/geospatial/landmark.py`, `src/raahat/domain/geospatial/__init__.py`, `src/raahat/infrastructure/database/models/location.py`, `src/raahat/infrastructure/database/migrations/versions/41e7e411f7ee_add_pg_trgm_and_landmark_trgm_index.py`, `src/raahat/infrastructure/database/repositories/landmark.py`, `src/raahat/infrastructure/database/repositories/__init__.py`, `src/raahat/adapters/maps/transliteration.py`, `src/raahat/adapters/maps/indexer.py`, `src/raahat/adapters/maps/__init__.py`, `tests/unit/geospatial/test_landmark.py`, `tests/integration/test_landmark_repository.py`.
+- Verified: 8 unit tests in `tests/unit/geospatial/test_landmark.py` (bounding box containment/validation, transliteration normalization, synonym expansion, trigram similarity, in-memory repository text search & radius queries); 9 integration tests in `tests/integration/test_landmark_repository.py` against PostgreSQL+PostGIS (exact text search, fuzzy trigram query, transliteration variant query, spatial bounding box filter, similarity threshold enforcement, radius search with distance sorting, kind filtering, synthetic City indexer seeding); all 147 test suite tests pass; `mypy src/raahat tests` clean across 113 source files; `ruff check .` clean.
+- Limitations: Active clarification and question selection engine will consume `LandmarkRepository` in Task 2.2.
 
 ### 2026-11-07 — Task 1.6 complete
 - Changed: Implemented IVR voice call pipeline adapter in `src/raahat/adapters/channels/ivr/`. Built `IVRCallSession` tracking multi-turn dialog state and turn cap (`max_turns`); built `IVRCallAgent` managing state machine transitions (`AWAITING_LOCATION`, `AWAITING_LOCATION_KEYPAD`, `AWAITING_PEOPLE_COUNT`, `AWAITING_PEOPLE_COUNT_READBACK`, `AWAITING_NEEDS`, `COMPLETED`); implemented speech recognition protocol & mock in `src/raahat/infrastructure/speech/`, VAD detection (`EnergyVADDetector` and `SileroVADDetector`), number read-back generator and confirmation evaluator (`evaluate_readback_confirmation`), keypad fallback on repeated recognition failures, and structured `ReportSubmission` generation into `ReportIngestionService`.

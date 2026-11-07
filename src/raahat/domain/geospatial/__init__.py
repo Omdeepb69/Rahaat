@@ -5,6 +5,7 @@ from .engine import WINDOW_R, LocationEngine
 from .events import Envelope, Evidence, location_updated
 from .gazetteer import KINDS, SIGMA, WARD_NAMES, City
 from .geo import Grid, box_sum
+from .landmark import BoundingBox, Landmark, LandmarkCandidate
 from .location_hypothesis import LocationHypothesis
 from .probe import evaluate, strip_template
 from .simulate import Caller, run_episode
@@ -32,5 +33,8 @@ __all__ = [
     "strip_template",
     "evaluate",
     "LocationHypothesis",
+    "BoundingBox",
+    "Landmark",
+    "LandmarkCandidate",
 ]
 

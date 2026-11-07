@@ -54,6 +54,12 @@ class LandmarkModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         Index("landmarks_geo_idx", "location", postgresql_using="gist"),
         Index("landmarks_name_idx", "name"),
+        Index(
+            "landmarks_name_trgm_idx",
+            "name",
+            postgresql_using="gin",
+            postgresql_ops={"name": "gin_trgm_ops"},
+        ),
     )
 
     external_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
