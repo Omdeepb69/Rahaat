@@ -33,7 +33,7 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 1.6 IVR Pipeline Adapter Integration
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [x] 2.1 PostGIS Landmark Index & Candidate Matcher
-  - [ ] 2.2 Active Clarification & Question Selection Engine
+  - [x] 2.2 Active Clarification & Question Selection Engine
   - [ ] 2.3 Location Verification API & Hypotheses History
   - [ ] 2.4 Offline Field Client Storage & Protocol (SQLite)
   - [ ] 2.5 Idempotent Synchronization Endpoint & Sync Worker
@@ -261,25 +261,25 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 
 ## Current Task
 
-**Task ID:** 2.1
+**Task ID:** 2.3
 
-**Goal:** Implement PostGIS-backed landmark repository with spatial queries, trigram fuzzy matching (`pg_trgm`), and candidate location retrieval based on spoken/textual landmark descriptions.
+**Goal:** Implement `POST /api/v1/incidents/{id}/location/verify` endpoint, preserving all historical candidate hypotheses while recording dispatcher confirmation decisions and generating audit events.
 
-**Inputs:** PostGIS gazetteer schema from 1.2.
+**Inputs:** Location engine from 2.2, API framework from 1.5.
 
-**Output:** PostGIS landmark repository and candidate spatial query engine in `src/raahat/adapters/maps/` and `src/raahat/infrastructure/database/repositories/`.
+**Output:** Location verification route and hypothesis history repository.
 
-**Constraints:** Transliteration-tolerant fuzzy lookup; spatial bounding to disaster zone.
+**Constraints:** Never erase earlier location hypotheses upon verification; require authenticated dispatcher identity.
 
-**Verification:** Unit and integration tests verifying landmark spatial queries, trigram similarity thresholds, and bounding box filtering against PostgreSQL+PostGIS; `mypy` and `ruff` pass cleanly.
+**Verification:** Unit and integration tests verifying location verification endpoint, hypothesis status update without deletion of older hypotheses, and audit logging; `mypy` and `ruff` clean.
 
-**Depends on:** 1.2, 1.3
+**Depends on:** 2.2, 1.5.
 
 ---
 
 ## Next Task
 
-**Task ID:** 2.2 — Active Clarification & Question Selection Engine.
+**Task ID:** 2.4 — Offline Field Client Storage & Protocol (SQLite).
 
 ---
 
@@ -295,6 +295,12 @@ Phase 2 — Geospatial Intelligence & Offline Field Resilience
 ---
 
 ## Log
+
+### 2026-11-07 — Task 2.2 complete
+- Changed: Implemented active clarification and question selection engine. Defined domain models `ClarificationAnswer`, `ClarificationQuestion`, `LocationObservation`, and `LocationResolution` in `src/raahat/application/location/models.py`; defined `LocationResolver` protocol in `src/raahat/application/location/protocol.py`; implemented `PostGISGazetteerResolver` in `src/raahat/application/location/resolver.py` supporting direct GPS pins, fuzzy landmark text matching via `LandmarkRepository`, Expected Information Gain (EIG) calculation for spatial ambiguity, adaptive question selection ("mandir ke samne ya peeche?" vs landmark disambiguation), ward filtering, prior answer evaluation, and explicit uncertainty bounding (`probability=None` strictly enforced per specification).
+- Files: `src/raahat/application/location/models.py`, `src/raahat/application/location/protocol.py`, `src/raahat/application/location/resolver.py`, `src/raahat/application/location/__init__.py`, `tests/unit/application/test_location_resolver.py`, `tests/integration/test_location_resolver_integration.py`.
+- Verified: 8 unit tests in `tests/unit/application/test_location_resolver.py` (protocol conformance, GPS resolution, single landmark relative direction question, answer processing, multiple landmark EIG disambiguation, ward filtering, no-match fallback); 3 integration tests in `tests/integration/test_location_resolver_integration.py` against live PostGIS (direct coordinates finding nearby landmark, fuzzy text matching, multi-turn disambiguation flow); full test suite passes (158 passed); `mypy src/raahat tests` clean across 118 files; `ruff check .` clean.
+- Limitations: Location verification API endpoint and historical candidate hypothesis tracking will be implemented in Task 2.3.
 
 ### 2026-11-07 — Task 2.1 complete
 - Changed: Implemented PostGIS-backed landmark repository and candidate matcher. Added Alembic migration `41e7e411f7ee` creating `pg_trgm` extension and GIN trigram index `landmarks_name_trgm_idx` on `landmarks.name`; defined domain value objects `BoundingBox`, `Landmark`, and `LandmarkCandidate` in `src/raahat/domain/geospatial/landmark.py`; created transliteration normalization and synonym expansion helpers in `src/raahat/adapters/maps/transliteration.py`; implemented `LandmarkRepository` protocol, `PostgresLandmarkRepository`, `InMemoryLandmarkRepository`, and `trigram_similarity` in `src/raahat/infrastructure/database/repositories/landmark.py`; implemented `LandmarkIndexer` in `src/raahat/adapters/maps/indexer.py` seeding synthetic `City` POIs into PostgreSQL/PostGIS.
