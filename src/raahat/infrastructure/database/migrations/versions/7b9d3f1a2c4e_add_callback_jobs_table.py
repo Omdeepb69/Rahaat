@@ -45,3 +45,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS callback_jobs CASCADE;")
+

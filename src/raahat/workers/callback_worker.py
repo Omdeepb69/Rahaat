@@ -62,3 +62,4 @@ class CallbackWorker:
                 logger.exception("Error in CallbackWorker tick: %s", exc)
                 await asyncio.sleep(self.config.poll_interval_s)
         logger.info("CallbackWorker poll loop terminated")
+

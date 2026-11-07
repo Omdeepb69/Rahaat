@@ -159,3 +159,4 @@ async def test_postgres_callback_scheduler_full_flow(
     job2_db = repo.get_by_id(job2.id)
     assert job2_db is not None
     assert job2_db.status == CallbackStatus.CANCELLED_NO_CONSENT
+

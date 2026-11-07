@@ -80,3 +80,4 @@ class StubTelephonyProvider(TelephonyProvider):
 
     async def get_call_status(self, call_sid: str) -> CallStatus:
         return self.call_states.get(call_sid, CallStatus.FAILED)
+

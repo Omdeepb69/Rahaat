@@ -45,3 +45,4 @@ class CallbackJobModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
 
     disaster = relationship("DisasterModel")
+

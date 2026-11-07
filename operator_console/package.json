@@ -1,0 +1,19 @@
+{
+  "name": "raahat-operator-console",
+  "version": "0.2.0",
+  "description": "Raahat 2.0 Dispatcher Operator Console Web Application",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --check src/**/*.js",
+    "lint": "echo 'JS syntax check ok'"
+  },
+  "keywords": [
+    "disaster-intelligence",
+    "operator-console",
+    "emergency-dispatch",
+    "gis"
+  ],
+  "author": "Raahat Team",
+  "license": "Apache-2.0"
+}

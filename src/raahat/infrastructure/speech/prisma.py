@@ -109,3 +109,4 @@ class PrismaRecognizer(SpeechRecognizer):
             language=lang,
             segments=tuple(segments),
         )
+

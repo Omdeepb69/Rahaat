@@ -1,8 +1,12 @@
 """FastAPI application factory for Raahat 2.0."""
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from raahat.api.routes.audit import router as audit_router
 from raahat.api.routes.devices import router as devices_router
@@ -43,6 +47,17 @@ def create_app() -> FastAPI:
     app.include_router(operations_router, prefix="/api/v1")
     app.include_router(audit_router, prefix="/api/v1")
     app.include_router(events_router, prefix="/api/v1")
+
+    # Mount Operator Console web application
+    console_dir = Path(__file__).resolve().parent.parent.parent.parent / "operator_console"
+    if console_dir.exists() and (console_dir / "public").exists():
+        if (console_dir / "src").exists():
+            app.mount("/console/src", StaticFiles(directory=str(console_dir / "src")), name="console-src")
+        app.mount("/console", StaticFiles(directory=str(console_dir / "public"), html=True), name="console")
+
+        @app.get("/", include_in_schema=False)
+        def root_redirect() -> RedirectResponse:
+            return RedirectResponse(url="/console/")
 
     return app
 

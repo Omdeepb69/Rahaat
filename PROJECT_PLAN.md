@@ -42,13 +42,13 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.2 Conservative Entity Resolution & Incident Matcher
   - [x] 3.3 Human Verification & Reversible Incident Linking Workflow
   - [x] 3.4 Fact Extraction & Deterministic Safety Triage Policy
-- [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
+- [x] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
   - [x] 4.1 Resource Registry & Availability Management
   - [x] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
   - [x] 4.3 Tamper-Evident Append-Only Audit Logging
   - [x] 4.4 Live Event Streaming (SSE / WebSocket)
   - [x] 4.5 Speech Recognizer & Telephony Callback Boundaries
-  - [ ] 4.6 Operator Console Web Application
+  - [x] 4.6 Operator Console Web Application
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
   - [ ] 5.1 Fault Injection & Chaos Recovery Scenarios
   - [ ] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.6 — Operator Console Web Application
+**Task ID:** 5.1 — Fault Injection & Chaos Recovery Scenarios
 
-**Goal:** Build the operator console frontend with four distinct workspaces: 1. Incoming Reports Feed, 2. Situation Map (MapLibre + OSM with distinct visual encoding for confirmed, candidate, approximate, stale, and contradictory locations), 3. Incident Investigation (transcripts, evidence spans, merge review), 4. Operations (resources, assignments, approvals).
+**Goal:** Implement automated fault injection test suite verifying system behavior during speech worker crashes, database disconnections, LLM unavailability, worker lease timeouts, duplicate sync attempts, and operator disconnects.
 
-**Inputs:** API routes from 1.5, 3.3, 4.2, and streaming from 4.4.
+**Inputs:** Ingestion from 1.5, outbox worker from 1.4, sync worker from 2.5, operations from 4.2.
 
-**Output:** Single-page web console in `operator_console/`.
+**Output:** Chaos test suite in `tests/fault_injection/`.
 
-**Constraints:** Critical UI safety rule: map markers must never display unverified candidate locations as confirmed rescue pins; explicit display of unknown fields and evidence provenance.
+**Constraints:** Failures must be diagnosable; zero lost reports; expired leases must safely recover without duplicate processing.
 
-**Verification:** End-to-end component / static bundle tests or server route verification, responsive layout verification, and policy compliance inspection; `mypy` and `ruff` clean.
+**Verification:** Automated chaos test suite execution validating failure containment and recovery invariants; `mypy` and `ruff` clean.
 
-**Depends on:** 4.2, 4.4.
+**Depends on:** 1.4, 2.5, 4.2.
 
 ---
 
 ## Next Task
 
-**Task ID:** 5.1 — Fault Injection & Chaos Recovery Scenarios
+**Task ID:** 5.2 — RaahatBench Benchmark Dataset & Ground Truth Generator
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.6 complete
+- Changed: Implemented the operator console web application with four distinct workspaces: 1. Incoming Reports Feed (with multi-channel filtering, live SSE ingestion indicators, and search), 2. Situation Map (strict visual encodings enforcing the critical UI safety rule: confirmed ground truth pins, candidate hypothesis pins with dashed uncertainty radii, approximate area polygons, stale coordinates >2h old, and contradictory alert markers), 3. Incident Investigation (explicit UNKNOWN display preserving uncertainty, supporting report provenance graph, candidate location hypotheses, and deduplication review with approve/reject merge links and unmerge), 4. Operations & Rescue Dispatch (active incident priority queue, resource registry for boats/medical/vehicles, assignment proposal, authenticated human approval workflow, operation lifecycle state progression, and cryptographic audit hash chain verification). Created single-page web console in `operator_console/` (`package.json`, `public/index.html`, `public/favicon.svg`, `public/css/console.css`, `public/css/map.css`, `src/api.js`, `src/state.js`, `src/app.js`, and components `reports_feed.js`, `situation_map.js`, `investigation.js`, `operations.js`); mounted console in FastAPI `src/raahat/api/app.py` at `/console` and redirected root `/` to `/console/`.
+- Files: `operator_console/package.json` (new), `operator_console/public/index.html` (new), `operator_console/public/favicon.svg` (new), `operator_console/public/css/console.css` (new), `operator_console/public/css/map.css` (new), `operator_console/src/api.js` (new), `operator_console/src/state.js` (new), `operator_console/src/app.js` (new), `operator_console/src/components/reports_feed.js` (new), `operator_console/src/components/situation_map.js` (new), `operator_console/src/components/investigation.js` (new), `operator_console/src/components/operations.js` (new), `src/raahat/api/app.py` (updated), `tests/integration/test_operator_console.py` (new).
+- Verified: 385 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 380 prior + 5 new integration tests validating root redirect, HTML structure, static assets serving, critical safety visual encoding rules in CSS, and zero JS syntax errors via `node --check`); `mypy src/raahat field_app tests` — 0 errors across 215 source files; `ruff check .` — 0 errors.
+- Limitations: In-browser map rendering utilizes HTML5 canvas / SVG spatial layers with fallback; full WebGL vector tile rendering with MapLibre will load offline pbf tile packages in Phase 5 deployment.
 
 ### 2026-11-07 — Task 4.5 complete
 - Changed: Implemented speech recognition adapters, Piper TTS engine abstraction, and outbound telephony callback boundary with consent and retry controls. Extended speech protocol in `src/raahat/infrastructure/speech/protocol.py` with `TTSSynthesizer`, `SynthesisInput`, and `SynthesisOutput`; implemented `WhisperRecognizer` local adapter in `src/raahat/infrastructure/speech/whisper.py` with decoupled lazy loading of `openai-whisper`; implemented `PrismaRecognizer` client adapter stub in `src/raahat/infrastructure/speech/prisma.py` parsing Gnani Prisma word/segment timing and confidence; implemented `PiperTTS` and `MockTTSSynthesizer` in `src/raahat/infrastructure/speech/piper_tts.py`; created `TelephonyProvider` protocol and `StubTelephonyProvider` in `src/raahat/infrastructure/telephony/provider.py`; defined callback domain models (`CallbackJob`, `CallbackStatus`, `CallStatus`, `DialResult`) in `src/raahat/infrastructure/telephony/models.py`; defined `CallbackJobRepository` protocol in `src/raahat/infrastructure/telephony/repository.py`; implemented `CallbackJobModel` in `src/raahat/infrastructure/database/models/callback.py` with Alembic migration `7b9d3f1a2c4e_add_callback_jobs_table.py`; implemented `PostgresCallbackJobRepository` and `InMemoryCallbackJobRepository` in `src/raahat/infrastructure/database/repositories/callback.py`; built `CallbackScheduler` in `src/raahat/infrastructure/telephony/scheduler.py` enforcing consent checks (immediate transition to `CANCELLED_NO_CONSENT`), exponential backoff on retryable failures, and a strict retry cap transitioning to `EXHAUSTED` (zero infinite redial loops); implemented `CallbackWorker` in `src/raahat/workers/callback_worker.py`; wired `get_callback_scheduler` in `src/raahat/api/dependencies.py`.

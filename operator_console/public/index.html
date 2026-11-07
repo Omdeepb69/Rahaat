@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raahat 2.0 — Disaster Intelligence & Rescue Operations Console</title>
+  <link rel="icon" type="image/svg+xml" href="/console/favicon.svg">
+  <link rel="stylesheet" href="/console/css/console.css">
+  <link rel="stylesheet" href="/console/css/map.css">
+</head>
+<body>
+  <!-- Top Navigation & Control Bar -->
+  <header class="top-bar">
+    <div class="brand-section">
+      <svg width="24" height="24" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="6" fill="#1e293b"/>
+        <path d="M16 6 L26 12 L26 20 L16 26 L6 20 L6 12 Z" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+        <circle cx="16" cy="16" r="4" fill="#ef4444"/>
+      </svg>
+      <h1>RAAHAT 2.0</h1>
+      <span class="brand-badge">CONTROL ROOM</span>
+    </div>
+
+    <!-- Workspace Tabs -->
+    <nav class="workspace-tabs" id="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-workspace="reports" id="tab-reports" role="tab" aria-selected="true">
+        <span>01</span> Incoming Reports Feed
+      </button>
+      <button class="tab-btn" data-workspace="map" id="tab-map" role="tab" aria-selected="false">
+        <span>02</span> Situation Map
+      </button>
+      <button class="tab-btn" data-workspace="investigation" id="tab-investigation" role="tab" aria-selected="false">
+        <span>03</span> Incident Investigation
+      </button>
+      <button class="tab-btn" data-workspace="operations" id="tab-operations" role="tab" aria-selected="false">
+        <span>04</span> Operations & Dispatch
+      </button>
+    </nav>
+
+    <!-- System & Dispatcher Status -->
+    <div class="system-status">
+      <div class="stream-status" title="Live SSE Event Stream">
+        <span class="pulse-dot" id="stream-indicator"></span>
+        <span id="stream-text" style="color: var(--text-muted);">LIVE SSE</span>
+      </div>
+
+      <div class="dispatcher-chip" id="dispatcher-badge" title="Click to change Dispatcher ID">
+        <span style="color: var(--text-muted);">DISPATCHER:</span>
+        <span id="dispatcher-id-display" style="font-weight: 700; color: #60a5fa;">00000000-0000-0000-0000-000000000001</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Console Body -->
+  <main class="console-body">
+    <!-- Workspace 1: Incoming Reports Feed -->
+    <section class="workspace-panel active" id="workspace-reports" role="tabpanel">
+      <div class="feed-controls">
+        <input type="text" class="search-input" id="report-search" placeholder="Search phone, location, transcript..." style="min-width: 260px;">
+        <select class="filter-select" id="filter-channel">
+          <option value="">All Channels</option>
+          <option value="ivr">IVR Voice Call</option>
+          <option value="sms">SMS Ingestion</option>
+          <option value="web_sos">Web SOS</option>
+          <option value="volunteer">Volunteer App</option>
+          <option value="radio">Radio Console</option>
+        </select>
+        <select class="filter-select" id="filter-status">
+          <option value="">All Processing Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="extracted">Extracted</option>
+          <option value="processed">Processed</option>
+          <option value="failed">Failed</option>
+        </select>
+        <button class="btn-primary" id="btn-refresh-reports">Refresh Feed</button>
+      </div>
+
+      <div class="feed-list" id="reports-feed-container">
+        <!-- Feed items dynamically rendered by reports_feed.js -->
+        <div style="color: var(--text-muted); text-align: center; padding: 2rem;">Loading live reports...</div>
+      </div>
+    </section>
+
+    <!-- Workspace 2: Situation Map -->
+    <section class="workspace-panel" id="workspace-map" role="tabpanel">
+      <div class="map-container-wrapper">
+        <div id="situation-map" class="map-canvas-fallback">
+          <!-- Safety Legend -->
+          <div class="map-safety-legend">
+            <div class="legend-title">Location Evidence Status</div>
+            <div class="legend-item">
+              <span class="legend-badge pin-confirmed"></span>
+              <span><strong>Confirmed:</strong> Ground-truth verified</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge pin-candidate"></span>
+              <span><strong>Candidate:</strong> Uncalibrated hypothesis</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge pin-approximate"></span>
+              <span><strong>Approximate:</strong> Cluster / area estimate</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge pin-stale"></span>
+              <span><strong>Stale:</strong> Older than 2 hours</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge pin-contradictory"></span>
+              <span><strong>Contradictory:</strong> Landmark conflict</span>
+            </div>
+          </div>
+
+          <!-- Dynamic SVG Map Markers Rendered Here -->
+          <div id="map-markers-layer" style="position: absolute; inset: 0;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace 3: Incident Investigation -->
+    <section class="workspace-panel" id="workspace-investigation" role="tabpanel">
+      <div class="panel-grid">
+        <!-- Left: Incident Overview & Evidence Graph -->
+        <div class="panel-card">
+          <div class="card-header">
+            <h2>Incident Overview & Evidence Graph</h2>
+            <div id="incident-status-tag"></div>
+          </div>
+
+          <div id="investigation-content" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="color: var(--text-muted);">Select an incident from the feed or operations list to inspect.</div>
+          </div>
+        </div>
+
+        <!-- Right: Location Hypotheses & Merge Review Queue -->
+        <div class="panel-card">
+          <div class="card-header">
+            <h2>Location Hypotheses & Deduplication Review</h2>
+          </div>
+
+          <div id="hypotheses-content" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="color: var(--text-muted);">Candidate location hypotheses and duplicate merge review will display here.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace 4: Operations & Rescue Dispatch -->
+    <section class="workspace-panel" id="workspace-operations" role="tabpanel">
+      <div class="panel-grid">
+        <!-- Left: Active Incidents & Assignment Proposals -->
+        <div class="panel-card">
+          <div class="card-header">
+            <h2>Rescue Queue & Assignment Workflow</h2>
+          </div>
+
+          <div class="human-approval-box">
+            <h4>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              Human Dispatcher Authorization Mandatory
+            </h4>
+            <p style="font-size: 0.8rem; color: #cbd5e1;">
+              AI models produce decision-support recommendations only. No resource dispatch or lifecycle state transition can proceed without authenticated dispatcher approval.
+            </p>
+          </div>
+
+          <div id="active-incidents-container" style="display: flex; flex-direction: column; gap: 0.75rem; overflow-y: auto; max-height: 400px;">
+            <div style="color: var(--text-muted);">Loading active incidents...</div>
+          </div>
+        </div>
+
+        <!-- Right: Resource Registry & Operation Timeline -->
+        <div class="panel-card">
+          <div class="card-header">
+            <h2>Resource Registry & Operation Timeline</h2>
+            <button class="btn-primary" id="btn-refresh-resources">Refresh Resources</button>
+          </div>
+
+          <div id="resources-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="color: var(--text-muted);">Loading available resources (boats, medical teams, vehicles)...</div>
+          </div>
+
+          <div class="card-header" style="margin-top: 1rem;">
+            <h2>Tamper-Evident Audit Verification</h2>
+          </div>
+          <div id="audit-verify-widget" style="padding: 0.5rem; background: var(--bg-tertiary); border-radius: var(--radius-sm); font-size: 0.8rem;">
+            <span>Cryptographic Hash Integrity: <strong style="color: var(--status-confirmed);" id="audit-status-badge">CHECKING...</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Dispatcher ID Settings Modal -->
+  <div class="modal-overlay" id="dispatcher-modal">
+    <div class="modal-content">
+      <h3>Dispatcher Identity Settings</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        All operational approvals and assignments are signed with your Dispatcher UUID and recorded in the append-only audit log.
+      </p>
+      <label style="font-size: 0.8rem; font-weight: 600;">Dispatcher UUID:</label>
+      <input type="text" class="search-input" id="input-dispatcher-id" value="00000000-0000-0000-0000-000000000001">
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+        <button class="btn-primary" id="btn-save-dispatcher">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="/console/src/app.js"></script>
+</body>
+</html>

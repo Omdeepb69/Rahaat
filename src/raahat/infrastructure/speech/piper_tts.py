@@ -88,3 +88,4 @@ class MockTTSSynthesizer(TTSSynthesizer):
             encoding="mock_pcm",
             sample_rate=self.sample_rate,
         )
+
