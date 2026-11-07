@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## In-Memory Test Doubles Must Not Tie-Break Chronological Order by Random UUIDs
+- What happened: Sorting events in an in-memory repository by `(created_at, str(id))` scrambled the sequence of events recorded in rapid succession (with identical sub-millisecond timestamps), causing cryptographic hash chains to appear broken because the genesis event was sorted after subsequent events.
+- Takeaway: For in-memory repositories testing sequential or chained event logs, preserve list insertion order (or assign an explicit monotonic sequence) rather than sorting on `(created_at, uuid)` where timestamps can collide.
+- Applies to: In-memory test repositories, event-sourcing doubles, and audit log verification.
+
 ## Handling Both WKTElement and WKBElement in PostGIS Deserialization Routines
 - What happened: GeoAlchemy2's `WKTElement` stores spatial text in its `.data` attribute as `str`, while `WKBElement` stores binary representation in `.data` as `bytes`. Assuming `.data` is always raw EWKB bytes caused `bytes(str)` to raise `TypeError: string argument without an encoding` when reading back an entity immediately after flush.
 - Takeaway: Check `isinstance(raw_data.data, str)` first; if true and contains `"POINT"`, parse directly via WKT rather than coercing to bytes. Only unpack binary EWKB if `.data` is already `bytes`.

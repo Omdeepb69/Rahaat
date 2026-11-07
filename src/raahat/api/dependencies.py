@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from raahat.application.resources import ResourceService
     from raahat.application.triage import IncidentTriageService
     from raahat.domain.evidence import EvidenceGraphService
+    from raahat.infrastructure.audit import AuditService
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session, sessionmaker
@@ -160,6 +161,16 @@ def get_resource_service(
         audit_repo=audit_repo,
         session_factory=session_factory,
     )
+
+
+def get_audit_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> AuditService:
+    """Provide AuditService instance."""
+    from raahat.infrastructure.audit import AuditService, PostgresAuditRepository
+
+    audit_repo = PostgresAuditRepository(session_factory)
+    return AuditService(audit_repo=audit_repo, session_factory=session_factory)
 
 
 def require_dispatcher_id(

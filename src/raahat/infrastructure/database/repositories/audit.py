@@ -6,8 +6,10 @@ import json
 import uuid
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from raahat.infrastructure.database.base import utc_now
 from raahat.infrastructure.database.models.audit import AuditEventModel
 
 
@@ -47,6 +49,39 @@ class AuditRepository(Protocol):
         entity_id: uuid.UUID,
     ) -> Optional[AuditEventModel]: ...
 
+    def get_event_by_id(
+        self,
+        event_id: uuid.UUID,
+    ) -> Optional[AuditEventModel]: ...
+
+    def get_entity_chain(
+        self,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> list[AuditEventModel]: ...
+
+    def query_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[AuditEventModel]: ...
+
+    def count_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+    ) -> int: ...
+
+    def list_distinct_entities(
+        self,
+    ) -> list[tuple[str, uuid.UUID]]: ...
+
 
 class PostgresAuditRepository:
     """AuditRepository backed by PostgreSQL with cryptographic hash chaining."""
@@ -67,6 +102,89 @@ class PostgresAuditRepository:
                 .order_by(AuditEventModel.created_at.desc(), AuditEventModel.id.desc())
                 .first()
             )
+
+    def get_event_by_id(
+        self,
+        event_id: uuid.UUID,
+    ) -> Optional[AuditEventModel]:
+        """Fetch an audit event by its unique ID."""
+        with self._session_factory() as session:
+            return session.get(AuditEventModel, event_id)
+
+    def get_entity_chain(
+        self,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> list[AuditEventModel]:
+        """Fetch all events for a specific entity in chronological chain order."""
+        with self._session_factory() as session:
+            stmt = (
+                select(AuditEventModel)
+                .where(
+                    AuditEventModel.entity_type == entity_type,
+                    AuditEventModel.entity_id == entity_id,
+                )
+                .order_by(AuditEventModel.created_at.asc(), AuditEventModel.id.asc())
+            )
+            return list(session.scalars(stmt).all())
+
+    def query_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[AuditEventModel]:
+        """Query audit records with optional filters, newest first."""
+        with self._session_factory() as session:
+            stmt = select(AuditEventModel)
+            if entity_type is not None:
+                stmt = stmt.where(AuditEventModel.entity_type == entity_type)
+            if entity_id is not None:
+                stmt = stmt.where(AuditEventModel.entity_id == entity_id)
+            if action is not None:
+                stmt = stmt.where(AuditEventModel.action == action)
+            if actor_id is not None:
+                stmt = stmt.where(AuditEventModel.actor_id == actor_id)
+
+            stmt = stmt.order_by(AuditEventModel.created_at.desc(), AuditEventModel.id.desc())
+            stmt = stmt.limit(limit).offset(offset)
+            return list(session.scalars(stmt).all())
+
+    def count_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+    ) -> int:
+        """Count audit records matching the specified filters."""
+        with self._session_factory() as session:
+            stmt = select(func.count(AuditEventModel.id))
+            if entity_type is not None:
+                stmt = stmt.where(AuditEventModel.entity_type == entity_type)
+            if entity_id is not None:
+                stmt = stmt.where(AuditEventModel.entity_id == entity_id)
+            if action is not None:
+                stmt = stmt.where(AuditEventModel.action == action)
+            if actor_id is not None:
+                stmt = stmt.where(AuditEventModel.actor_id == actor_id)
+
+            return session.scalar(stmt) or 0
+
+    def list_distinct_entities(
+        self,
+    ) -> list[tuple[str, uuid.UUID]]:
+        """Return list of distinct (entity_type, entity_id) pairs present in the audit log."""
+        with self._session_factory() as session:
+            stmt = (
+                select(AuditEventModel.entity_type, AuditEventModel.entity_id)
+                .distinct()
+                .order_by(AuditEventModel.entity_type, AuditEventModel.entity_id)
+            )
+            return [(row[0], row[1]) for row in session.execute(stmt).all()]
 
     def record_event(
         self,
@@ -127,6 +245,78 @@ class InMemoryAuditRepository:
         ]
         return matching[-1] if matching else None
 
+    def get_event_by_id(
+        self,
+        event_id: uuid.UUID,
+    ) -> Optional[AuditEventModel]:
+        for e in self.events:
+            if e.id == event_id:
+                return e
+        return None
+
+    def get_entity_chain(
+        self,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> list[AuditEventModel]:
+        return [
+            e for e in self.events
+            if e.entity_type == entity_type and e.entity_id == entity_id
+        ]
+
+    def query_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[AuditEventModel]:
+        filtered = self.events
+        if entity_type is not None:
+            filtered = [e for e in filtered if e.entity_type == entity_type]
+        if entity_id is not None:
+            filtered = [e for e in filtered if e.entity_id == entity_id]
+        if action is not None:
+            filtered = [e for e in filtered if e.action == action]
+        if actor_id is not None:
+            filtered = [e for e in filtered if e.actor_id == actor_id]
+
+        filtered = sorted(filtered, key=lambda e: (e.created_at, str(e.id)), reverse=True)
+        return filtered[offset : offset + limit]
+
+    def count_events(
+        self,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[uuid.UUID] = None,
+        action: Optional[str] = None,
+        actor_id: Optional[uuid.UUID] = None,
+    ) -> int:
+        filtered = self.events
+        if entity_type is not None:
+            filtered = [e for e in filtered if e.entity_type == entity_type]
+        if entity_id is not None:
+            filtered = [e for e in filtered if e.entity_id == entity_id]
+        if action is not None:
+            filtered = [e for e in filtered if e.action == action]
+        if actor_id is not None:
+            filtered = [e for e in filtered if e.actor_id == actor_id]
+
+        return len(filtered)
+
+    def list_distinct_entities(
+        self,
+    ) -> list[tuple[str, uuid.UUID]]:
+        seen: set[tuple[str, uuid.UUID]] = set()
+        result: list[tuple[str, uuid.UUID]] = []
+        for e in self.events:
+            pair = (e.entity_type, e.entity_id)
+            if pair not in seen:
+                seen.add(pair)
+                result.append(pair)
+        return sorted(result, key=lambda p: (p[0], str(p[1])))
+
     def record_event(
         self,
         action: str,
@@ -154,6 +344,7 @@ class InMemoryAuditRepository:
             prev_hash=prev_hash,
             hash=event_hash,
             payload=payload,
+            created_at=utc_now(),
         )
         self.events.append(model)
         return model

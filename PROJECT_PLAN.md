@@ -45,7 +45,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
   - [x] 4.1 Resource Registry & Availability Management
   - [x] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
-  - [ ] 4.3 Tamper-Evident Append-Only Audit Logging
+  - [x] 4.3 Tamper-Evident Append-Only Audit Logging
   - [ ] 4.4 Live Event Streaming (SSE / WebSocket)
   - [ ] 4.5 Speech Recognizer & Telephony Callback Boundaries
   - [ ] 4.6 Operator Console Web Application
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.3 — Tamper-Evident Append-Only Audit Logging
+**Task ID:** 4.4 — Live Event Streaming (SSE / WebSocket)
 
-**Goal:** Implement audit service writing to `audit_events` with SHA-256 cryptographic hash chaining (`prev_hash || event_payload -> current_hash`), tamper verification routine, and read-only inspection API.
+**Goal:** Implement `GET /api/v1/events/stream` providing real-time Server-Sent Events (SSE) to dispatcher consoles, streaming sanitized incident updates, new reports, and operational status changes published by the outbox.
 
-**Inputs:** Database schema from 1.2.
+**Inputs:** Outbox engine from 1.4, operations events from 4.2.
 
-**Output:** Audit repository and hash chain verification service in `src/raahat/infrastructure/audit/`.
+**Output:** Real-time event streaming route in `src/raahat/api/routes/events.py`.
 
-**Constraints:** Append-only; no UPDATE or DELETE queries permitted on table; hash chain verification detects modified or omitted records.
+**Constraints:** Non-blocking asynchronous streaming; connection disconnect handling; event filtering by disaster ID.
 
-**Verification:** Unit and integration tests for hash calculation, chain verification, tamper detection, and query endpoints; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests for SSE connection lifecycle, disaster ID filtering, client disconnection, and event payload formatting; `mypy` and `ruff` clean.
 
-**Depends on:** 1.2, 1.3.
+**Depends on:** 1.4, 4.2.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.4 — Live Event Streaming (SSE / WebSocket)
+**Task ID:** 4.5 — Speech Recognizer & Telephony Callback Boundaries
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.3 complete
+- Changed: Implemented tamper-evident append-only audit logging with SHA-256 cryptographic hash chaining and verification routine. Extended `AuditRepository` protocol, `PostgresAuditRepository`, and `InMemoryAuditRepository` in `src/raahat/infrastructure/database/repositories/audit.py` with `get_event_by_id()`, `get_entity_chain()`, `query_events()`, `count_events()`, and `list_distinct_entities()`; implemented `AuditVerifier` in `src/raahat/infrastructure/audit/verifier.py` providing `verify_entity_chain()` and `verify_all_chains()` detecting payload tampering, attribute changes, omitted/deleted intermediate records, and forged genesis records; implemented `AuditService` in `src/raahat/infrastructure/audit/service.py` orchestrating event recording, querying, and verification; exported public interfaces in `src/raahat/infrastructure/audit/__init__.py`; wired `get_audit_service` in `src/raahat/api/dependencies.py`; implemented read-only inspection and verification endpoints (`GET /api/v1/audit/events`, `GET /api/v1/audit/events/{id}`, `GET /api/v1/audit/verify`) in `src/raahat/api/routes/audit.py`; registered `audit_router` in `src/raahat/api/app.py`.
+- Files: `src/raahat/infrastructure/database/repositories/audit.py` (updated), `src/raahat/infrastructure/audit/models.py` (new), `src/raahat/infrastructure/audit/verifier.py` (new), `src/raahat/infrastructure/audit/service.py` (new), `src/raahat/infrastructure/audit/__init__.py` (updated), `src/raahat/api/routes/audit.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/api/app.py` (updated), `tests/unit/infrastructure/test_audit_verification.py` (new), `tests/integration/test_audit_api.py` (new), `LESSONS.md` (updated).
+- Verified: 352 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 334 prior + 18 new: 13 unit tests in `test_audit_verification.py` + 5 integration tests in `test_audit_api.py` validating hash calculation, query pagination, single-entity and global verification, tamper detection on direct DB mutation, and 401/400 validation); `mypy src/raahat field_app tests` — 0 errors across 193 source files; `ruff check .` — 0 errors.
+- Limitations: Audit inspection is authenticated via `X-Dispatcher-Id` header; role-based fine-grained inspection permissions will integrate with Phase 5 operator authentication.
 
 ### 2026-11-07 — Task 4.2 complete
 - Changed: Implemented human-approved rescue assignment and operation lifecycle management. Defined `AssignmentRepository` protocol, `InMemoryAssignmentRepository`, and state machine transition rules (`validate_event_transition`, `next_status_for_event`) in `src/raahat/domain/operations/repository.py`; exported models and transition validators from `src/raahat/domain/operations/__init__.py`; implemented `PostgresAssignmentRepository` in `src/raahat/infrastructure/database/repositories/assignment.py`; implemented `DispatchService` in `src/raahat/application/dispatch/service.py` enforcing strict dispatcher authorization (`X-Dispatcher-Id`), state machine progression (`proposed -> approved -> acknowledged -> en_route -> on_scene -> rescued -> closed`), and tamper-evident audit logging for each transition; wired `get_dispatch_service` in `src/raahat/api/dependencies.py`; added operations REST routes (`POST /incidents/{id}/assignments`, `GET /incidents/{id}/assignments`, `GET /incidents/{id}/assignments/{assignment_id}`, `POST /incidents/{id}/assignments/{assignment_id}/events`, `GET /incidents/{id}/assignments/{assignment_id}/events`) in `src/raahat/api/routes/operations.py`; registered `operations_router` in `src/raahat/api/app.py`.
