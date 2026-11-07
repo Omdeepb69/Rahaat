@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import uuid
-from typing import Generator, Optional
+from typing import TYPE_CHECKING, Generator, Optional
+
+if TYPE_CHECKING:
+    from raahat.application.incident_resolution import IncidentResolutionService
+    from raahat.domain.evidence import EvidenceGraphService
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session, sessionmaker
@@ -64,13 +68,32 @@ def get_device_sync_service(
 
 def get_evidence_graph_service(
     session_factory: sessionmaker[Session] = Depends(get_session_factory),
-):
+) -> EvidenceGraphService:
     """Provide EvidenceGraphService instance."""
     from raahat.domain.evidence import EvidenceGraphService
     from raahat.infrastructure.database.repositories import PostgresEvidenceRepository
 
     repo = PostgresEvidenceRepository(session_factory=session_factory)
     return EvidenceGraphService(evidence_repo=repo, session_factory=session_factory)
+
+
+def get_incident_resolution_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> IncidentResolutionService:
+    """Provide IncidentResolutionService instance."""
+    from raahat.application.incident_resolution import (
+        ConservativeIncidentMatcher,
+        ConservativeIncidentResolver,
+        IncidentResolutionService,
+    )
+
+    matcher = ConservativeIncidentMatcher()
+    resolver = ConservativeIncidentResolver()
+    return IncidentResolutionService(
+        matcher=matcher,
+        resolver=resolver,
+        session_factory=session_factory,
+    )
 
 
 def require_dispatcher_id(

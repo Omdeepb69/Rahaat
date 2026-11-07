@@ -39,7 +39,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 2.5 Idempotent Synchronization Endpoint & Sync Worker
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.1 Evidence Provenance Graph & Contradiction Detection
-  - [ ] 3.2 Conservative Entity Resolution & Incident Matcher
+  - [x] 3.2 Conservative Entity Resolution & Incident Matcher
   - [ ] 3.3 Human Verification & Reversible Incident Linking Workflow
   - [ ] 3.4 Fact Extraction & Deterministic Safety Triage Policy
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 3.2 — Conservative Entity Resolution & Incident Matcher
+**Task ID:** 3.3 — Human Verification & Reversible Incident Linking Workflow
 
-**Goal:** Implement `IncidentMatcher` evaluating candidate incidents for incoming reports based on spatial distance, household members, and contact numbers, using conservative thresholds that flag ambiguous merges for human review.
+**Goal:** Build `POST /api/v1/incidents/{id}/links` and `POST /api/v1/incidents/{id}/verify` endpoints, recording dispatcher merge approvals/rejections in `entity_merge_events` and supporting reversibility without data loss.
 
-**Inputs:** Evidence graph from 3.1, candidate matcher from 2.1.
+**Inputs:** Incident matcher from 3.2, API framework from 1.5.
 
-**Output:** Conservative incident matcher service in `src/raahat/application/incident_resolution/`.
+**Output:** Incident verification routes and merge review service in `src/raahat/application/incident_resolution/` and `src/raahat/api/routes/incidents.py`.
 
-**Constraints:** Conservative matching: false merges are worse than duplicates. Ambiguous merges must be sent to review queue; automated links must remain reversible.
+**Constraints:** Original household and report records are never deleted; every merge action records reviewer ID, timestamp, and justification; full unmerge capability.
 
-**Verification:** Unit and integration tests verifying conservative scoring thresholds, false positive prevention, household member linking, ambiguous match routing to human review, and PostgreSQL candidate queries; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests verifying merge approval, unmerge rollback, `entity_merge_events` logging, audit event generation, and REST endpoint authorization; `mypy` and `ruff` clean.
 
-**Depends on:** 2.1, 3.1.
+**Depends on:** 3.2.
 
 ---
 
 ## Next Task
 
-**Task ID:** 3.3 — Human Verification & Reversible Incident Linking Workflow.
+**Task ID:** 3.4 — Fact Extraction & Deterministic Safety Triage Policy.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 3.2 complete
+- Changed: Implemented conservative entity resolution and incident matching engine. Defined domain repository protocol `IncidentRepository` and `InMemoryIncidentRepository` in `src/raahat/domain/incidents/repository.py`; defined application models (`ResolutionDecisionType`, `MatchSignal`, `IncidentCandidate`, `ResolutionDecision`, `ResolutionResult`, `IncidentSnapshot`) in `src/raahat/application/incident_resolution/models.py`; defined `IncidentMatcher` and `IncidentResolver` protocols in `src/raahat/application/incident_resolution/protocol.py`; implemented `ConservativeIncidentMatcher` evaluating phone normalization, spatial distance falloff (`distance_to`), name/household matching, and cross-report contradiction detection with score capping (<=0.50); implemented `ConservativeIncidentResolver` enforcing conservative auto-link thresholds (0.80), distance limits (<=150m), candidate margin requirements (>=0.15), and zero-tolerance contradiction routing to human review; implemented `IncidentResolutionService` orchestrating report resolution, duplicate report linking, and `pending_review` incident linking in `src/raahat/application/incident_resolution/service.py`; wired `get_incident_resolution_service` dependency in `src/raahat/api/dependencies.py`.
+- Files: `src/raahat/domain/incidents/repository.py`, `src/raahat/domain/incidents/__init__.py`, `src/raahat/application/incident_resolution/models.py`, `src/raahat/application/incident_resolution/protocol.py`, `src/raahat/application/incident_resolution/matcher.py`, `src/raahat/application/incident_resolution/resolver.py`, `src/raahat/application/incident_resolution/service.py`, `src/raahat/application/incident_resolution/__init__.py`, `src/raahat/api/dependencies.py`, `tests/unit/application/test_incident_matcher.py`, `tests/unit/application/test_incident_resolver.py`, `tests/unit/application/test_incident_resolution_service.py`, `tests/integration/test_incident_resolution.py`, `LESSONS.md`.
+- Verified: 9 unit tests in `test_incident_matcher.py` (phone normalization, feature extraction, distance scoring, contradiction capping, resolved incident exclusion); 7 unit tests in `test_incident_resolver.py` (auto-link, distance safety, contradiction override, ambiguous score, margin safety); 3 unit tests in `test_incident_resolution_service.py` with `InMemoryIncidentRepository` (auto-link duplicate, ambiguous review link, independent creation); 5 integration tests in `test_incident_resolution.py` against PostgreSQL + PostGIS container (candidate querying, auto-link duplicate insertion, ambiguous link pending_review insertion, conflicting link insertion, and automatic `LocationHypothesisModel` creation); full test suite passes (259 passed, up from 235); `mypy src/raahat field_app tests` clean across 160 source files; `ruff check .` clean.
+- Limitations: Human review endpoints `POST /api/v1/incidents/{id}/links` and merge/unmerge workflow will be implemented in Task 3.3.
 
 ### 2026-11-07 — Task 3.1 complete
 - Changed: Implemented evidence decomposition, source provenance tracking, and rule-based contradiction detection. Defined domain entities and value objects (`EvidenceSpan` with ID, `EvidenceItem`, `Contradiction`, `Corroboration`, `EvidenceProvenance`, `EvidenceGraph`) in `src/raahat/domain/evidence/evidence.py`; implemented `StructuredEvidenceExtractor` in `src/raahat/domain/evidence/extractor.py` decomposing structured and audio-turn payloads with Hindi/English concept keyword matching and trend normalization; implemented `RuleBasedContradictionDetector` in `src/raahat/domain/evidence/detector.py` flagging water level trend conflicts, headcount divergence, boolean status mismatches, numeric water depth discrepancies (>=50cm), and landmark divergence, plus corroboration detection; defined `EvidenceRepository` protocol and `InMemoryEvidenceRepository` in `src/raahat/domain/evidence/repository.py`; implemented `PostgresEvidenceRepository` in `src/raahat/infrastructure/database/repositories/evidence.py`; implemented `EvidenceGraphService` in `src/raahat/domain/evidence/service.py` coordinating decomposition, persistence, provenance tracing, and graph synthesis; added `get_evidence_graph_service` dependency provider in `src/raahat/api/dependencies.py`.

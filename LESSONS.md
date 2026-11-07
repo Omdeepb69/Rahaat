@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Explicit Intermediate Flushing for Independent Foreign-Key Dependent Models
+- What happened: Inserting a new parent entity (`IncidentModel`) and a child link model (`IncidentLinkModel`) in the same session without an explicit ORM `relationship()` caused an `IntegrityError: ForeignKeyViolation` because SQLAlchemy's topological sort had no dependency edge to order the INSERTs.
+- Takeaway: When two SQLAlchemy models share a foreign key relationship that is not mapped by an explicit ORM `relationship()` property, call `session.flush()` immediately after adding the parent entity before adding child entities referencing its generated UUID.
+- Applies to: SQLAlchemy 2.0 applications with declarative models without back-populating relationships.
+
 ## Domain Protocol Location for Dependency Inversion and Circular Import Prevention
 - What happened: Placing repository interface protocols in `infrastructure/` caused circular imports when `domain/` services imported the interface and `infrastructure/` imported domain entities from the domain package `__init__.py`.
 - Takeaway: By strict dependency inversion, repository Protocols and pure-Python in-memory implementations belong in the `domain/` layer (e.g. `domain/evidence/repository.py`). The `infrastructure/` layer implements the protocol and can re-export it. Domain services never import from `infrastructure/`.
