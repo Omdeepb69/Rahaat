@@ -150,3 +150,4 @@ class NameIndex:
             out[i] = self.channel.loglik(spoken, self.names[i])
         self._cache[spoken] = out
         return out
+

@@ -58,3 +58,4 @@ def corrupt(text: str, p: float, rng: np.random.Generator) -> str:
             out.append(ch)
             out.append((VOWELS + "h")[int(rng.integers(6))])
     return "".join(out)
+

@@ -149,3 +149,4 @@ class LocationEngine:
     def choose_adaptive(self) -> Tuple[Any, ...]:
         qs = self.candidate_questions()
         return qs[int(np.argmax([self.eig(q) for q in qs]))]
+

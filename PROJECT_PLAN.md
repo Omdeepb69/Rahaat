@@ -26,7 +26,7 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 - [ ] Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
   - [x] 1.1 Repository & Workspace Foundation
-  - [ ] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
+  - [x] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
   - [ ] 1.3 Core Domain Entities & Value Objects
   - [ ] 1.4 Transactional Outbox & Background Worker Runtime
   - [ ] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
@@ -261,17 +261,17 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Current Task
 
-**Task ID:** 1.2
+**Task ID:** 1.3
 
-**Goal:** Create PostgreSQL/PostGIS database models, repositories, and initial Alembic migrations for core tables (`disasters`, `reports`, `households`, `persons`, `incidents`, `evidence_items`, `evidence_spans`, `incident_reports`, `location_hypotheses`, `resources`, `assignments`, `operation_events`, `outbox_events`, `audit_events`, `sync_cursors`, `entity_merge_events`).
+**Goal:** Implement immutable domain entities, value objects, and status enums for `Report`, `EvidenceItem`, `EvidenceSpan`, `Household`, `Person`, `Incident`, `LocationHypothesis`, and `PriorityAssessment` in pure Python.
 
-**Inputs:** Schema definitions from `RAAHAT_SPEC.md` §4 and `ARCHITECTURE.md`.
+**Inputs:** Entity contracts from `RAAHAT_SPEC.md` §4 and `ARCHITECTURE.md`.
 
-**Output:** SQLAlchemy declarative models under `src/raahat/infrastructure/database/models/`, Alembic migrations in `src/raahat/infrastructure/database/migrations/`, and migration tests in `tests/integration/test_migrations.py`.
+**Output:** Pure domain classes in `src/raahat/domain/` with zero database or web framework dependencies, complete type safety, validation rules, and comprehensive unit tests in `tests/unit/domain/`.
 
-**Constraints:** PostGIS spatial indexes (`GIST`), check constraints for probabilities `[0,1]`, UUID primary keys, separate `client_created_at` from `received_at`.
+**Constraints:** Immutability for event records; strict validation; zero vendor/framework imports in `src/raahat/domain/`.
 
-**Verification:** Run Alembic migration upgrade against PostgreSQL test database and verify table creation, foreign keys, spatial indices, and check constraints.
+**Verification:** Unit tests in `tests/unit/domain/` verifying domain entity creation, immutability, invalid state rejection, and serialization/deserialization; `mypy` and `ruff` pass cleanly.
 
 **Depends on:** 1.1
 
@@ -279,7 +279,7 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Next Task
 
-**Task ID:** 1.3 — Core Domain Entities & Value Objects.
+**Task ID:** 1.4 — Transactional Outbox & Background Worker Runtime.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 ---
 
 ## Log
+
+### 2026-11-07 — Task 1.2 complete
+- Changed: Implemented complete SQLAlchemy 2.0 declarative models and Alembic migrations for all 17 core Raahat 2.0 tables with PostGIS geography/geometry types, GIST indexes, and check constraints (`[0, 1]` ranges for probability and confidence, unique idempotency keys per disaster); set up engine/session factory in `src/raahat/infrastructure/database/session.py`; created integration test suite `tests/integration/test_migrations.py`.
+- Files: `alembic.ini`, `src/raahat/infrastructure/database/base.py`, `src/raahat/infrastructure/database/session.py`, `src/raahat/infrastructure/database/models/*`, `src/raahat/infrastructure/database/migrations/*`, `tests/integration/test_migrations.py`, `pyproject.toml`, `LESSONS.md`.
+- Verified: Tested Alembic migration upgrade and downgrade against live PostgreSQL 17 + PostGIS 3.7 container; ran `PYTHONPATH="" pytest tests` with 20 passing tests (7 integration + 13 geospatial); `ruff check .` passed with 0 errors; `mypy src/raahat tests` passed with 0 errors across 72 source files.
+- Limitations: PostgreSQL test container runs on localhost:54329; production compose stack will wrap this in Phase 5.
 
 ### 2026-11-07 — Task 1.1 complete
 - Changed: Initialized git repository, configured `pyproject.toml` with packaging, test, ruff, and mypy settings; established full `src/raahat/` and `tests/` directory tree; migrated slice-1 location math and synthetic gazetteer from `raahat-repo` into `src/raahat/domain/geospatial/`; created `tests/unit/geospatial/test_core.py`.

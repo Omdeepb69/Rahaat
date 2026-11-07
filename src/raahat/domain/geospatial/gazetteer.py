@@ -157,3 +157,4 @@ class City:
     @property
     def n_pois(self) -> int:
         return len(self.poi_names)
+

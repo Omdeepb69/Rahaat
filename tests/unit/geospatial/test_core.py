@@ -123,3 +123,4 @@ def test_probe_selftest_and_strip() -> None:
     pairs = [(n, corrupt(n, 0.15, rng)) for n in c.names for _ in range(6)]
     r = evaluate(pairs, c.names)
     assert r["learned_top1"] > 0.8
+

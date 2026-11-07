@@ -43,3 +43,4 @@ def box_sum(p: np.ndarray, n: int, r: int) -> np.ndarray:
     hi = np.clip(ix + r + 1, 0, n)
     s = c[hi][:, hi] - c[lo][:, hi] - c[hi][:, lo] + c[lo][:, lo]
     return s.ravel()
+

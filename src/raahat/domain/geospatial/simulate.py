@@ -108,3 +108,4 @@ def run_episode(
         "hit": bool(abs(est[0] - truth[0]) <= half and abs(est[1] - truth[1]) <= half),
         "asked": asked,
     }
+
