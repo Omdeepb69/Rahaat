@@ -29,7 +29,7 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
   - [x] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
   - [x] 1.3 Core Domain Entities & Value Objects
   - [x] 1.4 Transactional Outbox & Background Worker Runtime
-  - [ ] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
+  - [x] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
   - [ ] 1.6 IVR Pipeline Adapter Integration
 - [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
   - [ ] 2.1 PostGIS Landmark Index & Candidate Matcher
@@ -261,25 +261,25 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Current Task
 
-**Task ID:** 1.5
+**Task ID:** 1.6
 
-**Goal:** Build `ReportIngestionService` and REST endpoints `POST /api/v1/reports`, enforcing idempotency `(disaster_id, idempotency_key)`, atomic outbox publishing, and channel adapters for Web SOS, SMS, and Radio Console manual submissions.
+**Goal:** Adapt the voice call session (Silero VAD, speech transcription, keypad fallback, number read-back) to emit structured `ReportSubmission` records into `ReportIngestionService` rather than mutating incidents directly.
 
-**Inputs:** Outbox service from 1.4, report models from 1.3, database models from 1.2.
+**Inputs:** Ingestion gateway from 1.5, speech contracts from `ARCHITECTURE.md`.
 
-**Output:** Ingestion application service, API routes, and channel payload adapters in `src/raahat/application/ingestion/`, `src/raahat/adapters/channels/`, and `src/raahat/api/routes/reports.py`.
+**Output:** IVR channel adapter in `src/raahat/adapters/channels/ivr/`.
 
-**Constraints:** Ingestion must acknowledge only after durable PostgreSQL persistence; atomic outbox write in same transaction; never directly mutate incidents from ingestion.
+**Constraints:** Preserve call session state and keypad/read-back fallbacks; call agent must never directly assign resources or merge incidents.
 
-**Verification:** Unit and integration tests verifying idempotent report ingestion, outbox event generation, rejection of duplicate keys, and channel payload parsing; `mypy` and `ruff` pass cleanly.
+**Verification:** Unit tests verifying IVR session transition, fallback behavior, transcription handling, and structured ReportSubmission emission; `mypy` and `ruff` pass cleanly.
 
-**Depends on:** 1.2, 1.3, 1.4
+**Depends on:** 1.5
 
 ---
 
 ## Next Task
 
-**Task ID:** 1.6 — IVR Pipeline Adapter Integration.
+**Task ID:** 2.1 — PostGIS Landmark Index & Candidate Matcher.
 
 ---
 
@@ -295,6 +295,12 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 ---
 
 ## Log
+
+### 2026-11-07 — Task 1.5 complete
+- Changed: Implemented `ReportIngestionService` enforcing `(disaster_id, idempotency_key)` uniqueness and atomic outbox event publishing (`raahat.report.received`) in the same database transaction; built channel payload adapters for Web SOS (`WebSOSAdapter`), SMS (`SMSAdapter`), and Radio Console (`RadioConsoleAdapter`); built FastAPI application (`create_app`) with REST endpoints `POST /api/v1/reports`, channel-specific routes (`POST /api/v1/reports/channels/{web|sms|radio}`), and report query endpoints (`GET /api/v1/reports/{id}`, `GET /api/v1/reports`).
+- Files: `pyproject.toml`, `src/raahat/adapters/channels/web/adapter.py`, `src/raahat/adapters/channels/sms/adapter.py`, `src/raahat/adapters/channels/radio_console/adapter.py`, `src/raahat/adapters/channels/__init__.py`, `src/raahat/application/ingestion/service.py`, `src/raahat/application/ingestion/__init__.py`, `src/raahat/api/app.py`, `src/raahat/api/dependencies.py`, `src/raahat/api/routes/reports.py`, `src/raahat/api/routes/__init__.py`, `src/raahat/api/__init__.py`, `tests/unit/adapters/test_channel_adapters.py`, `tests/unit/application/test_ingestion_service.py`, `tests/integration/test_ingestion_api.py`.
+- Verified: 10 unit tests (channel adapter payload conversions and validation, ingestion service idempotency and race condition recovery); 9 integration tests against PostgreSQL and FastAPI `TestClient` (generic submission, duplicate suppression returning 200, atomic outbox creation, Web SOS / SMS / Radio routes, 404 on missing disaster or report, list filtering); all 118 test suite tests pass; `mypy src/raahat tests` clean (98 files); `ruff check .` clean.
+- Limitations: Live telephony / Twilio voice call webhook and speech recognizer integration is handled in Task 1.6.
 
 ### 2026-11-07 — Task 1.4 complete
 - Changed: Implemented transactional outbox pattern and database-backed worker runtime. Added `DomainEvent` value object, `OutboxJobStatus` enum, `EventOutbox` protocol with `PostgresEventOutbox` publisher in `src/raahat/infrastructure/outbox/`; implemented `PostgresOutboxRepository` using `SELECT … FOR UPDATE SKIP LOCKED` with row-level leasing, fencing tokens, and configurable retry/dead-letter settling; implemented `OutboxWorker` in `src/raahat/workers/runner.py` executing handlers outside open DB transactions.
