@@ -129,3 +129,4 @@ class RaahatBenchDataset(BaseModel):
     distribution_summary: dict[str, Any]
     incidents: list[GroundTruthIncident]
     reports: list[BenchmarkReportRecord]
+

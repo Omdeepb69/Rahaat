@@ -52,7 +52,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
   - [x] 5.1 Fault Injection & Chaos Recovery Scenarios
   - [x] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
-  - [ ] 5.3 Ablation Studies & Research Evaluation Runner
+  - [x] 5.3 Ablation Studies & Research Evaluation Runner
   - [ ] 5.4 Docker Compose Stack & Infrastructure Scaffolding
   - [ ] 5.5 Observability Dashboards, Runbook & Limitations Documentation
 
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 5.3 — Ablation Studies & Research Evaluation Runner
+**Task ID:** 5.4 — Docker Compose Stack & Infrastructure Scaffolding
 
-**Goal:** Implement benchmark runner executing Configurations A (conventional baseline) through E (Full Raahat) against frozen RaahatBench; calculate Top-1/Top-3 candidate accuracy, MAE (m), B-cubed F1, false merge rate, high-severity recall, and under-triage rate.
+**Goal:** Create production-grade Docker Compose environment (`compose.yaml`, `Dockerfile`) deploying Nginx reverse proxy, FastAPI API service, Background Worker service, PostgreSQL 16 + PostGIS, Prometheus, and Grafana with volume persistence and health checks.
 
-**Inputs:** Benchmark dataset from 5.2, baseline and upgraded pipelines.
+**Inputs:** API service, worker runner, database migrations, console frontend.
 
-**Output:** Evaluation runner and automated report generator in `evaluation/runner.py`.
+**Output:** Validated Compose stack and build files in project root and `deployment/`.
 
-**Constraints:** Paired bootstrap 95% confidence intervals; honest reporting of limitations and failures.
+**Constraints:** Non-root container execution; health and readiness checks; persistent volume survival across restarts; no exposed internal database ports.
 
-**Verification:** Test suite executing evaluation runner against benchmark subset; statistical metrics correctness checks; `mypy` and `ruff` clean.
+**Verification:** Docker Compose configuration validation (`docker compose config`); container health check passing; startup smoke test; `mypy` and `ruff` clean.
 
-**Depends on:** 5.2, 2.2, 3.2, 3.4.
+**Depends on:** 1.2, 1.4, 1.5, 4.6.
 
 ---
 
 ## Next Task
 
-**Task ID:** 5.4 — Docker Compose Stack & Infrastructure Scaffolding
+**Task ID:** 5.5 — Observability Dashboards, Runbook & Limitations Documentation
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-08 — Task 5.3 complete
+- Changed: Implemented the automated ablation study and research evaluation harness per RAAHAT_SPEC §9.2 - §9.4. Built modular metric evaluators in `evaluation/metrics/` (`spatial.py` for Top-1 accuracy, Top-3 candidate recall, MAE meters, and ECE calibration; `resolution.py` with O(N) contingency counting for B-cubed precision/recall/F1, false merge rate, and missed duplicate rate; `triage.py` for high-severity recall, under-triage rate, false escalation rate, and unknown field preservation; `bootstrap.py` for 1,000-sample paired bootstrap resampling with 95% confidence intervals and empirical p-values). Implemented ablation pipeline configurations A through E in `evaluation/baselines/pipelines.py` (Config A conventional baseline, Config B geospatial candidate upgrade, Config C evidence-aware conservative resolution, Config D deterministic safety priority policy, and Config E Full Raahat with offline synchronization). Created evaluation runner in `evaluation/runner.py` with CLI support, automated engineering acceptance gates verification (§9.3), formal evaluation of research questions RQ1-RQ3 (§9.4), and Markdown/JSON report generators. Executed evaluation over frozen RaahatBench and produced publication-ready report in `evaluation/reports/raahat_bench_evaluation_report.md`.
+- Files: `evaluation/metrics/spatial.py` (new), `evaluation/metrics/resolution.py` (new), `evaluation/metrics/triage.py` (new), `evaluation/metrics/bootstrap.py` (new), `evaluation/metrics/__init__.py` (new), `evaluation/baselines/pipelines.py` (new), `evaluation/runner.py` (new), `evaluation/__init__.py` (updated), `evaluation/models.py` (updated), `evaluation/reports/raahat_bench_evaluation_report.md` (new), `evaluation/reports/raahat_bench_evaluation_report.json` (new), `tests/unit/evaluation/test_evaluation_runner.py` (new).
+- Verified: 412 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 406 prior + 6 new evaluation runner unit tests); `mypy src/raahat field_app evaluation tests` — 0 errors across 230 source files; `ruff check .` — 0 errors; full benchmark execution completes in ~8s with 100% acceptance gates passed (High Severity Recall: 100%, False Merge Rate: 0.0%, Top-3 Candidate Recall: 100%, Offline Sync Ingestion: 100%).
+- Limitations: Benchmark evaluation is executed on synthetic RaahatBench distributions; paired bootstrap significance is computed at 95% confidence over synthetic noise distributions.
 
 ### 2026-11-08 — Task 5.2 complete
 - Changed: Implemented the RaahatBench benchmark dataset and ground truth generator matching RAAHAT_SPEC §9.1 specifications. Defined benchmark data models in `evaluation/models.py` (`GroundTruthHousehold`, `GroundTruthIncident`, `BenchmarkReportRecord`, `RaahatBenchDataset`) providing immutable ground-truth linkages and canonical conversion to `ReportSubmission`. Implemented `RaahatBenchGenerator` in `evaluation/generator.py` with deterministic RNG seeding creating 1,000 synthetic reports across 100 ground-truth incidents in realistic Kerala disaster zones (Aluva, Chengannur, Kuttanad, Chalakudy, Meppadi) with precise target distributions (35.0% direct victim, 25.0% relative/third-party, 20.0% volunteer, 20.0% responder; 30.0% duplicate/overlapping, 12.0% contradictory, 25.0% ambiguous location, 25.0% missing critical fields, 46.2% Hindi-English code-switched, 14.5% Malayalam, 14.4% Hindi, and 20.0% offline synchronized reports across 5 simulated volunteer devices with monotonic sequences). Generated and froze benchmark dataset files in `evaluation/datasets/` (`raahat_bench_1000.json`, `ground_truth_incidents.json`, `metadata.json`).

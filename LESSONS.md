@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Compute Pairwise Clustering Metrics via Cluster Contingency Counters, Not $O(N^2)$ Loops
+- What happened: Computing pairwise false merge and missed duplicate rates using nested $O(N^2)$ loops across $N=1,000$ reports scaled to $5 \times 10^8$ operations inside a $B=1,000$ paired bootstrap loop, hanging the evaluation runner.
+- Takeaway: Calculate pairwise cluster combinations using cluster size contingency tables ($\binom{n}{2} = n(n-1)/2$). Intra- and inter-cluster pairs count in $O(N)$ time, reducing bootstrap runtime from minutes to milliseconds.
+- Applies to: Entity resolution, coreference evaluation, clustering metrics, and any pairwise bootstrap resampling routine.
+
 ## Repository Protocols Belong in the Consuming Boundary, Not the Concrete Adapter
 - What happened: Defining a `CallbackJobRepository` protocol in `infrastructure/database/repositories/callback.py` caused a circular import when `telephony/scheduler.py` imported the repository protocol while the repository module imported domain entities from `telephony/models.py`.
 - Takeaway: Place repository and integration protocols in the consuming/domain layer (`src/.../telephony/repository.py`), letting concrete database adapters implement the protocol without creating backward dependency cycles.

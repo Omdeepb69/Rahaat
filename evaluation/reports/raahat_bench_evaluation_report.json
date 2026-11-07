@@ -1,0 +1,204 @@
+{
+  "benchmark_id": "raahat-bench-v1",
+  "timestamp": "2026-11-07T18:36:18.448425Z",
+  "num_reports": 1000,
+  "num_incidents": 100,
+  "results": {
+    "A": {
+      "configuration_key": "A",
+      "configuration_name": "Config A (Conventional Baseline)",
+      "description": "Nearest landmark + aggressive string match ER + linear weighted scoring + online only",
+      "num_reports": 1000,
+      "top1_accuracy": 0.75,
+      "top3_recall": 0.75,
+      "mae_meters": 967.5,
+      "ece": 0.3625,
+      "bcubed_precision": 0.3219,
+      "bcubed_recall": 0.6417,
+      "bcubed_f1": 0.4287,
+      "false_merge_rate": 0.8884,
+      "missed_duplicate_rate": 0.4114,
+      "high_severity_recall": 0.8296,
+      "under_triage_rate": 0.1704,
+      "false_escalation_rate": 0.0,
+      "unknown_preservation_rate": 0.0,
+      "ingestion_success_rate": 0.8
+    },
+    "B": {
+      "configuration_key": "B",
+      "configuration_name": "Config B (Geospatial Upgrade)",
+      "description": "Candidate ranking & active clarification + baseline ER + linear scoring",
+      "num_reports": 1000,
+      "top1_accuracy": 1.0,
+      "top3_recall": 1.0,
+      "mae_meters": 99.8,
+      "ece": 0.1375,
+      "bcubed_precision": 0.3219,
+      "bcubed_recall": 0.6417,
+      "bcubed_f1": 0.4287,
+      "false_merge_rate": 0.8884,
+      "missed_duplicate_rate": 0.4114,
+      "high_severity_recall": 0.8296,
+      "under_triage_rate": 0.1704,
+      "false_escalation_rate": 0.0,
+      "unknown_preservation_rate": 0.0,
+      "ingestion_success_rate": 0.8
+    },
+    "C": {
+      "configuration_key": "C",
+      "configuration_name": "Config C (Evidence Graph)",
+      "description": "Geospatial upgrade + evidence-aware conservative ER + linear scoring",
+      "num_reports": 1000,
+      "top1_accuracy": 1.0,
+      "top3_recall": 1.0,
+      "mae_meters": 99.8,
+      "ece": 0.125,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 1.0,
+      "bcubed_f1": 1.0,
+      "false_merge_rate": 0.0,
+      "missed_duplicate_rate": 0.0,
+      "high_severity_recall": 0.8296,
+      "under_triage_rate": 0.1704,
+      "false_escalation_rate": 0.0,
+      "unknown_preservation_rate": 0.0,
+      "ingestion_success_rate": 0.8
+    },
+    "D": {
+      "configuration_key": "D",
+      "configuration_name": "Config D (Safety Policy)",
+      "description": "Geospatial upgrade + evidence-aware ER + deterministic safety triage policy",
+      "num_reports": 1000,
+      "top1_accuracy": 1.0,
+      "top3_recall": 1.0,
+      "mae_meters": 99.8,
+      "ece": 0.115,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 1.0,
+      "bcubed_f1": 1.0,
+      "false_merge_rate": 0.0,
+      "missed_duplicate_rate": 0.0,
+      "high_severity_recall": 1.0,
+      "under_triage_rate": 0.0,
+      "false_escalation_rate": 0.8042,
+      "unknown_preservation_rate": 1.0,
+      "ingestion_success_rate": 0.8
+    },
+    "E": {
+      "configuration_key": "E",
+      "configuration_name": "Config E (Full Raahat)",
+      "description": "All components combined: spatial candidates + evidence ER + safety policy + offline sync",
+      "num_reports": 1000,
+      "top1_accuracy": 1.0,
+      "top3_recall": 1.0,
+      "mae_meters": 80.7,
+      "ece": 0.0925,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 1.0,
+      "bcubed_f1": 1.0,
+      "false_merge_rate": 0.0,
+      "missed_duplicate_rate": 0.0,
+      "high_severity_recall": 1.0,
+      "under_triage_rate": 0.0,
+      "false_escalation_rate": 0.8042,
+      "unknown_preservation_rate": 1.0,
+      "ingestion_success_rate": 1.0
+    }
+  },
+  "bootstrap_differences_e_vs_a": {
+    "mae_meters": {
+      "mean_a": 967.4475,
+      "ci_a_low": 903.4419,
+      "ci_a_high": 1033.6652,
+      "mean_b": 80.7125,
+      "ci_b_low": 79.0285,
+      "ci_b_high": 82.4537,
+      "delta_mean": -886.735,
+      "delta_ci_low": -951.2115,
+      "delta_ci_high": -824.4134,
+      "p_value": 0.0,
+      "is_significant": true
+    },
+    "top3_recall": {
+      "mean_a": 0.75,
+      "ci_a_low": 0.723,
+      "ci_a_high": 0.776,
+      "mean_b": 1.0,
+      "ci_b_low": 1.0,
+      "ci_b_high": 1.0,
+      "delta_mean": 0.25,
+      "delta_ci_low": 0.224,
+      "delta_ci_high": 0.277,
+      "p_value": 0.0,
+      "is_significant": true
+    },
+    "false_merge_rate": {
+      "mean_a": 0.8739,
+      "ci_a_low": 0.8504,
+      "ci_a_high": 0.8958,
+      "mean_b": 0.0,
+      "ci_b_low": 0.0,
+      "ci_b_high": 0.0,
+      "delta_mean": -0.8739,
+      "delta_ci_low": -0.8958,
+      "delta_ci_high": -0.8504,
+      "p_value": 0.0,
+      "is_significant": true
+    },
+    "under_triage_rate": {
+      "mean_a": 0.171,
+      "ci_a_low": 0.1457,
+      "ci_a_high": 0.1956,
+      "mean_b": 0.0,
+      "ci_b_low": 0.0,
+      "ci_b_high": 0.0,
+      "delta_mean": -0.171,
+      "delta_ci_low": -0.1956,
+      "delta_ci_high": -0.1457,
+      "p_value": 0.0,
+      "is_significant": true
+    }
+  },
+  "research_questions": {
+    "RQ1_active_clarification_improves_geospatial_accuracy": {
+      "supported": true,
+      "evidence": "Config B reduced MAE from 967.5m to 99.8m and increased Top-3 recall from 0.75 to 1.0."
+    },
+    "RQ2_evidence_graph_reduces_false_merges": {
+      "supported": true,
+      "evidence": "Config C reduced false merge rate from 88.8% to 0.0% while preserving B-cubed F1 at 1.0."
+    },
+    "RQ3_explicit_uncertainty_preservation_reduces_under_triage": {
+      "supported": true,
+      "evidence": "Config D eliminated under-triage from 17.0% to 0.0% by enforcing 'unknown never lowers priority', reaching 100.0% high-severity recall."
+    }
+  },
+  "acceptance_gates": {
+    "high_severity_recall": {
+      "target": ">= 0.99",
+      "achieved": 1.0,
+      "passed": true
+    },
+    "false_household_incident_merges": {
+      "target": "<= 0.01",
+      "achieved": 0.0,
+      "passed": true
+    },
+    "location_candidate_recall_top3": {
+      "target": ">= 0.90",
+      "achieved": 1.0,
+      "passed": true
+    },
+    "offline_synchronization_success": {
+      "target": "100%",
+      "achieved": "100.0%",
+      "passed": true
+    }
+  },
+  "limitations": [
+    "Dataset is synthetic: Benchmark distributions (35% direct, 25% relative, 20% volunteer, 20% radio) are controlled evaluation targets, not real-world disaster estimates.",
+    "Synthetic audio SNR and noise levels model Gaussian / motor boat acoustic profiles rather than field-recorded micro-climates.",
+    "99% high-severity recall on synthetic benchmark is an algorithmic validation, not an unhedged operational safety guarantee for production deployment.",
+    "Single-instance evaluation: Multi-node database replication lag and physical network partition timings are evaluated separately in staging environments."
+  ]
+}
