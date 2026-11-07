@@ -51,7 +51,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 4.6 Operator Console Web Application
 - [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
   - [x] 5.1 Fault Injection & Chaos Recovery Scenarios
-  - [ ] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
+  - [x] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
   - [ ] 5.3 Ablation Studies & Research Evaluation Runner
   - [ ] 5.4 Docker Compose Stack & Infrastructure Scaffolding
   - [ ] 5.5 Observability Dashboards, Runbook & Limitations Documentation
@@ -261,13 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 5.2 — RaahatBench Benchmark Dataset & Ground Truth Generator
+**Task ID:** 5.3 — Ablation Studies & Research Evaluation Runner
+
+**Goal:** Implement benchmark runner executing Configurations A (conventional baseline) through E (Full Raahat) against frozen RaahatBench; calculate Top-1/Top-3 candidate accuracy, MAE (m), B-cubed F1, false merge rate, high-severity recall, and under-triage rate.
+
+**Inputs:** Benchmark dataset from 5.2, baseline and upgraded pipelines.
+
+**Output:** Evaluation runner and automated report generator in `evaluation/runner.py`.
+
+**Constraints:** Paired bootstrap 95% confidence intervals; honest reporting of limitations and failures.
+
+**Verification:** Test suite executing evaluation runner against benchmark subset; statistical metrics correctness checks; `mypy` and `ruff` clean.
+
+**Depends on:** 5.2, 2.2, 3.2, 3.4.
 
 ---
 
 ## Next Task
 
-**Task ID:** 5.3 — End-to-End Pipeline Evaluation Harness
+**Task ID:** 5.4 — Docker Compose Stack & Infrastructure Scaffolding
 
 ---
 
@@ -283,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-08 — Task 5.2 complete
+- Changed: Implemented the RaahatBench benchmark dataset and ground truth generator matching RAAHAT_SPEC §9.1 specifications. Defined benchmark data models in `evaluation/models.py` (`GroundTruthHousehold`, `GroundTruthIncident`, `BenchmarkReportRecord`, `RaahatBenchDataset`) providing immutable ground-truth linkages and canonical conversion to `ReportSubmission`. Implemented `RaahatBenchGenerator` in `evaluation/generator.py` with deterministic RNG seeding creating 1,000 synthetic reports across 100 ground-truth incidents in realistic Kerala disaster zones (Aluva, Chengannur, Kuttanad, Chalakudy, Meppadi) with precise target distributions (35.0% direct victim, 25.0% relative/third-party, 20.0% volunteer, 20.0% responder; 30.0% duplicate/overlapping, 12.0% contradictory, 25.0% ambiguous location, 25.0% missing critical fields, 46.2% Hindi-English code-switched, 14.5% Malayalam, 14.4% Hindi, and 20.0% offline synchronized reports across 5 simulated volunteer devices with monotonic sequences). Generated and froze benchmark dataset files in `evaluation/datasets/` (`raahat_bench_1000.json`, `ground_truth_incidents.json`, `metadata.json`).
+- Files: `evaluation/models.py` (new), `evaluation/generator.py` (new), `evaluation/__init__.py` (new), `evaluation/datasets/raahat_bench_1000.json` (new), `evaluation/datasets/ground_truth_incidents.json` (new), `evaluation/datasets/metadata.json` (new), `tests/unit/evaluation/test_benchmark_generator.py` (new).
+- Verified: 406 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 397 prior + 9 new benchmark unit tests validating exact determinism, distribution conformance, linguistic markers, ground truth reference integrity, offline device sequences monotonicity, and JSON round-trip fidelity); `mypy src/raahat field_app evaluation tests` — 0 errors across 222 source files; `ruff check .` — 0 errors.
+- Limitations: Dataset is synthetic and designed to benchmark algorithmic failure modes under controlled multi-channel noise; real-world disaster efficacy claims must not be made from synthetic benchmark scores alone.
 
 ### 2026-11-07 — Task 5.1 complete
 - Changed: Implemented automated fault injection and chaos recovery test suite covering speech worker crashes, database disconnections, LLM unavailability, worker lease timeouts, duplicate sync attempts, and operator disconnects. Created `tests/fault_injection/test_worker_lease_chaos.py` (simulating worker crash mid-processing with automatic lease expiration and reclaim, fencing token protection rejecting zombie worker writes, dead-letter accumulation on repeated crash without report loss, and telephony gateway crash with backoff and recovery), `tests/fault_injection/test_database_and_network_chaos.py` (verifying critical safety invariant that DB disconnection rejects ingestion diagnosably without false acknowledgments, offline field queue durability across power cycles, duplicate sync batch idempotency suppression, and monotonic sync sequence gap detection), and `tests/fault_injection/test_llm_operator_and_reversibility_chaos.py` (simulating speech recognizer worker process death triggering IVR keypad DTMF fallback, LLM fact extraction outage preserving safe triage priority with explicit unknown fields, operator disconnect preserving proposed rescue assignment state for secondary dispatcher approval, and reversible unmerge recovering from human linking errors with complete audit trail).

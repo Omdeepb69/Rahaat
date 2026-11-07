@@ -1,0 +1,4227 @@
+[
+  {
+    "incident_id": "9718b503-b2f8-58b0-80e1-89a86f78372d",
+    "incident_code": "INC-001",
+    "title": "Flood distress at Aluva near District Hospital Aluva",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "District Hospital Aluva",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.093149,
+    "longitude": 76.373745,
+    "true_severity": "urgent",
+    "water_depth_cm": 124.9,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 7,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-001-HH1",
+        "family_name": "Nambiar",
+        "people_count": 7,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Nambiar Residence, near District Hospital Aluva",
+        "latitude": 10.093284,
+        "longitude": 76.374382
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "b0e38b06-5646-5496-bc8e-5d1553451be5",
+    "incident_code": "INC-002",
+    "title": "Flood distress at Chengannur near Christian College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Christian College",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.31247,
+    "longitude": 76.597366,
+    "true_severity": "urgent",
+    "water_depth_cm": 145.7,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 5,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-002-HH1",
+        "family_name": "Paul",
+        "people_count": 5,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "Paul Residence, near Christian College",
+        "latitude": 9.312281,
+        "longitude": 76.59816
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "772c6fb3-fea9-5298-98ee-58d4f45d9f64",
+    "incident_code": "INC-003",
+    "title": "Flood distress at Kuttanad near Edathua St. Aloysius Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Edathua St. Aloysius Church",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.391456,
+    "longitude": 76.491554,
+    "true_severity": "low",
+    "water_depth_cm": 38.8,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-003-HH1",
+        "family_name": "Ali",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Ali Residence, near Edathua St. Aloysius Church",
+        "latitude": 9.391126,
+        "longitude": 76.491007
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "b08e0bb4-cb33-59ad-867a-da96a9ae1595",
+    "incident_code": "INC-004",
+    "title": "Flood distress at Chalakudy near NH Bridge over Chalakudy River",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "NH Bridge over Chalakudy River",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.282162,
+    "longitude": 76.344105,
+    "true_severity": "critical",
+    "water_depth_cm": 316.1,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 9,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-004-HH1",
+        "family_name": "Cherian",
+        "people_count": 7,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 1,
+        "location_name": "Cherian Residence, near NH Bridge over Chalakudy River",
+        "latitude": 10.28196,
+        "longitude": 76.343563
+      },
+      {
+        "household_id": "INC-004-HH2",
+        "family_name": "George",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "George Residence, near NH Bridge over Chalakudy River",
+        "latitude": 10.282849,
+        "longitude": 76.344711
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "e17c033d-fefb-5d9d-8d8c-4d7c331ab4b9",
+    "incident_code": "INC-005",
+    "title": "Flood distress at Meppadi near Meppadi Mariamman Kovil",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Meppadi Mariamman Kovil",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.567583,
+    "longitude": 76.118376,
+    "true_severity": "urgent",
+    "water_depth_cm": 126.9,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 15,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-005-HH1",
+        "family_name": "Ali",
+        "people_count": 3,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Ali Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.567047,
+        "longitude": 76.11842
+      },
+      {
+        "household_id": "INC-005-HH2",
+        "family_name": "Koya",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Koya Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.567887,
+        "longitude": 76.118717
+      },
+      {
+        "household_id": "INC-005-HH3",
+        "family_name": "Varma",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Varma Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.567505,
+        "longitude": 76.117973
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "83203237-5c99-5423-8e4f-90cbfb703b5f",
+    "incident_code": "INC-006",
+    "title": "Flood distress at Aluva near Aluva Private Bus Stand",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Aluva Private Bus Stand",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.085801,
+    "longitude": 76.327652,
+    "true_severity": "urgent",
+    "water_depth_cm": 151.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 4,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-006-HH1",
+        "family_name": "Menon",
+        "people_count": 4,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 2,
+        "location_name": "Menon Residence, near Aluva Private Bus Stand",
+        "latitude": 10.086071,
+        "longitude": 76.327195
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "803a0082-f487-5744-9df1-750ef2cf69f3",
+    "incident_code": "INC-007",
+    "title": "Flood distress at Chengannur near HP Petrol Pump Kallissery",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "HP Petrol Pump Kallissery",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.299116,
+    "longitude": 76.633176,
+    "true_severity": "critical",
+    "water_depth_cm": 214.0,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 7,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-007-HH1",
+        "family_name": "Mathew",
+        "people_count": 7,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Mathew Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.299063,
+        "longitude": 76.633543
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "fc469f0b-1949-505e-ac08-5c5799e3ac07",
+    "incident_code": "INC-008",
+    "title": "Flood distress at Kuttanad near Champakulam River Jetty",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Champakulam River Jetty",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.398668,
+    "longitude": 76.492208,
+    "true_severity": "standard",
+    "water_depth_cm": 53.6,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-008-HH1",
+        "family_name": "Thomas",
+        "people_count": 6,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 2,
+        "location_name": "Thomas Residence, near Champakulam River Jetty",
+        "latitude": 9.398608,
+        "longitude": 76.492807
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "cdedae9e-7310-5c8b-988d-e8b10739eb40",
+    "incident_code": "INC-009",
+    "title": "Flood distress at Chalakudy near St. Mary's Forane Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Mary's Forane Church",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.285769,
+    "longitude": 76.348401,
+    "true_severity": "critical",
+    "water_depth_cm": 187.1,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 11,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-009-HH1",
+        "family_name": "Nambiar",
+        "people_count": 3,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Nambiar Residence, near St. Mary's Forane Church",
+        "latitude": 10.285311,
+        "longitude": 76.348243
+      },
+      {
+        "household_id": "INC-009-HH2",
+        "family_name": "Menon",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Menon Residence, near St. Mary's Forane Church",
+        "latitude": 10.286451,
+        "longitude": 76.348857
+      },
+      {
+        "household_id": "INC-009-HH3",
+        "family_name": "Cherian",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Cherian Residence, near St. Mary's Forane Church",
+        "latitude": 10.286028,
+        "longitude": 76.34838
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "ed447ad1-5d1d-5bd0-bb9d-ae0422f0dfa1",
+    "incident_code": "INC-010",
+    "title": "Flood distress at Meppadi near Meppadi Mariamman Kovil",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Meppadi Mariamman Kovil",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.535495,
+    "longitude": 76.113885,
+    "true_severity": "standard",
+    "water_depth_cm": 84.8,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-010-HH1",
+        "family_name": "Hassan",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Hassan Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.534786,
+        "longitude": 76.113898
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "e8bd31fc-e853-5440-ae13-1d851f70c7e8",
+    "incident_code": "INC-011",
+    "title": "Flood distress at Aluva near St. Dominic Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Dominic Church",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.125167,
+    "longitude": 76.330026,
+    "true_severity": "standard",
+    "water_depth_cm": 90.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 3,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-011-HH1",
+        "family_name": "Hassan",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "Hassan Residence, near St. Dominic Church",
+        "latitude": 10.125419,
+        "longitude": 76.33013
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "34bbfa08-581b-52fa-b90a-4820ee74af88",
+    "incident_code": "INC-012",
+    "title": "Flood distress at Chengannur near Govt Taluk Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Taluk Hospital",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.308318,
+    "longitude": 76.599438,
+    "true_severity": "critical",
+    "water_depth_cm": 213.4,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 7,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-012-HH1",
+        "family_name": "Cherian",
+        "people_count": 5,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 1,
+        "location_name": "Cherian Residence, near Govt Taluk Hospital",
+        "latitude": 9.308251,
+        "longitude": 76.600236
+      },
+      {
+        "household_id": "INC-012-HH2",
+        "family_name": "Mathew",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Mathew Residence, near Govt Taluk Hospital",
+        "latitude": 9.309011,
+        "longitude": 76.600047
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d7cb8e12-aff9-5124-8f32-c7a7819ff5a2",
+    "incident_code": "INC-013",
+    "title": "Flood distress at Kuttanad near Govt Primary Health Centre",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Primary Health Centre",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.408964,
+    "longitude": 76.461476,
+    "true_severity": "urgent",
+    "water_depth_cm": 140.7,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 9,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-013-HH1",
+        "family_name": "Pillai",
+        "people_count": 4,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Pillai Residence, near Govt Primary Health Centre",
+        "latitude": 9.409049,
+        "longitude": 76.461112
+      },
+      {
+        "household_id": "INC-013-HH2",
+        "family_name": "Koya",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Koya Residence, near Govt Primary Health Centre",
+        "latitude": 9.409529,
+        "longitude": 76.461485
+      },
+      {
+        "household_id": "INC-013-HH3",
+        "family_name": "Joseph",
+        "people_count": 2,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Joseph Residence, near Govt Primary Health Centre",
+        "latitude": 9.40817,
+        "longitude": 76.46191
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "fda80ad3-1b35-5511-93d3-71f88a920eb4",
+    "incident_code": "INC-014",
+    "title": "Flood distress at Chalakudy near Mala Road Crossing",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mala Road Crossing",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.313856,
+    "longitude": 76.321098,
+    "true_severity": "urgent",
+    "water_depth_cm": 148.6,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 12,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-014-HH1",
+        "family_name": "Das",
+        "people_count": 3,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "Das Residence, near Mala Road Crossing",
+        "latitude": 10.313988,
+        "longitude": 76.320535
+      },
+      {
+        "household_id": "INC-014-HH2",
+        "family_name": "Pillai",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Pillai Residence, near Mala Road Crossing",
+        "latitude": 10.314494,
+        "longitude": 76.320634
+      },
+      {
+        "household_id": "INC-014-HH3",
+        "family_name": "Nambiar",
+        "people_count": 7,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Nambiar Residence, near Mala Road Crossing",
+        "latitude": 10.314614,
+        "longitude": 76.321497
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "10f20f03-767c-5470-aa5c-7ea7d6d147fc",
+    "incident_code": "INC-015",
+    "title": "Flood distress at Meppadi near Govt High School Chooralmala",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt High School Chooralmala",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.572288,
+    "longitude": 76.114837,
+    "true_severity": "standard",
+    "water_depth_cm": 108.6,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-015-HH1",
+        "family_name": "Fernandez",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Fernandez Residence, near Govt High School Chooralmala",
+        "latitude": 11.572871,
+        "longitude": 76.115334
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "0d9f762b-05e2-5258-b60f-00045f7ca3e6",
+    "incident_code": "INC-016",
+    "title": "Flood distress at Aluva near St. Dominic Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Dominic Church",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.09594,
+    "longitude": 76.365969,
+    "true_severity": "urgent",
+    "water_depth_cm": 136.8,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 8,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-016-HH1",
+        "family_name": "Iyer",
+        "people_count": 4,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 1,
+        "location_name": "Iyer Residence, near St. Dominic Church",
+        "latitude": 10.095178,
+        "longitude": 76.365478
+      },
+      {
+        "household_id": "INC-016-HH2",
+        "family_name": "Panicker",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Panicker Residence, near St. Dominic Church",
+        "latitude": 10.095702,
+        "longitude": 76.365984
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7b70a841-27e2-59ed-b90f-5e5771c6358f",
+    "incident_code": "INC-017",
+    "title": "Flood distress at Chengannur near Govt Taluk Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Taluk Hospital",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.326476,
+    "longitude": 76.628583,
+    "true_severity": "urgent",
+    "water_depth_cm": 175.7,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-017-HH1",
+        "family_name": "Koya",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 2,
+        "location_name": "Koya Residence, near Govt Taluk Hospital",
+        "latitude": 9.326646,
+        "longitude": 76.628601
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "f5baaa34-86f4-598c-8a92-97dab90a5e94",
+    "incident_code": "INC-018",
+    "title": "Flood distress at Kuttanad near Pallathuruthy Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Pallathuruthy Bridge",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.38426,
+    "longitude": 76.471829,
+    "true_severity": "low",
+    "water_depth_cm": 16.6,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-018-HH1",
+        "family_name": "George",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "George Residence, near Pallathuruthy Bridge",
+        "latitude": 9.384639,
+        "longitude": 76.471344
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "4558e56b-2ddd-59ab-8902-5b4846779eb4",
+    "incident_code": "INC-019",
+    "title": "Flood distress at Chalakudy near St. James Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. James Hospital",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.303565,
+    "longitude": 76.355444,
+    "true_severity": "standard",
+    "water_depth_cm": 87.4,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-019-HH1",
+        "family_name": "Paul",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Paul Residence, near St. James Hospital",
+        "latitude": 10.302969,
+        "longitude": 76.355317
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "df81d322-43e0-56fe-a4a0-34edc47346f5",
+    "incident_code": "INC-020",
+    "title": "Flood distress at Meppadi near Govt High School Chooralmala",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt High School Chooralmala",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.573018,
+    "longitude": 76.136866,
+    "true_severity": "urgent",
+    "water_depth_cm": 153.1,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-020-HH1",
+        "family_name": "Kumar",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 2,
+        "location_name": "Kumar Residence, near Govt High School Chooralmala",
+        "latitude": 11.572925,
+        "longitude": 76.137147
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "a97e53fe-53c3-5dc4-b446-db2e7a371adb",
+    "incident_code": "INC-021",
+    "title": "Flood distress at Aluva near Govt Higher Secondary School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Higher Secondary School",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.108159,
+    "longitude": 76.366287,
+    "true_severity": "urgent",
+    "water_depth_cm": 156.1,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 8,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-021-HH1",
+        "family_name": "Nambiar",
+        "people_count": 3,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 1,
+        "location_name": "Nambiar Residence, near Govt Higher Secondary School",
+        "latitude": 10.107751,
+        "longitude": 76.366247
+      },
+      {
+        "household_id": "INC-021-HH2",
+        "family_name": "Kurian",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Kurian Residence, near Govt Higher Secondary School",
+        "latitude": 10.108508,
+        "longitude": 76.366101
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "12cdd9f2-885d-5fd7-99ac-4affc88d9843",
+    "incident_code": "INC-022",
+    "title": "Flood distress at Chengannur near Mahadeva Temple Chengannur",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mahadeva Temple Chengannur",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.312483,
+    "longitude": 76.593779,
+    "true_severity": "critical",
+    "water_depth_cm": 305.0,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-022-HH1",
+        "family_name": "Das",
+        "people_count": 6,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 1,
+        "location_name": "Das Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.312413,
+        "longitude": 76.594261
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "ccc7853c-2f1c-59a6-974d-6dd343faf4a5",
+    "incident_code": "INC-023",
+    "title": "Flood distress at Kuttanad near St. Mary's School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Mary's School",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.398379,
+    "longitude": 76.492395,
+    "true_severity": "urgent",
+    "water_depth_cm": 176.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 12,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-023-HH1",
+        "family_name": "Chacko",
+        "people_count": 5,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Chacko Residence, near St. Mary's School",
+        "latitude": 9.398023,
+        "longitude": 76.492839
+      },
+      {
+        "household_id": "INC-023-HH2",
+        "family_name": "Chacko",
+        "people_count": 7,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 1,
+        "location_name": "Chacko Residence, near St. Mary's School",
+        "latitude": 9.398014,
+        "longitude": 76.492107
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "1ab81feb-62f0-5f6e-994e-a0e310c3cc79",
+    "incident_code": "INC-024",
+    "title": "Flood distress at Chalakudy near Chalakudy Railway Station",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chalakudy Railway Station",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.309008,
+    "longitude": 76.314919,
+    "true_severity": "low",
+    "water_depth_cm": 28.4,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-024-HH1",
+        "family_name": "Thomas",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Thomas Residence, near Chalakudy Railway Station",
+        "latitude": 10.308953,
+        "longitude": 76.314219
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d8ec0922-54dd-54ff-9e98-cbaa91f5f2d0",
+    "incident_code": "INC-025",
+    "title": "Flood distress at Meppadi near Meppadi Mariamman Kovil",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Meppadi Mariamman Kovil",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.567645,
+    "longitude": 76.122474,
+    "true_severity": "standard",
+    "water_depth_cm": 101.4,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-025-HH1",
+        "family_name": "Sharma",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Sharma Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.567706,
+        "longitude": 76.122849
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "63ffb1ce-6c59-5eae-80c8-28736cfbb082",
+    "incident_code": "INC-026",
+    "title": "Flood distress at Aluva near Indian Oil Petrol Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Indian Oil Petrol Pump",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.122593,
+    "longitude": 76.371491,
+    "true_severity": "urgent",
+    "water_depth_cm": 125.4,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-026-HH1",
+        "family_name": "Paul",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 1,
+        "location_name": "Paul Residence, near Indian Oil Petrol Pump",
+        "latitude": 10.123362,
+        "longitude": 76.371546
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "ce0de740-88c7-5177-8d89-e2c5a2fb890f",
+    "incident_code": "INC-027",
+    "title": "Flood distress at Chengannur near Mahadeva Temple Chengannur",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mahadeva Temple Chengannur",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.337846,
+    "longitude": 76.615995,
+    "true_severity": "standard",
+    "water_depth_cm": 55.0,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-027-HH1",
+        "family_name": "Varghese",
+        "people_count": 2,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Varghese Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.337774,
+        "longitude": 76.615735
+      },
+      {
+        "household_id": "INC-027-HH2",
+        "family_name": "Varma",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Varma Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.338382,
+        "longitude": 76.615947
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "923eac81-e125-59ea-babf-6be64af80e6b",
+    "incident_code": "INC-028",
+    "title": "Flood distress at Kuttanad near St. Mary's School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Mary's School",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.402451,
+    "longitude": 76.445604,
+    "true_severity": "urgent",
+    "water_depth_cm": 125.7,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-028-HH1",
+        "family_name": "Nair",
+        "people_count": 6,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 1,
+        "location_name": "Nair Residence, near St. Mary's School",
+        "latitude": 9.402409,
+        "longitude": 76.444987
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "83124006-3470-57fb-87a0-82d1cc1fc63f",
+    "incident_code": "INC-029",
+    "title": "Flood distress at Chalakudy near NH Bridge over Chalakudy River",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "NH Bridge over Chalakudy River",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.329388,
+    "longitude": 76.331252,
+    "true_severity": "standard",
+    "water_depth_cm": 96.0,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 9,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-029-HH1",
+        "family_name": "Varghese",
+        "people_count": 4,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Varghese Residence, near NH Bridge over Chalakudy River",
+        "latitude": 10.329509,
+        "longitude": 76.331905
+      },
+      {
+        "household_id": "INC-029-HH2",
+        "family_name": "Varma",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Varma Residence, near NH Bridge over Chalakudy River",
+        "latitude": 10.329693,
+        "longitude": 76.331456
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "9867a4b1-72c7-5a67-8cb5-fb15bacbb1c7",
+    "incident_code": "INC-030",
+    "title": "Flood distress at Meppadi near St. Joseph's Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Joseph's Church",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.531095,
+    "longitude": 76.141624,
+    "true_severity": "urgent",
+    "water_depth_cm": 165.7,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-030-HH1",
+        "family_name": "Babu",
+        "people_count": 4,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Babu Residence, near St. Joseph's Church",
+        "latitude": 11.530989,
+        "longitude": 76.141404
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "afaafeae-b42f-557e-8527-a71512fa036d",
+    "incident_code": "INC-031",
+    "title": "Flood distress at Aluva near Govt Higher Secondary School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Higher Secondary School",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.127179,
+    "longitude": 76.349587,
+    "true_severity": "critical",
+    "water_depth_cm": 241.0,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-031-HH1",
+        "family_name": "Fernandez",
+        "people_count": 6,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Fernandez Residence, near Govt Higher Secondary School",
+        "latitude": 10.127708,
+        "longitude": 76.348926
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d9c7c91a-637c-5b45-8bda-ad5210c7fb49",
+    "incident_code": "INC-032",
+    "title": "Flood distress at Chengannur near HP Petrol Pump Kallissery",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "HP Petrol Pump Kallissery",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.336582,
+    "longitude": 76.598593,
+    "true_severity": "urgent",
+    "water_depth_cm": 149.9,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 11,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-032-HH1",
+        "family_name": "Varghese",
+        "people_count": 5,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 2,
+        "location_name": "Varghese Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.337191,
+        "longitude": 76.598915
+      },
+      {
+        "household_id": "INC-032-HH2",
+        "family_name": "Joseph",
+        "people_count": 6,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Joseph Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.33667,
+        "longitude": 76.598178
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "62b61e77-1a72-59e3-9f13-8be5ecb9ff02",
+    "incident_code": "INC-033",
+    "title": "Flood distress at Kuttanad near Bharat Petroleum Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Bharat Petroleum Pump",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.388805,
+    "longitude": 76.478592,
+    "true_severity": "urgent",
+    "water_depth_cm": 165.5,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 13,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-033-HH1",
+        "family_name": "Cherian",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "Cherian Residence, near Bharat Petroleum Pump",
+        "latitude": 9.388854,
+        "longitude": 76.478473
+      },
+      {
+        "household_id": "INC-033-HH2",
+        "family_name": "Fernandez",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Fernandez Residence, near Bharat Petroleum Pump",
+        "latitude": 9.388496,
+        "longitude": 76.478161
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "ac523459-1de5-5e14-8f64-2ed8003a4b79",
+    "incident_code": "INC-034",
+    "title": "Flood distress at Chalakudy near Carmel College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Carmel College",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.318064,
+    "longitude": 76.323777,
+    "true_severity": "urgent",
+    "water_depth_cm": 123.4,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-034-HH1",
+        "family_name": "Cherian",
+        "people_count": 3,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Cherian Residence, near Carmel College",
+        "latitude": 10.318397,
+        "longitude": 76.32318
+      },
+      {
+        "household_id": "INC-034-HH2",
+        "family_name": "Menon",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Menon Residence, near Carmel College",
+        "latitude": 10.318285,
+        "longitude": 76.324181
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "260fab0b-9218-55f6-b256-9416fb396693",
+    "incident_code": "INC-035",
+    "title": "Flood distress at Meppadi near Tea Estate Dispensary",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Tea Estate Dispensary",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.531129,
+    "longitude": 76.103613,
+    "true_severity": "standard",
+    "water_depth_cm": 78.2,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-035-HH1",
+        "family_name": "Menon",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Menon Residence, near Tea Estate Dispensary",
+        "latitude": 11.53097,
+        "longitude": 76.102932
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7021b4dc-1b9a-5912-ba27-4c7ce3afe83f",
+    "incident_code": "INC-036",
+    "title": "Flood distress at Aluva near Govt Higher Secondary School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Higher Secondary School",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.114072,
+    "longitude": 76.32928,
+    "true_severity": "urgent",
+    "water_depth_cm": 166.8,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-036-HH1",
+        "family_name": "Kumar",
+        "people_count": 6,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 3,
+        "location_name": "Kumar Residence, near Govt Higher Secondary School",
+        "latitude": 10.113881,
+        "longitude": 76.329934
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "0c05516d-fb79-578f-9b1c-d1ffcd5648ab",
+    "incident_code": "INC-037",
+    "title": "Flood distress at Chengannur near Kallissery Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Kallissery Bridge",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.307368,
+    "longitude": 76.615826,
+    "true_severity": "low",
+    "water_depth_cm": 25.7,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 7,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-037-HH1",
+        "family_name": "Koya",
+        "people_count": 7,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Koya Residence, near Kallissery Bridge",
+        "latitude": 9.306991,
+        "longitude": 76.615156
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "87c31805-efc6-54c5-85ef-210921f5c418",
+    "incident_code": "INC-038",
+    "title": "Flood distress at Kuttanad near Govt Primary Health Centre",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Primary Health Centre",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.376993,
+    "longitude": 76.4706,
+    "true_severity": "urgent",
+    "water_depth_cm": 110.2,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-038-HH1",
+        "family_name": "Das",
+        "people_count": 4,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Das Residence, near Govt Primary Health Centre",
+        "latitude": 9.377293,
+        "longitude": 76.471278
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "eb2ea5c2-23ee-509a-b6bd-0376ff5d7158",
+    "incident_code": "INC-039",
+    "title": "Flood distress at Chalakudy near Chalakudy Railway Station",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chalakudy Railway Station",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.321391,
+    "longitude": 76.339253,
+    "true_severity": "standard",
+    "water_depth_cm": 75.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 12,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-039-HH1",
+        "family_name": "Pillai",
+        "people_count": 2,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Pillai Residence, near Chalakudy Railway Station",
+        "latitude": 10.321543,
+        "longitude": 76.339772
+      },
+      {
+        "household_id": "INC-039-HH2",
+        "family_name": "Cherian",
+        "people_count": 5,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Cherian Residence, near Chalakudy Railway Station",
+        "latitude": 10.322099,
+        "longitude": 76.339254
+      },
+      {
+        "household_id": "INC-039-HH3",
+        "family_name": "Chacko",
+        "people_count": 5,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Chacko Residence, near Chalakudy Railway Station",
+        "latitude": 10.321107,
+        "longitude": 76.338854
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7a605b62-16d5-5ef8-ab4f-ff19324c26c5",
+    "incident_code": "INC-040",
+    "title": "Flood distress at Meppadi near Meppadi Mariamman Kovil",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Meppadi Mariamman Kovil",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.530566,
+    "longitude": 76.151096,
+    "true_severity": "critical",
+    "water_depth_cm": 319.9,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 10,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-040-HH1",
+        "family_name": "Varghese",
+        "people_count": 5,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Varghese Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.530056,
+        "longitude": 76.151233
+      },
+      {
+        "household_id": "INC-040-HH2",
+        "family_name": "Babu",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Babu Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.530299,
+        "longitude": 76.151368
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "6ac1a5be-834d-5650-b9d8-fce359b0f746",
+    "incident_code": "INC-041",
+    "title": "Flood distress at Aluva near Indian Oil Petrol Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Indian Oil Petrol Pump",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.125487,
+    "longitude": 76.34309,
+    "true_severity": "urgent",
+    "water_depth_cm": 130.2,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-041-HH1",
+        "family_name": "Panicker",
+        "people_count": 2,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Panicker Residence, near Indian Oil Petrol Pump",
+        "latitude": 10.125739,
+        "longitude": 76.343158
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "415f2ff9-55c6-5c05-85a9-3d0a703875f5",
+    "incident_code": "INC-042",
+    "title": "Flood distress at Chengannur near Govt Taluk Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Taluk Hospital",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.313162,
+    "longitude": 76.595779,
+    "true_severity": "critical",
+    "water_depth_cm": 267.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 11,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-042-HH1",
+        "family_name": "Thomas",
+        "people_count": 4,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 2,
+        "location_name": "Thomas Residence, near Govt Taluk Hospital",
+        "latitude": 9.313771,
+        "longitude": 76.595755
+      },
+      {
+        "household_id": "INC-042-HH2",
+        "family_name": "Nair",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Nair Residence, near Govt Taluk Hospital",
+        "latitude": 9.312859,
+        "longitude": 76.595001
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "f20b5411-6486-5090-9459-a047ace4ede0",
+    "incident_code": "INC-043",
+    "title": "Flood distress at Kuttanad near Champakulam River Jetty",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Champakulam River Jetty",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.3854,
+    "longitude": 76.454235,
+    "true_severity": "urgent",
+    "water_depth_cm": 142.3,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-043-HH1",
+        "family_name": "Joseph",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Joseph Residence, near Champakulam River Jetty",
+        "latitude": 9.385331,
+        "longitude": 76.453666
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "521a1f26-64ee-59e8-bbe5-d8904103a350",
+    "incident_code": "INC-044",
+    "title": "Flood distress at Chalakudy near Carmel College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Carmel College",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.291531,
+    "longitude": 76.337969,
+    "true_severity": "urgent",
+    "water_depth_cm": 170.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 12,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-044-HH1",
+        "family_name": "Cherian",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Cherian Residence, near Carmel College",
+        "latitude": 10.291514,
+        "longitude": 76.337407
+      },
+      {
+        "household_id": "INC-044-HH2",
+        "family_name": "Ali",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Ali Residence, near Carmel College",
+        "latitude": 10.291335,
+        "longitude": 76.338662
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "51e5614d-9283-5980-a84f-c2d4a0bb895a",
+    "incident_code": "INC-045",
+    "title": "Flood distress at Meppadi near Mundakkai Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mundakkai Bridge",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.56948,
+    "longitude": 76.152039,
+    "true_severity": "critical",
+    "water_depth_cm": 260.1,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-045-HH1",
+        "family_name": "Fernandez",
+        "people_count": 5,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Fernandez Residence, near Mundakkai Bridge",
+        "latitude": 11.569298,
+        "longitude": 76.152301
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "dcea4b11-e96c-5167-b197-f115797f1450",
+    "incident_code": "INC-046",
+    "title": "Flood distress at Aluva near Indian Oil Petrol Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Indian Oil Petrol Pump",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.123637,
+    "longitude": 76.375641,
+    "true_severity": "urgent",
+    "water_depth_cm": 177.5,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 2,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-046-HH1",
+        "family_name": "Iyer",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "Iyer Residence, near Indian Oil Petrol Pump",
+        "latitude": 10.124389,
+        "longitude": 76.374961
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "e7d55b30-8c58-5494-897f-ef871f5097be",
+    "incident_code": "INC-047",
+    "title": "Flood distress at Chengannur near Kallissery Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Kallissery Bridge",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.331576,
+    "longitude": 76.599651,
+    "true_severity": "urgent",
+    "water_depth_cm": 155.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 8,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-047-HH1",
+        "family_name": "Menon",
+        "people_count": 6,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Menon Residence, near Kallissery Bridge",
+        "latitude": 9.332372,
+        "longitude": 76.600046
+      },
+      {
+        "household_id": "INC-047-HH2",
+        "family_name": "Kumar",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Kumar Residence, near Kallissery Bridge",
+        "latitude": 9.331486,
+        "longitude": 76.599961
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "6422ef0f-0080-5657-98e4-d87742214761",
+    "incident_code": "INC-048",
+    "title": "Flood distress at Kuttanad near Edathua St. Aloysius Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Edathua St. Aloysius Church",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.410171,
+    "longitude": 76.4453,
+    "true_severity": "urgent",
+    "water_depth_cm": 130.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 7,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-048-HH1",
+        "family_name": "Hassan",
+        "people_count": 7,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 1,
+        "location_name": "Hassan Residence, near Edathua St. Aloysius Church",
+        "latitude": 9.409497,
+        "longitude": 76.445893
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "2eac8978-4287-5f4d-bc08-08a897c964ec",
+    "incident_code": "INC-049",
+    "title": "Flood distress at Chalakudy near Carmel College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Carmel College",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.312986,
+    "longitude": 76.320041,
+    "true_severity": "critical",
+    "water_depth_cm": 212.5,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-049-HH1",
+        "family_name": "Nair",
+        "people_count": 5,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Nair Residence, near Carmel College",
+        "latitude": 10.312304,
+        "longitude": 76.320753
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "fcf42cfd-f725-5794-8627-2edf8298c36c",
+    "incident_code": "INC-050",
+    "title": "Flood distress at Meppadi near Wayanad Forest Checkpost",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Wayanad Forest Checkpost",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.575383,
+    "longitude": 76.117958,
+    "true_severity": "urgent",
+    "water_depth_cm": 158.3,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 10,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-050-HH1",
+        "family_name": "Mathew",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 3,
+        "location_name": "Mathew Residence, near Wayanad Forest Checkpost",
+        "latitude": 11.575056,
+        "longitude": 76.118277
+      },
+      {
+        "household_id": "INC-050-HH2",
+        "family_name": "Nair",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 3,
+        "location_name": "Nair Residence, near Wayanad Forest Checkpost",
+        "latitude": 11.575775,
+        "longitude": 76.118491
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "afa4d082-08c9-5ca1-ac86-1b1b0b97e808",
+    "incident_code": "INC-051",
+    "title": "Flood distress at Aluva near Aluva Private Bus Stand",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Aluva Private Bus Stand",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.127747,
+    "longitude": 76.365387,
+    "true_severity": "low",
+    "water_depth_cm": 36.2,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 3,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-051-HH1",
+        "family_name": "Babu",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Babu Residence, near Aluva Private Bus Stand",
+        "latitude": 10.1281,
+        "longitude": 76.365642
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "49e3c654-651a-5a60-b3d0-0b7bd54eeb70",
+    "incident_code": "INC-052",
+    "title": "Flood distress at Chengannur near Mahadeva Temple Chengannur",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mahadeva Temple Chengannur",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.334417,
+    "longitude": 76.617812,
+    "true_severity": "urgent",
+    "water_depth_cm": 131.6,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-052-HH1",
+        "family_name": "Cherian",
+        "people_count": 4,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Cherian Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.333828,
+        "longitude": 76.617875
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "b40d89d4-39ea-5f6e-a72f-641854284fee",
+    "incident_code": "INC-053",
+    "title": "Flood distress at Kuttanad near Pallathuruthy Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Pallathuruthy Bridge",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.413574,
+    "longitude": 76.469543,
+    "true_severity": "critical",
+    "water_depth_cm": 296.3,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 18,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-053-HH1",
+        "family_name": "Cherian",
+        "people_count": 7,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Cherian Residence, near Pallathuruthy Bridge",
+        "latitude": 9.414315,
+        "longitude": 76.468968
+      },
+      {
+        "household_id": "INC-053-HH2",
+        "family_name": "Nambiar",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Nambiar Residence, near Pallathuruthy Bridge",
+        "latitude": 9.413359,
+        "longitude": 76.470008
+      },
+      {
+        "household_id": "INC-053-HH3",
+        "family_name": "Nair",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Nair Residence, near Pallathuruthy Bridge",
+        "latitude": 9.413972,
+        "longitude": 76.469162
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7d0c5331-842a-54ce-b947-04f3b5f9a908",
+    "incident_code": "INC-054",
+    "title": "Flood distress at Chalakudy near St. James Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. James Hospital",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.301051,
+    "longitude": 76.339927,
+    "true_severity": "urgent",
+    "water_depth_cm": 117.6,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 18,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-054-HH1",
+        "family_name": "Nambiar",
+        "people_count": 7,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 3,
+        "location_name": "Nambiar Residence, near St. James Hospital",
+        "latitude": 10.300904,
+        "longitude": 76.339351
+      },
+      {
+        "household_id": "INC-054-HH2",
+        "family_name": "Menon",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 3,
+        "location_name": "Menon Residence, near St. James Hospital",
+        "latitude": 10.300468,
+        "longitude": 76.339853
+      },
+      {
+        "household_id": "INC-054-HH3",
+        "family_name": "Paul",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Paul Residence, near St. James Hospital",
+        "latitude": 10.301439,
+        "longitude": 76.339374
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7fbe284b-e14b-5e84-a9ab-de4d17bf78a4",
+    "incident_code": "INC-055",
+    "title": "Flood distress at Meppadi near River Crossing Point",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "River Crossing Point",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.546744,
+    "longitude": 76.107951,
+    "true_severity": "critical",
+    "water_depth_cm": 266.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 12,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-055-HH1",
+        "family_name": "Thomas",
+        "people_count": 5,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 2,
+        "location_name": "Thomas Residence, near River Crossing Point",
+        "latitude": 11.546103,
+        "longitude": 76.108248
+      },
+      {
+        "household_id": "INC-055-HH2",
+        "family_name": "Ali",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Ali Residence, near River Crossing Point",
+        "latitude": 11.547493,
+        "longitude": 76.108669
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "f39a9c66-37e5-5e03-a23c-4b5381c36e57",
+    "incident_code": "INC-056",
+    "title": "Flood distress at Aluva near Aluva Private Bus Stand",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Aluva Private Bus Stand",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.12381,
+    "longitude": 76.331184,
+    "true_severity": "urgent",
+    "water_depth_cm": 154.9,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 10,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-056-HH1",
+        "family_name": "Hassan",
+        "people_count": 3,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Hassan Residence, near Aluva Private Bus Stand",
+        "latitude": 10.123341,
+        "longitude": 76.33073
+      },
+      {
+        "household_id": "INC-056-HH2",
+        "family_name": "Nambiar",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Nambiar Residence, near Aluva Private Bus Stand",
+        "latitude": 10.123015,
+        "longitude": 76.331757
+      },
+      {
+        "household_id": "INC-056-HH3",
+        "family_name": "Pillai",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Pillai Residence, near Aluva Private Bus Stand",
+        "latitude": 10.124068,
+        "longitude": 76.330425
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "3c3c37f0-c728-5674-8e0f-79260e4dcf2a",
+    "incident_code": "INC-057",
+    "title": "Flood distress at Chengannur near Chengannur Market Junction",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chengannur Market Junction",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.293243,
+    "longitude": 76.625899,
+    "true_severity": "urgent",
+    "water_depth_cm": 151.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-057-HH1",
+        "family_name": "Kumar",
+        "people_count": 6,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Kumar Residence, near Chengannur Market Junction",
+        "latitude": 9.29316,
+        "longitude": 76.625678
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "47a19324-6324-5aec-bac8-d489a5b03fea",
+    "incident_code": "INC-058",
+    "title": "Flood distress at Kuttanad near Mankombu Rice Research Station",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mankombu Rice Research Station",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.394683,
+    "longitude": 76.4656,
+    "true_severity": "urgent",
+    "water_depth_cm": 176.2,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-058-HH1",
+        "family_name": "Chacko",
+        "people_count": 5,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Chacko Residence, near Mankombu Rice Research Station",
+        "latitude": 9.395023,
+        "longitude": 76.46551
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7fe6eff3-4ee4-5888-baf2-a9792974a0a0",
+    "incident_code": "INC-059",
+    "title": "Flood distress at Chalakudy near Carmel College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Carmel College",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.326963,
+    "longitude": 76.324106,
+    "true_severity": "critical",
+    "water_depth_cm": 189.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-059-HH1",
+        "family_name": "Koya",
+        "people_count": 6,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Koya Residence, near Carmel College",
+        "latitude": 10.326851,
+        "longitude": 76.324575
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "608b9e2c-74e5-5e59-8979-736684215f63",
+    "incident_code": "INC-060",
+    "title": "Flood distress at Meppadi near Mundakkai Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mundakkai Bridge",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.531721,
+    "longitude": 76.135736,
+    "true_severity": "urgent",
+    "water_depth_cm": 140.1,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-060-HH1",
+        "family_name": "Fernandez",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Fernandez Residence, near Mundakkai Bridge",
+        "latitude": 11.53152,
+        "longitude": 76.13518
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "497648a9-e295-554c-a652-e3f62ccba343",
+    "incident_code": "INC-061",
+    "title": "Flood distress at Aluva near St. Dominic Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Dominic Church",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.128749,
+    "longitude": 76.329957,
+    "true_severity": "critical",
+    "water_depth_cm": 193.1,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 9,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-061-HH1",
+        "family_name": "Ali",
+        "people_count": 2,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Ali Residence, near St. Dominic Church",
+        "latitude": 10.128476,
+        "longitude": 76.329353
+      },
+      {
+        "household_id": "INC-061-HH2",
+        "family_name": "Sharma",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Sharma Residence, near St. Dominic Church",
+        "latitude": 10.128031,
+        "longitude": 76.329617
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "dc8939da-7c6d-5e63-9f79-d1bea16daaa9",
+    "incident_code": "INC-062",
+    "title": "Flood distress at Chengannur near Chengannur Market Junction",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chengannur Market Junction",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.308122,
+    "longitude": 76.59158,
+    "true_severity": "critical",
+    "water_depth_cm": 201.7,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 12,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-062-HH1",
+        "family_name": "Sharma",
+        "people_count": 6,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "Sharma Residence, near Chengannur Market Junction",
+        "latitude": 9.308241,
+        "longitude": 76.592072
+      },
+      {
+        "household_id": "INC-062-HH2",
+        "family_name": "Ali",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Ali Residence, near Chengannur Market Junction",
+        "latitude": 9.308296,
+        "longitude": 76.591833
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "90696ff8-7d2e-5647-b100-ca63b8247a41",
+    "incident_code": "INC-063",
+    "title": "Flood distress at Kuttanad near Pallathuruthy Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Pallathuruthy Bridge",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.399674,
+    "longitude": 76.444448,
+    "true_severity": "critical",
+    "water_depth_cm": 278.4,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 3,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-063-HH1",
+        "family_name": "Varghese",
+        "people_count": 3,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Varghese Residence, near Pallathuruthy Bridge",
+        "latitude": 9.399101,
+        "longitude": 76.444661
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "16c71306-9fa2-5a64-8e26-5ce54e94b975",
+    "incident_code": "INC-064",
+    "title": "Flood distress at Chalakudy near Chalakudy Railway Station",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chalakudy Railway Station",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.283533,
+    "longitude": 76.345306,
+    "true_severity": "urgent",
+    "water_depth_cm": 136.3,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-064-HH1",
+        "family_name": "Panicker",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 1,
+        "location_name": "Panicker Residence, near Chalakudy Railway Station",
+        "latitude": 10.282985,
+        "longitude": 76.345495
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "a74e6a23-5ce7-5120-9d84-08c920e86fe7",
+    "incident_code": "INC-065",
+    "title": "Flood distress at Meppadi near Wayanad Forest Checkpost",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Wayanad Forest Checkpost",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.559698,
+    "longitude": 76.116605,
+    "true_severity": "standard",
+    "water_depth_cm": 79.1,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-065-HH1",
+        "family_name": "George",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "George Residence, near Wayanad Forest Checkpost",
+        "latitude": 11.559965,
+        "longitude": 76.115878
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "acfe7598-c9d7-5e57-a2e1-b66aa0f36b34",
+    "incident_code": "INC-066",
+    "title": "Flood distress at Aluva near Aluva Mahadeva Temple",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Aluva Mahadeva Temple",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.102363,
+    "longitude": 76.356566,
+    "true_severity": "critical",
+    "water_depth_cm": 208.6,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 10,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-066-HH1",
+        "family_name": "Cherian",
+        "people_count": 4,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "Cherian Residence, near Aluva Mahadeva Temple",
+        "latitude": 10.102758,
+        "longitude": 76.356047
+      },
+      {
+        "household_id": "INC-066-HH2",
+        "family_name": "Varma",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Varma Residence, near Aluva Mahadeva Temple",
+        "latitude": 10.102853,
+        "longitude": 76.355881
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "2632491a-3a83-52b1-808e-136d541c68c0",
+    "incident_code": "INC-067",
+    "title": "Flood distress at Chengannur near Mahadeva Temple Chengannur",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mahadeva Temple Chengannur",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.335588,
+    "longitude": 76.588515,
+    "true_severity": "standard",
+    "water_depth_cm": 77.6,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-067-HH1",
+        "family_name": "Hassan",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Hassan Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.335436,
+        "longitude": 76.589261
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "a5a8409a-0ce6-53b2-b12f-b84b12d26f49",
+    "incident_code": "INC-068",
+    "title": "Flood distress at Kuttanad near Bharat Petroleum Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Bharat Petroleum Pump",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.373594,
+    "longitude": 76.490381,
+    "true_severity": "urgent",
+    "water_depth_cm": 168.2,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-068-HH1",
+        "family_name": "Hassan",
+        "people_count": 5,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 3,
+        "location_name": "Hassan Residence, near Bharat Petroleum Pump",
+        "latitude": 9.373337,
+        "longitude": 76.490114
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d2e0c150-bbca-58aa-8b56-1d627e2ba705",
+    "incident_code": "INC-069",
+    "title": "Flood distress at Chalakudy near St. Mary's Forane Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. Mary's Forane Church",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.290407,
+    "longitude": 76.333524,
+    "true_severity": "low",
+    "water_depth_cm": 33.6,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-069-HH1",
+        "family_name": "Sharma",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Sharma Residence, near St. Mary's Forane Church",
+        "latitude": 10.290911,
+        "longitude": 76.333102
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "b608f9b3-3b98-5565-9d23-f0979e82994d",
+    "incident_code": "INC-070",
+    "title": "Flood distress at Meppadi near Govt High School Chooralmala",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt High School Chooralmala",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.533322,
+    "longitude": 76.112864,
+    "true_severity": "critical",
+    "water_depth_cm": 286.4,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 18,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-070-HH1",
+        "family_name": "Babu",
+        "people_count": 5,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "Babu Residence, near Govt High School Chooralmala",
+        "latitude": 11.534001,
+        "longitude": 76.112967
+      },
+      {
+        "household_id": "INC-070-HH2",
+        "family_name": "Babu",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Babu Residence, near Govt High School Chooralmala",
+        "latitude": 11.532764,
+        "longitude": 76.112173
+      },
+      {
+        "household_id": "INC-070-HH3",
+        "family_name": "Iyer",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Iyer Residence, near Govt High School Chooralmala",
+        "latitude": 11.533085,
+        "longitude": 76.112183
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d788e698-643a-564c-a192-b29dca1dadb7",
+    "incident_code": "INC-071",
+    "title": "Flood distress at Aluva near District Hospital Aluva",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "District Hospital Aluva",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.105687,
+    "longitude": 76.32848,
+    "true_severity": "critical",
+    "water_depth_cm": 296.4,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 5,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-071-HH1",
+        "family_name": "George",
+        "people_count": 5,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 2,
+        "location_name": "George Residence, near District Hospital Aluva",
+        "latitude": 10.106341,
+        "longitude": 76.328595
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "5f480780-436b-553c-8db7-e69db49afb48",
+    "incident_code": "INC-072",
+    "title": "Flood distress at Chengannur near Christian College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Christian College",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.301912,
+    "longitude": 76.61665,
+    "true_severity": "low",
+    "water_depth_cm": 48.5,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 7,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-072-HH1",
+        "family_name": "Panicker",
+        "people_count": 7,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Panicker Residence, near Christian College",
+        "latitude": 9.301508,
+        "longitude": 76.61655
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "c3472a51-bd8c-56ba-90f2-024cedd98e55",
+    "incident_code": "INC-073",
+    "title": "Flood distress at Kuttanad near Govt Primary Health Centre",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Primary Health Centre",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.386971,
+    "longitude": 76.469137,
+    "true_severity": "urgent",
+    "water_depth_cm": 135.5,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 14,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-073-HH1",
+        "family_name": "Menon",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Diabetic elderly requiring daily insulin",
+        "floor": 3,
+        "location_name": "Menon Residence, near Govt Primary Health Centre",
+        "latitude": 9.387256,
+        "longitude": 76.468792
+      },
+      {
+        "household_id": "INC-073-HH2",
+        "family_name": "Fernandez",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Fernandez Residence, near Govt Primary Health Centre",
+        "latitude": 9.386704,
+        "longitude": 76.469269
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "56817d38-0123-581c-9e1f-a8520dbf7b78",
+    "incident_code": "INC-074",
+    "title": "Flood distress at Chalakudy near South Junction",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "South Junction",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.289071,
+    "longitude": 76.325491,
+    "true_severity": "low",
+    "water_depth_cm": 19.5,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 11,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-074-HH1",
+        "family_name": "Kurian",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Kurian Residence, near South Junction",
+        "latitude": 10.288797,
+        "longitude": 76.324895
+      },
+      {
+        "household_id": "INC-074-HH2",
+        "family_name": "Das",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Das Residence, near South Junction",
+        "latitude": 10.288421,
+        "longitude": 76.325764
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "0e911fc3-d0c4-5a7a-ba03-ca9dcb30e325",
+    "incident_code": "INC-075",
+    "title": "Flood distress at Meppadi near Tea Estate Dispensary",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Tea Estate Dispensary",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.551424,
+    "longitude": 76.103912,
+    "true_severity": "urgent",
+    "water_depth_cm": 122.6,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 3,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-075-HH1",
+        "family_name": "Pillai",
+        "people_count": 3,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Pillai Residence, near Tea Estate Dispensary",
+        "latitude": 11.551436,
+        "longitude": 76.103976
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d2b8d37c-d23f-562d-a227-ce08d7c04eda",
+    "incident_code": "INC-076",
+    "title": "Flood distress at Aluva near District Hospital Aluva",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "District Hospital Aluva",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.119532,
+    "longitude": 76.352927,
+    "true_severity": "standard",
+    "water_depth_cm": 102.6,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 7,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-076-HH1",
+        "family_name": "Varghese",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Varghese Residence, near District Hospital Aluva",
+        "latitude": 10.119886,
+        "longitude": 76.352197
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "9686ff8c-80e6-5795-8169-1c896fd17d0d",
+    "incident_code": "INC-077",
+    "title": "Flood distress at Chengannur near HP Petrol Pump Kallissery",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "HP Petrol Pump Kallissery",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.310715,
+    "longitude": 76.622379,
+    "true_severity": "urgent",
+    "water_depth_cm": 152.7,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 11,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-077-HH1",
+        "family_name": "Chacko",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Chacko Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.311146,
+        "longitude": 76.622824
+      },
+      {
+        "household_id": "INC-077-HH2",
+        "family_name": "George",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "George Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.311197,
+        "longitude": 76.6218
+      },
+      {
+        "household_id": "INC-077-HH3",
+        "family_name": "Joseph",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Joseph Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.31141,
+        "longitude": 76.622717
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "adf39823-31eb-54bb-809a-4c186adcbe7c",
+    "incident_code": "INC-078",
+    "title": "Flood distress at Kuttanad near Champakulam River Jetty",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Champakulam River Jetty",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.390795,
+    "longitude": 76.449234,
+    "true_severity": "standard",
+    "water_depth_cm": 95.8,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 18,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-078-HH1",
+        "family_name": "Pillai",
+        "people_count": 5,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Pillai Residence, near Champakulam River Jetty",
+        "latitude": 9.391484,
+        "longitude": 76.449098
+      },
+      {
+        "household_id": "INC-078-HH2",
+        "family_name": "Varma",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Varma Residence, near Champakulam River Jetty",
+        "latitude": 9.390595,
+        "longitude": 76.448479
+      },
+      {
+        "household_id": "INC-078-HH3",
+        "family_name": "Mathew",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Mathew Residence, near Champakulam River Jetty",
+        "latitude": 9.390056,
+        "longitude": 76.449902
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "b28c2c7b-9ebe-5ae1-a89b-834f6e465687",
+    "incident_code": "INC-079",
+    "title": "Flood distress at Chalakudy near Mala Road Crossing",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mala Road Crossing",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.305623,
+    "longitude": 76.349556,
+    "true_severity": "standard",
+    "water_depth_cm": 76.9,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 3,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-079-HH1",
+        "family_name": "Thomas",
+        "people_count": 3,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Thomas Residence, near Mala Road Crossing",
+        "latitude": 10.305667,
+        "longitude": 76.348934
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "7435e38a-7500-58d8-aff8-487503916ec7",
+    "incident_code": "INC-080",
+    "title": "Flood distress at Meppadi near Meppadi Mariamman Kovil",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Meppadi Mariamman Kovil",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.540405,
+    "longitude": 76.118058,
+    "true_severity": "standard",
+    "water_depth_cm": 64.3,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-080-HH1",
+        "family_name": "Chacko",
+        "people_count": 6,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 3,
+        "location_name": "Chacko Residence, near Meppadi Mariamman Kovil",
+        "latitude": 11.539835,
+        "longitude": 76.117945
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "8be3dc18-11ab-510a-bc5c-ab4ce9109ea5",
+    "incident_code": "INC-081",
+    "title": "Flood distress at Aluva near Railway Station Road Junction",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Railway Station Road Junction",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.11334,
+    "longitude": 76.338628,
+    "true_severity": "urgent",
+    "water_depth_cm": 123.1,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 2,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-081-HH1",
+        "family_name": "Chacko",
+        "people_count": 2,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Chacko Residence, near Railway Station Road Junction",
+        "latitude": 10.112946,
+        "longitude": 76.337854
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "528852b4-ce2d-5e06-800a-1232761adc31",
+    "incident_code": "INC-082",
+    "title": "Flood distress at Chengannur near Bethel Marthoma Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Bethel Marthoma Church",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.331926,
+    "longitude": 76.60364,
+    "true_severity": "urgent",
+    "water_depth_cm": 164.0,
+    "water_trend": "stable",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 3,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-082-HH1",
+        "family_name": "Babu",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "Babu Residence, near Bethel Marthoma Church",
+        "latitude": 9.331892,
+        "longitude": 76.603132
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "ce423905-486d-5f61-a575-36ebcd972b31",
+    "incident_code": "INC-083",
+    "title": "Flood distress at Kuttanad near Bharat Petroleum Pump",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Bharat Petroleum Pump",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.371743,
+    "longitude": 76.478802,
+    "true_severity": "urgent",
+    "water_depth_cm": 112.6,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-083-HH1",
+        "family_name": "Cherian",
+        "people_count": 6,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 2,
+        "location_name": "Cherian Residence, near Bharat Petroleum Pump",
+        "latitude": 9.371002,
+        "longitude": 76.479037
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "4d3ea183-52d9-5af1-85f5-fb9491d0aab9",
+    "incident_code": "INC-084",
+    "title": "Flood distress at Chalakudy near Chalakudy North Temple",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Chalakudy North Temple",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.296306,
+    "longitude": 76.351107,
+    "true_severity": "standard",
+    "water_depth_cm": 101.9,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-084-HH1",
+        "family_name": "Sharma",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Sharma Residence, near Chalakudy North Temple",
+        "latitude": 10.296048,
+        "longitude": 76.350606
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "d2f362ac-59d7-5fab-abc1-14e2fe90b6ff",
+    "incident_code": "INC-085",
+    "title": "Flood distress at Meppadi near Tea Estate Dispensary",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Tea Estate Dispensary",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.560603,
+    "longitude": 76.121367,
+    "true_severity": "low",
+    "water_depth_cm": 43.0,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 9,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-085-HH1",
+        "family_name": "Kurian",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Kurian Residence, near Tea Estate Dispensary",
+        "latitude": 11.560676,
+        "longitude": 76.121081
+      },
+      {
+        "household_id": "INC-085-HH2",
+        "family_name": "Kurian",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Kurian Residence, near Tea Estate Dispensary",
+        "latitude": 11.560767,
+        "longitude": 76.121249
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "10720809-1133-5cc8-9bd3-35063d4b9bb6",
+    "incident_code": "INC-086",
+    "title": "Flood distress at Aluva near Aluva Mahadeva Temple",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Aluva Mahadeva Temple",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.117088,
+    "longitude": 76.344177,
+    "true_severity": "critical",
+    "water_depth_cm": 281.8,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-086-HH1",
+        "family_name": "Menon",
+        "people_count": 2,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Menon Residence, near Aluva Mahadeva Temple",
+        "latitude": 10.117109,
+        "longitude": 76.344577
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "1fbfe302-2b97-5189-b86d-5f16dec62127",
+    "incident_code": "INC-087",
+    "title": "Flood distress at Chengannur near HP Petrol Pump Kallissery",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "HP Petrol Pump Kallissery",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.300499,
+    "longitude": 76.587957,
+    "true_severity": "urgent",
+    "water_depth_cm": 112.4,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 2,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-087-HH1",
+        "family_name": "Hassan",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Hassan Residence, near HP Petrol Pump Kallissery",
+        "latitude": 9.300294,
+        "longitude": 76.588378
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "e920ee0d-b131-5025-8ec4-2b835cbca627",
+    "incident_code": "INC-088",
+    "title": "Flood distress at Kuttanad near Boat Jetty Junction",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Boat Jetty Junction",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.393696,
+    "longitude": 76.469473,
+    "true_severity": "standard",
+    "water_depth_cm": 68.9,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 16,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-088-HH1",
+        "family_name": "Nair",
+        "people_count": 7,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Nair Residence, near Boat Jetty Junction",
+        "latitude": 9.394358,
+        "longitude": 76.468861
+      },
+      {
+        "household_id": "INC-088-HH2",
+        "family_name": "Joseph",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Joseph Residence, near Boat Jetty Junction",
+        "latitude": 9.394006,
+        "longitude": 76.470271
+      },
+      {
+        "household_id": "INC-088-HH3",
+        "family_name": "Thomas",
+        "people_count": 2,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Thomas Residence, near Boat Jetty Junction",
+        "latitude": 9.393608,
+        "longitude": 76.468813
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "bebd2063-ea71-5ce1-9d1b-9f8f2f5d7165",
+    "incident_code": "INC-089",
+    "title": "Flood distress at Chalakudy near St. James Hospital",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "St. James Hospital",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.316096,
+    "longitude": 76.350276,
+    "true_severity": "critical",
+    "water_depth_cm": 273.5,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 9,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-089-HH1",
+        "family_name": "Varghese",
+        "people_count": 7,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Varghese Residence, near St. James Hospital",
+        "latitude": 10.315575,
+        "longitude": 76.350054
+      },
+      {
+        "household_id": "INC-089-HH2",
+        "family_name": "Nambiar",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Nambiar Residence, near St. James Hospital",
+        "latitude": 10.316561,
+        "longitude": 76.349518
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "4aed66e1-ef0b-526d-b3b8-988e5c13e416",
+    "incident_code": "INC-090",
+    "title": "Flood distress at Meppadi near Govt High School Chooralmala",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt High School Chooralmala",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.553701,
+    "longitude": 76.121446,
+    "true_severity": "urgent",
+    "water_depth_cm": 152.8,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 14,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-090-HH1",
+        "family_name": "Fernandez",
+        "people_count": 5,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Fernandez Residence, near Govt High School Chooralmala",
+        "latitude": 11.553019,
+        "longitude": 76.122202
+      },
+      {
+        "household_id": "INC-090-HH2",
+        "family_name": "Babu",
+        "people_count": 2,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Babu Residence, near Govt High School Chooralmala",
+        "latitude": 11.553106,
+        "longitude": 76.121972
+      },
+      {
+        "household_id": "INC-090-HH3",
+        "family_name": "Ali",
+        "people_count": 7,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Ali Residence, near Govt High School Chooralmala",
+        "latitude": 11.553593,
+        "longitude": 76.122103
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "0374f33f-f786-550f-803b-809d7979629a",
+    "incident_code": "INC-091",
+    "title": "Flood distress at Aluva near Govt Higher Secondary School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Higher Secondary School",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.085371,
+    "longitude": 76.332808,
+    "true_severity": "standard",
+    "water_depth_cm": 68.2,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 16,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-091-HH1",
+        "family_name": "Nambiar",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Nambiar Residence, near Govt Higher Secondary School",
+        "latitude": 10.085924,
+        "longitude": 76.332409
+      },
+      {
+        "household_id": "INC-091-HH2",
+        "family_name": "Babu",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Babu Residence, near Govt Higher Secondary School",
+        "latitude": 10.085425,
+        "longitude": 76.332812
+      },
+      {
+        "household_id": "INC-091-HH3",
+        "family_name": "Varghese",
+        "people_count": 6,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Varghese Residence, near Govt Higher Secondary School",
+        "latitude": 10.08557,
+        "longitude": 76.333451
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "02c6d521-7fe9-578c-84ce-b5029bdf9f86",
+    "incident_code": "INC-092",
+    "title": "Flood distress at Chengannur near Mahadeva Temple Chengannur",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mahadeva Temple Chengannur",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.309381,
+    "longitude": 76.632596,
+    "true_severity": "critical",
+    "water_depth_cm": 295.5,
+    "water_trend": "rising",
+    "trapped_status": "trapped_roof",
+    "total_people": 6,
+    "has_medical_emergency": true,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-092-HH1",
+        "family_name": "Babu",
+        "people_count": 6,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "High fever and chest pain",
+        "floor": 3,
+        "location_name": "Babu Residence, near Mahadeva Temple Chengannur",
+        "latitude": 9.309248,
+        "longitude": 76.632818
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "3332ad9a-6052-5419-983c-c3d9516314e8",
+    "incident_code": "INC-093",
+    "title": "Flood distress at Kuttanad near Pallathuruthy Bridge",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Pallathuruthy Bridge",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.389902,
+    "longitude": 76.474358,
+    "true_severity": "critical",
+    "water_depth_cm": 269.9,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-093-HH1",
+        "family_name": "Paul",
+        "people_count": 5,
+        "vulnerable_members": [
+          "pregnant_woman"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Paul Residence, near Pallathuruthy Bridge",
+        "latitude": 9.389198,
+        "longitude": 76.474261
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "2f640d9d-5d0e-5fd1-9274-9bbd7f877baa",
+    "incident_code": "INC-094",
+    "title": "Flood distress at Chalakudy near Carmel College",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Carmel College",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.306213,
+    "longitude": 76.318201,
+    "true_severity": "urgent",
+    "water_depth_cm": 131.9,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 8,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-094-HH1",
+        "family_name": "George",
+        "people_count": 6,
+        "vulnerable_members": [
+          "elderly"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "George Residence, near Carmel College",
+        "latitude": 10.305609,
+        "longitude": 76.31812
+      },
+      {
+        "household_id": "INC-094-HH2",
+        "family_name": "Pillai",
+        "people_count": 2,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Pillai Residence, near Carmel College",
+        "latitude": 10.30581,
+        "longitude": 76.318785
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "3f58614f-40b5-50ba-a75a-20e31c13acaa",
+    "incident_code": "INC-095",
+    "title": "Flood distress at Meppadi near Town Centre Bus Stop",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Town Centre Bus Stop",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.533985,
+    "longitude": 76.119372,
+    "true_severity": "urgent",
+    "water_depth_cm": 123.3,
+    "water_trend": "rising",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-095-HH1",
+        "family_name": "Chacko",
+        "people_count": 2,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Chacko Residence, near Town Centre Bus Stop",
+        "latitude": 11.533529,
+        "longitude": 76.119137
+      },
+      {
+        "household_id": "INC-095-HH2",
+        "family_name": "Menon",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Menon Residence, near Town Centre Bus Stop",
+        "latitude": 11.534261,
+        "longitude": 76.119029
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "2803cc32-2f46-57ec-893c-8a145709f719",
+    "incident_code": "INC-096",
+    "title": "Flood distress at Aluva near Govt Higher Secondary School",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Govt Higher Secondary School",
+    "area_name": "Aluva",
+    "district": "Ernakulam",
+    "pincode": "683101",
+    "latitude": 10.083009,
+    "longitude": 76.331975,
+    "true_severity": "urgent",
+    "water_depth_cm": 171.8,
+    "water_trend": "stable",
+    "trapped_status": "ground_submerged",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-096-HH1",
+        "family_name": "Hassan",
+        "people_count": 6,
+        "vulnerable_members": [
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 2,
+        "location_name": "Hassan Residence, near Govt Higher Secondary School",
+        "latitude": 10.082327,
+        "longitude": 76.331982
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "078897d3-5f4e-5f15-80e3-27372f625929",
+    "incident_code": "INC-097",
+    "title": "Flood distress at Chengannur near Bethel Marthoma Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Bethel Marthoma Church",
+    "area_name": "Chengannur",
+    "district": "Pathanamthitta",
+    "pincode": "689121",
+    "latitude": 9.33072,
+    "longitude": 76.600386,
+    "true_severity": "low",
+    "water_depth_cm": 19.5,
+    "water_trend": "receding",
+    "trapped_status": "none",
+    "total_people": 4,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": false,
+    "households": [
+      {
+        "household_id": "INC-097-HH1",
+        "family_name": "Sharma",
+        "people_count": 4,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Sharma Residence, near Bethel Marthoma Church",
+        "latitude": 9.330151,
+        "longitude": 76.60055
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "c171649c-34d3-5982-bd92-306471656c8e",
+    "incident_code": "INC-098",
+    "title": "Flood distress at Kuttanad near Edathua St. Aloysius Church",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Edathua St. Aloysius Church",
+    "area_name": "Kuttanad",
+    "district": "Alappuzha",
+    "pincode": "688502",
+    "latitude": 9.385069,
+    "longitude": 76.445013,
+    "true_severity": "critical",
+    "water_depth_cm": 199.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 6,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-098-HH1",
+        "family_name": "Pillai",
+        "people_count": 6,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Dialysis patient stranded",
+        "floor": 1,
+        "location_name": "Pillai Residence, near Edathua St. Aloysius Church",
+        "latitude": 9.384898,
+        "longitude": 76.445199
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "f3613c83-89fc-55bf-ae7b-f418be71d7a7",
+    "incident_code": "INC-099",
+    "title": "Flood distress at Chalakudy near Mala Road Crossing",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "Mala Road Crossing",
+    "area_name": "Chalakudy",
+    "district": "Thrissur",
+    "pincode": "680307",
+    "latitude": 10.32413,
+    "longitude": 76.337686,
+    "true_severity": "critical",
+    "water_depth_cm": 279.2,
+    "water_trend": "rising",
+    "trapped_status": "trapped_upper_floor",
+    "total_people": 11,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-099-HH1",
+        "family_name": "Sharma",
+        "people_count": 4,
+        "vulnerable_members": [
+          "mobility_impaired"
+        ],
+        "has_medical_emergency": true,
+        "medical_emergency_details": "Severe hypothermia and dehydration",
+        "floor": 3,
+        "location_name": "Sharma Residence, near Mala Road Crossing",
+        "latitude": 10.323822,
+        "longitude": 76.338324
+      },
+      {
+        "household_id": "INC-099-HH2",
+        "family_name": "Das",
+        "people_count": 7,
+        "vulnerable_members": [
+          "bedridden_patient"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Das Residence, near Mala Road Crossing",
+        "latitude": 10.324583,
+        "longitude": 76.338128
+      }
+    ],
+    "is_active": true
+  },
+  {
+    "incident_id": "e5442044-bec3-5288-8e41-07357080711a",
+    "incident_code": "INC-100",
+    "title": "Flood distress at Meppadi near River Crossing Point",
+    "disaster_id": "a1b2c3d4-e5f6-47a8-b9c0-112233445566",
+    "landmark_name": "River Crossing Point",
+    "area_name": "Meppadi",
+    "district": "Wayanad",
+    "pincode": "673577",
+    "latitude": 11.554882,
+    "longitude": 76.13907,
+    "true_severity": "standard",
+    "water_depth_cm": 60.2,
+    "water_trend": "receding",
+    "trapped_status": "ground_submerged",
+    "total_people": 5,
+    "has_medical_emergency": false,
+    "has_vulnerable_people": true,
+    "households": [
+      {
+        "household_id": "INC-100-HH1",
+        "family_name": "Nambiar",
+        "people_count": 2,
+        "vulnerable_members": [
+          "elderly",
+          "infant"
+        ],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 1,
+        "location_name": "Nambiar Residence, near River Crossing Point",
+        "latitude": 11.554387,
+        "longitude": 76.138976
+      },
+      {
+        "household_id": "INC-100-HH2",
+        "family_name": "Kumar",
+        "people_count": 3,
+        "vulnerable_members": [],
+        "has_medical_emergency": false,
+        "medical_emergency_details": null,
+        "floor": 3,
+        "location_name": "Kumar Residence, near River Crossing Point",
+        "latitude": 11.555322,
+        "longitude": 76.139743
+      }
+    ],
+    "is_active": true
+  }
+]
