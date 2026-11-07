@@ -1,0 +1,303 @@
+# Project Plan
+
+This file is the persistent source of truth for project progress. It
+survives across conversations and context resets. Conversation history is
+not a record of project state — this file is. Update it after every
+completed task, not at the end of a session.
+
+## Goal
+
+Build Raahat 2.0: an uncertainty-aware, offline-resilient multichannel disaster
+intelligence and rescue coordination platform. "Done" means satisfying all 25
+acceptance criteria in `RAAHAT_SPEC.md` §14:
+1. Multichannel report ingestion (IVR, SMS, Web SOS, offline volunteer app, radio console gateway) behind a unified contract.
+2. Distinct Report, Evidence, Household, Person, and Incident entities with PostGIS persistence and transactional outbox.
+3. Active landmark disambiguation under geographic uncertainty.
+4. Conservative, reversible entity resolution and conflict-aware evidence graph.
+5. Deterministic, explainable safety triage preserving unknown fields.
+6. Human-authorized rescue dispatch workflow with immutable audit logging.
+7. Reproducible evaluation on RaahatBench benchmark and Docker Compose deployment stack.
+
+## Current Phase
+
+Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
+
+## Status
+
+- [ ] Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
+  - [x] 1.1 Repository & Workspace Foundation
+  - [ ] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
+  - [ ] 1.3 Core Domain Entities & Value Objects
+  - [ ] 1.4 Transactional Outbox & Background Worker Runtime
+  - [ ] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
+  - [ ] 1.6 IVR Pipeline Adapter Integration
+- [ ] Phase 2 — Geospatial Intelligence & Offline Field Resilience
+  - [ ] 2.1 PostGIS Landmark Index & Candidate Matcher
+  - [ ] 2.2 Active Clarification & Question Selection Engine
+  - [ ] 2.3 Location Verification API & Hypotheses History
+  - [ ] 2.4 Offline Field Client Storage & Protocol (SQLite)
+  - [ ] 2.5 Idempotent Synchronization Endpoint & Sync Worker
+- [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
+  - [ ] 3.1 Evidence Provenance Graph & Contradiction Detection
+  - [ ] 3.2 Conservative Entity Resolution & Incident Matcher
+  - [ ] 3.3 Human Verification & Reversible Incident Linking Workflow
+  - [ ] 3.4 Fact Extraction & Deterministic Safety Triage Policy
+- [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
+  - [ ] 4.1 Resource Registry & Availability Management
+  - [ ] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
+  - [ ] 4.3 Tamper-Evident Append-Only Audit Logging
+  - [ ] 4.4 Live Event Streaming (SSE / WebSocket)
+  - [ ] 4.5 Speech Recognizer & Telephony Callback Boundaries
+  - [ ] 4.6 Operator Console Web Application
+- [ ] Phase 5 — Resilience, RaahatBench Evaluation & Deployment
+  - [ ] 5.1 Fault Injection & Chaos Recovery Scenarios
+  - [ ] 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
+  - [ ] 5.3 Ablation Studies & Research Evaluation Runner
+  - [ ] 5.4 Docker Compose Stack & Infrastructure Scaffolding
+  - [ ] 5.5 Observability Dashboards, Runbook & Limitations Documentation
+
+---
+
+## Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
+
+### 1.1 Repository & Workspace Foundation
+- Objective: Initialize `src/raahat` layout, configure `pyproject.toml` (FastAPI, Pydantic, SQLAlchemy, psycopg, pytest, ruff, mypy), audit and import slice-1 location math & synthetic gazetteer from `/mnt/data/projects/raahat-repo` into `src/raahat/domain/geospatial/`, and verify 13 unit tests pass in new layout.
+- Inputs: `/mnt/data/projects/raahat-repo`, `RAAHAT_SPEC.md`.
+- Output: Standardized Python package structure, passing geospatial unit tests, linters and typecheckers configured.
+- Depends on: None.
+
+### 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
+- Objective: Create PostgreSQL/PostGIS database models and initial Alembic migrations for core tables (`disasters`, `reports`, `households`, `persons`, `incidents`, `evidence_items`, `evidence_spans`, `incident_reports`, `location_hypotheses`, `resources`, `assignments`, `operation_events`, `outbox_events`, `audit_events`, `sync_cursors`, `entity_merge_events`).
+- Inputs: Schema definitions from `RAAHAT_SPEC.md` §4.
+- Output: Working Alembic migration scripts, SQLAlchemy declarative models, test database setup.
+- Constraints: PostGIS spatial indexes (`GIST`), check constraints for probabilities `[0,1]`, UUID primary keys.
+- Depends on: 1.1.
+
+### 1.3 Core Domain Entities & Value Objects
+- Objective: Implement immutable domain entities, value objects, and status enums for `Report`, `EvidenceItem`, `EvidenceSpan`, `Household`, `Person`, `Incident`, `LocationHypothesis`, and `PriorityAssessment` in pure Python.
+- Inputs: Entity contracts from `RAAHAT_SPEC.md` §4 and `ARCHITECTURE.md`.
+- Output: Pure domain classes in `src/raahat/domain/` with zero database or web framework dependencies.
+- Constraints: Immutability for event records; strict validation; no external vendor imports.
+- Depends on: 1.1.
+
+### 1.4 Transactional Outbox & Background Worker Runtime
+- Objective: Implement the transactional outbox pattern and a database-backed worker runner with row-level leasing (`FOR UPDATE SKIP LOCKED`), fencing tokens, and job lifecycle (`PENDING -> CLAIMED -> PROCESSING -> SUCCEEDED / RETRYABLE_FAILURE / DEAD_LETTER`).
+- Inputs: Outbox table schema from 1.2, domain events from 1.3.
+- Output: Outbox publisher protocol and DB-backed background worker loop in `src/raahat/workers/runner.py`.
+- Constraints: Short transactions; no open DB transactions during long-running tasks; worker lease expiration recovery.
+- Depends on: 1.2, 1.3.
+
+### 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
+- Objective: Build `ReportIngestionService` and REST endpoints `POST /api/v1/reports`, enforcing idempotency `(disaster_id, idempotency_key)`, atomic outbox publishing, and channel adapters for Web SOS, SMS, and Radio Console manual submissions.
+- Inputs: Outbox service from 1.4, report models from 1.3.
+- Output: Ingestion application service, API routes, and channel payload adapters.
+- Constraints: Ingestion must acknowledge only after durable PostgreSQL persistence; never directly mutate incidents from ingestion.
+- Depends on: 1.2, 1.3, 1.4.
+
+### 1.6 IVR Pipeline Adapter Integration
+- Objective: Adapt the voice call session (Silero VAD, speech transcription, keypad fallback, number read-back) to emit structured `ReportSubmission` records into `ReportIngestionService` rather than mutating incidents directly.
+- Inputs: Ingestion gateway from 1.5, speech contracts from `ARCHITECTURE.md`.
+- Output: IVR channel adapter in `src/raahat/adapters/channels/ivr/`.
+- Constraints: Preserve call session state and keypad/read-back fallbacks; call agent must never directly assign resources or merge incidents.
+- Depends on: 1.5.
+
+---
+
+## Phase 2 — Geospatial Intelligence & Offline Field Resilience
+
+### 2.1 PostGIS Landmark Index & Candidate Matcher
+- Objective: Implement PostGIS-backed landmark repository with spatial queries, trigram fuzzy matching (`pg_trgm`), and candidate location retrieval based on spoken/textual landmark descriptions.
+- Inputs: PostGIS gazetteer schema from 1.2.
+- Output: PostGIS landmark repository and candidate spatial query engine.
+- Constraints: Transliteration-tolerant fuzzy lookup; spatial bounding to disaster zone.
+- Depends on: 1.2, 1.3.
+
+### 2.2 Active Clarification & Question Selection Engine
+- Objective: Port and adapt the expected-confidence utility and belief distribution engine to select optimal follow-up disambiguation questions ("mandir ke samne ya peeche?") and produce candidate hypotheses with explicit uncertainty bounding.
+- Inputs: Geospatial math from 1.1, candidate matcher from 2.1.
+- Output: `LocationResolver` protocol implementation in `src/raahat/application/location/`.
+- Constraints: Explicitly set `probability: null` prior to model calibration; do not fabricate confidence; return clear candidate bounding.
+- Depends on: 1.1, 2.1.
+
+### 2.3 Location Verification API & Hypotheses History
+- Objective: Implement `POST /api/v1/incidents/{id}/location/verify` endpoint, preserving all historical candidate hypotheses while recording dispatcher confirmation decisions and generating audit events.
+- Inputs: Location engine from 2.2, API framework from 1.5.
+- Output: Location verification route and hypothesis history repository.
+- Constraints: Never erase earlier location hypotheses upon verification; require authenticated dispatcher identity.
+- Depends on: 2.2, 1.5.
+
+### 2.4 Offline Field Client Storage & Protocol (SQLite)
+- Objective: Implement the offline field app data layer (`field_app/`) with SQLite storage, monotonic device sequence numbering, UUID event IDs, `client_created_at`, and an outbound sync queue.
+- Inputs: Domain report models from 1.3.
+- Output: SQLite database schema and sync client queue in `field_app/`.
+- Constraints: Zero internet dependency for report entry; local atomic persistence; clean separation of `locally_saved` vs `server_synchronized` statuses.
+- Depends on: 1.3.
+
+### 2.5 Idempotent Synchronization Endpoint & Sync Worker
+- Objective: Build `POST /api/v1/devices/sync` endpoint and server-side sync processor to ingest batches of offline reports with device authentication, sequence tracking in `sync_cursors`, and duplicate suppression.
+- Inputs: Field app sync format from 2.4, Ingestion gateway from 1.5.
+- Output: Device sync API endpoint and background sync worker in `src/raahat/workers/sync_worker.py`.
+- Constraints: 100% idempotent handling of retransmitted batches; server receipt timestamps recorded distinctly from client event timestamps.
+- Depends on: 1.5, 2.4.
+
+---
+
+## Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
+
+### 3.1 Evidence Provenance Graph & Contradiction Detection
+- Objective: Implement domain services and repositories to decompose reports into `EvidenceItem` and `EvidenceSpan` records, track source provenance, and detect contradictory claims (e.g. water level rising vs receded, varying headcounts).
+- Inputs: Report models from 1.3, DB tables from 1.2.
+- Output: Evidence graph service and conflict detection module in `src/raahat/domain/evidence/`.
+- Constraints: Every evidence item must link back to its report and source text/audio span; contradictions must be flagged, never silently resolved.
+- Depends on: 1.3, 1.5.
+
+### 3.2 Conservative Entity Resolution & Incident Matcher
+- Objective: Implement `IncidentMatcher` evaluating candidate incidents for incoming reports based on spatial distance, household members, and contact numbers, using conservative thresholds that flag ambiguous merges for human review.
+- Inputs: Evidence graph from 3.1, candidate matcher from 2.1.
+- Output: Conservative incident matcher service in `src/raahat/application/incident_resolution/`.
+- Constraints: Conservative matching: false merges are worse than duplicates. Ambiguous merges must be sent to review queue; automated links must remain reversible.
+- Depends on: 2.1, 3.1.
+
+### 3.3 Human Verification & Reversible Incident Linking Workflow
+- Objective: Build `POST /api/v1/incidents/{id}/links` and `POST /api/v1/incidents/{id}/verify` endpoints, recording dispatcher merge approvals/rejections in `entity_merge_events` and supporting reversibility without data loss.
+- Inputs: Incident matcher from 3.2, API framework from 1.5.
+- Output: Incident verification routes and merge review service.
+- Constraints: Original household and report records are never deleted; every merge action records reviewer ID, timestamp, and justification; full unmerge capability.
+- Depends on: 3.2.
+
+### 3.4 Fact Extraction & Deterministic Safety Triage Policy
+- Objective: Implement decoupled fact extraction (`fact_extractor`) and deterministic safety triage policy (`priority_policy`) calculating priority (`critical_review`, `urgent`, `standard`, `low`) based on explicit rules while strictly preserving `unknown` fields.
+- Inputs: Evidence graph from 3.1.
+- Output: Pure policy module in `src/raahat/policies/triage.py` and triage application service.
+- Constraints: "Unknown never lowers priority" rule; missing fields remain explicitly `unknown`; no floating point arbitrary weights; full decision explanation list.
+- Depends on: 3.1.
+
+---
+
+## Phase 4 — Operations Control Room, Resource Dispatch & Telephony
+
+### 4.1 Resource Registry & Availability Management
+- Objective: Implement domain models, PostGIS repositories, and API endpoints (`GET /api/v1/resources`, `POST /api/v1/resources`) for rescue assets (boats, medical teams, vehicles, shelters) with status tracking (`available`, `assigned`, `maintenance`, `offline`).
+- Inputs: Database models from 1.2, domain entities from 1.3.
+- Output: Resource management service and API routes.
+- Constraints: Spatial indexing for resource coordinates; authenticated management.
+- Depends on: 1.2, 1.3.
+
+### 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
+- Objective: Implement rescue assignment and operation tracking (`POST /api/v1/incidents/{id}/assignments`, `POST /api/v1/operations/{id}/events`), enforcing human dispatcher approval and state transitions (`proposed -> approved -> acknowledged -> en_route -> on_scene -> rescued -> closed`).
+- Inputs: Resource registry from 4.1, triage assessments from 3.4.
+- Output: Operations application service and assignment API routes.
+- Constraints: Strict zero autonomous dispatch rule: assignment fails without valid dispatcher authentication; audit event emitted on every transition.
+- Depends on: 4.1, 3.4.
+
+### 4.3 Tamper-Evident Append-Only Audit Logging
+- Objective: Implement audit service writing to `audit_events` with SHA-256 cryptographic hash chaining (`prev_hash || event_payload -> current_hash`), tamper verification routine, and read-only inspection API.
+- Inputs: Database schema from 1.2.
+- Output: Audit repository and hash chain verification service in `src/raahat/infrastructure/audit/`.
+- Constraints: Append-only; no UPDATE or DELETE queries permitted on table; hash chain verification detects modified or omitted records.
+- Depends on: 1.2, 1.3.
+
+### 4.4 Live Event Streaming (SSE / WebSocket)
+- Objective: Implement `GET /api/v1/events/stream` providing real-time Server-Sent Events (SSE) to dispatcher consoles, streaming sanitized incident updates, new reports, and operational status changes published by the outbox.
+- Inputs: Outbox engine from 1.4, operations events from 4.2.
+- Output: Real-time event streaming route in `src/raahat/api/routes/events.py`.
+- Constraints: Non-blocking asynchronous streaming; connection disconnect handling; event filtering by disaster ID.
+- Depends on: 1.4, 4.2.
+
+### 4.5 Speech Recognizer & Telephony Callback Boundaries
+- Objective: Implement `SpeechRecognizer` protocol with Whisper-base local adapter, Gnani Prisma client adapter stub, Piper TTS adapter, and outbound callback scheduler behind a telephony provider interface.
+- Inputs: IVR requirements from 1.6, domain contracts from `ARCHITECTURE.md`.
+- Output: Speech and telephony infrastructure adapters in `src/raahat/infrastructure/speech/` and `src/raahat/infrastructure/telephony/`.
+- Constraints: Core logic isolated from provider SDKs; retry limits and consent checks on automated callbacks; no infinite redial loops.
+- Depends on: 1.3.
+
+### 4.6 Operator Console Web Application
+- Objective: Build the operator console frontend with four distinct workspaces: 1. Incoming Reports Feed, 2. Situation Map (MapLibre + OSM with distinct visual encoding for confirmed, candidate, approximate, stale, and contradictory locations), 3. Incident Investigation (transcripts, evidence spans, merge review), 4. Operations (resources, assignments, approvals).
+- Inputs: API routes from 1.5, 3.3, 4.2, and streaming from 4.4.
+- Output: Single-page web console in `operator_console/`.
+- Constraints: Critical UI safety rule: map markers must never display unverified candidate locations as confirmed rescue pins; explicit display of unknown fields and evidence provenance.
+- Depends on: 4.2, 4.4.
+
+---
+
+## Phase 5 — Resilience, RaahatBench Evaluation & Deployment
+
+### 5.1 Fault Injection & Chaos Recovery Scenarios
+- Objective: Implement automated fault injection test suite verifying system behavior during speech worker crashes, database disconnections, LLM unavailability, worker lease timeouts, duplicate sync attempts, and operator disconnects.
+- Inputs: Ingestion from 1.5, outbox worker from 1.4, sync worker from 2.5.
+- Output: Chaos test suite in `tests/fault_injection/`.
+- Constraints: Failures must be diagnosable; zero lost reports; expired leases must safely recover without duplicate processing.
+- Depends on: 1.4, 2.5, 4.2.
+
+### 5.2 RaahatBench Benchmark Dataset & Ground Truth Generator
+- Objective: Implement `evaluation/` generator creating the frozen 1,000 synthetic reports across 100 ground-truth incidents with specified distributions (direct, third-party, volunteer, radio; code-switching, noisy audio, ambiguous landmarks, contradictions).
+- Inputs: Benchmark specification from `RAAHAT_SPEC.md` §9.1.
+- Output: Deterministic dataset generator and frozen dataset files in `evaluation/datasets/`.
+- Constraints: Fully deterministic generation via seeds; immutable ground-truth references for each incident, household, and coordinate.
+- Depends on: 1.3, 3.1.
+
+### 5.3 Ablation Studies & Research Evaluation Runner
+- Objective: Implement benchmark runner executing Configurations A (conventional baseline) through E (Full Raahat) against frozen RaahatBench; calculate Top-1/Top-3 candidate accuracy, MAE (m), B-cubed F1, false merge rate, high-severity recall, and under-triage rate.
+- Inputs: Benchmark dataset from 5.2, baseline and upgraded pipelines.
+- Output: Evaluation runner and automated report generator in `evaluation/runner.py`.
+- Constraints: Paired bootstrap 95% confidence intervals; honest reporting of limitations and failures.
+- Depends on: 5.2, 2.2, 3.2, 3.4.
+
+### 5.4 Docker Compose Stack & Infrastructure Scaffolding
+- Objective: Create production-grade Docker Compose environment (`compose.yaml`, `Dockerfile`) deploying Nginx reverse proxy, FastAPI API service, Background Worker service, PostgreSQL 16 + PostGIS, Prometheus, and Grafana with volume persistence and health checks.
+- Inputs: API service, worker runner, database migrations, console frontend.
+- Output: Validated Compose stack and build files in project root and `deployment/`.
+- Constraints: Non-root container execution; health and readiness checks; persistent volume survival across restarts; no exposed internal database ports.
+- Depends on: 1.2, 1.4, 1.5, 4.6.
+
+### 5.5 Observability Dashboards, Runbook & Limitations Documentation
+- Objective: Configure Prometheus scraping and Grafana dashboards for report throughput, processing latencies, worker queue lag, and sync metrics; author operational runbook, security documentation, and explicit limitations report.
+- Inputs: Prometheus metrics from services, deployment stack from 5.4.
+- Output: Dashboard configs, operational runbook, security architecture doc, and `docs/limitations.md`.
+- Constraints: Honest documentation of limitations (synthetic dataset, single-instance scaling boundaries, speech recognizer requirements).
+- Depends on: 5.4, 5.3.
+
+---
+
+## Current Task
+
+**Task ID:** 1.2
+
+**Goal:** Create PostgreSQL/PostGIS database models, repositories, and initial Alembic migrations for core tables (`disasters`, `reports`, `households`, `persons`, `incidents`, `evidence_items`, `evidence_spans`, `incident_reports`, `location_hypotheses`, `resources`, `assignments`, `operation_events`, `outbox_events`, `audit_events`, `sync_cursors`, `entity_merge_events`).
+
+**Inputs:** Schema definitions from `RAAHAT_SPEC.md` §4 and `ARCHITECTURE.md`.
+
+**Output:** SQLAlchemy declarative models under `src/raahat/infrastructure/database/models/`, Alembic migrations in `src/raahat/infrastructure/database/migrations/`, and migration tests in `tests/integration/test_migrations.py`.
+
+**Constraints:** PostGIS spatial indexes (`GIST`), check constraints for probabilities `[0,1]`, UUID primary keys, separate `client_created_at` from `received_at`.
+
+**Verification:** Run Alembic migration upgrade against PostgreSQL test database and verify table creation, foreign keys, spatial indices, and check constraints.
+
+**Depends on:** 1.1
+
+---
+
+## Next Task
+
+**Task ID:** 1.3 — Core Domain Entities & Value Objects.
+
+---
+
+## Constraints
+
+- Target language: Python 3.10+.
+- Authoritative transactional store: PostgreSQL + PostGIS. No Kafka, NATS, Kubernetes, or microservices for MVP.
+- All AI/automated operations are decision-support only; dispatch and resource allocation strictly require authenticated human approval.
+- Speech and geocoding implementations must sit behind abstract protocols (`SpeechRecognizer`, `LocationResolver`).
+- Explicit uncertainty preservation: unverified information remains `unknown`, candidate locations carry uncertainty bounds, and probabilities are never manufactured without statistical calibration.
+- All mutating actions produce append-only, tamper-evident audit logs.
+
+---
+
+## Log
+
+### 2026-11-07 — Task 1.1 complete
+- Changed: Initialized git repository, configured `pyproject.toml` with packaging, test, ruff, and mypy settings; established full `src/raahat/` and `tests/` directory tree; migrated slice-1 location math and synthetic gazetteer from `raahat-repo` into `src/raahat/domain/geospatial/`; created `tests/unit/geospatial/test_core.py`.
+- Files: `pyproject.toml`, `.gitignore`, `src/raahat/domain/geospatial/*`, `tests/unit/geospatial/test_core.py`, `LESSONS.md`.
+- Verified: All 13 unit tests passed in pytest (`PYTHONPATH="" pytest tests/unit/geospatial`), `ruff check .` passed with 0 errors, `mypy src/raahat tests/unit/geospatial` passed cleanly across 45 source files.
+- Limitations: Slice-1 gazetteer is currently synthetic grid-based; real PostGIS landmark indexing comes in Phase 2.
