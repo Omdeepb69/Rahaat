@@ -25,6 +25,7 @@ from .location_hypothesis import (
     LocationHypothesisRepository,
     PostgresLocationHypothesisRepository,
 )
+from .resource import PostgresResourceRepository
 
 __all__ = [
     "AuditRepository",
@@ -39,6 +40,7 @@ __all__ = [
     "PostgresEvidenceRepository",
     "PostgresLandmarkRepository",
     "PostgresLocationHypothesisRepository",
+    "PostgresResourceRepository",
     "compute_audit_hash",
     "evidence_item_to_model",
     "model_to_evidence_item",

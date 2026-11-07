@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Handling Both WKTElement and WKBElement in PostGIS Deserialization Routines
+- What happened: GeoAlchemy2's `WKTElement` stores spatial text in its `.data` attribute as `str`, while `WKBElement` stores binary representation in `.data` as `bytes`. Assuming `.data` is always raw EWKB bytes caused `bytes(str)` to raise `TypeError: string argument without an encoding` when reading back an entity immediately after flush.
+- Takeaway: Check `isinstance(raw_data.data, str)` first; if true and contains `"POINT"`, parse directly via WKT rather than coercing to bytes. Only unpack binary EWKB if `.data` is already `bytes`.
+- Applies to: GeoAlchemy2 / PostGIS model repositories and geometry parsing helpers.
+
 ## Explicit Type Imports for Pydantic v2 Models with Future Annotations
 - What happened: Under `from __future__ import annotations`, omitting runtime imports for types used in Pydantic models (such as `datetime` or `typing.Any`) passed module loading but raised `PydanticUserError: class is not fully defined; you should define X, then call Model.model_rebuild()` when FastAPI generated OpenAPI route response schemas.
 - Takeaway: Even with postponed annotation evaluation, Pydantic v2 evaluates type hints at schema generation time using the declaring module's global namespace; every type referenced in request/response models must be explicitly imported in that file.

@@ -9,6 +9,7 @@ if TYPE_CHECKING:
         IncidentResolutionService,
         IncidentReviewService,
     )
+    from raahat.application.resources import ResourceService
     from raahat.application.triage import IncidentTriageService
     from raahat.domain.evidence import EvidenceGraphService
 
@@ -121,6 +122,23 @@ def get_incident_triage_service(
     audit_repo = PostgresAuditRepository(session_factory)
     return IncidentTriageService(
         evidence_repo=evidence_repo,
+        audit_repo=audit_repo,
+        session_factory=session_factory,
+    )
+
+
+def get_resource_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> ResourceService:
+    """Provide ResourceService instance."""
+    from raahat.application.resources import ResourceService
+    from raahat.infrastructure.database.repositories.audit import PostgresAuditRepository
+    from raahat.infrastructure.database.repositories.resource import PostgresResourceRepository
+
+    resource_repo = PostgresResourceRepository(session_factory)
+    audit_repo = PostgresAuditRepository(session_factory)
+    return ResourceService(
+        resource_repo=resource_repo,
         audit_repo=audit_repo,
         session_factory=session_factory,
     )

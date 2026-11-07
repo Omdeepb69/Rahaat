@@ -43,7 +43,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.3 Human Verification & Reversible Incident Linking Workflow
   - [x] 3.4 Fact Extraction & Deterministic Safety Triage Policy
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
-  - [ ] 4.1 Resource Registry & Availability Management
+  - [x] 4.1 Resource Registry & Availability Management
   - [ ] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
   - [ ] 4.3 Tamper-Evident Append-Only Audit Logging
   - [ ] 4.4 Live Event Streaming (SSE / WebSocket)
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 4.1 — Resource Registry & Availability Management
+**Task ID:** 4.2 — Human-Approved Rescue Assignment & Operation Lifecycle
 
-**Goal:** Implement domain models, PostGIS repositories, and API endpoints (`GET /api/v1/resources`, `POST /api/v1/resources`) for rescue assets (boats, medical teams, vehicles, shelters) with status tracking (`available`, `assigned`, `maintenance`, `offline`).
+**Goal:** Implement rescue assignment and operation tracking (`POST /api/v1/incidents/{id}/assignments`, `POST /api/v1/operations/{id}/events`), enforcing human dispatcher approval and state transitions (`proposed -> approved -> acknowledged -> en_route -> on_scene -> rescued -> closed`).
 
-**Inputs:** Database models from 1.2, domain entities from 1.3.
+**Inputs:** Resource registry from 4.1, triage assessments from 3.4.
 
-**Output:** Resource management service and API routes in `src/raahat/application/resources/` (or `operations/`) and `src/raahat/api/routes/resources.py`.
+**Output:** Operations application service and assignment API routes in `src/raahat/application/dispatch/` and `src/raahat/api/routes/operations.py`.
 
-**Constraints:** Spatial indexing for resource coordinates; authenticated management.
+**Constraints:** Strict zero autonomous dispatch rule: assignment fails without valid dispatcher authentication; audit event emitted on every transition.
 
-**Verification:** Unit and integration tests for resource creation, spatial query, status transition, and API endpoint authorization; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests for assignment creation, dispatcher authorization, state machine transitions, and outbox/audit event generation; `mypy` and `ruff` clean.
 
-**Depends on:** 1.2, 1.3.
+**Depends on:** 4.1, 3.4.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.2 — Human-Approved Rescue Assignment & Operation Lifecycle
+**Task ID:** 4.3 — Tamper-Evident Append-Only Audit Logging
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 4.1 complete
+- Changed: Implemented resource registry, PostGIS spatial queries, and availability management. Defined `ResourceRepository` protocol and `InMemoryResourceRepository` with spatial distance scoring in `src/raahat/domain/resources/repository.py`; re-exported domain models in `src/raahat/domain/resources/__init__.py`; implemented `PostgresResourceRepository` with PostGIS `ST_DWithin` and `ST_Distance` indexing in `src/raahat/infrastructure/database/repositories/resource.py`; updated WKB parser in `location_hypothesis.py` to handle both `WKTElement` and `WKBElement`; implemented `ResourceService` in `src/raahat/application/resources/service.py` with registration, spatial proximity lookups, status transitions, and SHA-256 chained audit events (`resource.registered`, `resource.status_updated`); wired `get_resource_service` in `src/raahat/api/dependencies.py`; added resource REST endpoints (`POST /resources`, `GET /resources`, `GET /resources/{id}`, `PATCH /resources/{id}/status`) in `src/raahat/api/routes/resources.py`; registered `resources_router` in `src/raahat/api/app.py`.
+- Files: `src/raahat/domain/resources/repository.py` (new), `src/raahat/domain/resources/__init__.py` (updated), `src/raahat/infrastructure/database/repositories/resource.py` (new), `src/raahat/infrastructure/database/repositories/__init__.py` (updated), `src/raahat/infrastructure/database/repositories/location_hypothesis.py` (updated), `src/raahat/application/resources/service.py` (new), `src/raahat/application/resources/__init__.py` (new), `src/raahat/api/routes/resources.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/api/app.py` (updated), `tests/unit/application/test_resource_service.py` (new), `tests/integration/test_resources_api.py` (new).
+- Verified: 319 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 309 prior + 10 new: 5 unit tests in `test_resource_service.py` + 5 integration tests in `test_resources_api.py` validating registration, spatial search within radius, status update, and auth enforcement); `mypy src/raahat field_app tests` — 0 errors across 181 source files; `ruff check .` — 0 errors.
+- Limitations: Resource assignment lifecycle (`proposed -> approved -> acknowledged`) and dispatch workflows will be implemented in Task 4.2.
 
 ### 2026-11-07 — Task 3.4 complete
 - Changed: Implemented decoupled fact extraction (`EvidenceGraphFactExtractor`) and deterministic safety triage policy (`DeterministicSafetyPriorityPolicy`). Defined `SeverityFacts` domain model with explicit uncertainty preservation in `src/raahat/domain/triage/facts.py` (critical unknown fields automatically tracked, never coerced to negative observations); implemented `PriorityPolicy` protocol and `DeterministicSafetyPriorityPolicy` with zero arbitrary floating-point weights, explicit rule hierarchy (critical review, urgent, standard, low), full decision explanation lists, and strict enforcement of the "Unknown never lowers priority" rule in `src/raahat/policies/triage.py`; implemented `FactExtractor` protocol in `src/raahat/application/triage/protocol.py` and `EvidenceGraphFactExtractor` in `src/raahat/application/triage/extractor.py` aggregating observations and preserving contradictions; implemented `IncidentTriageService` in `src/raahat/application/triage/service.py` orchestrating evidence aggregation, policy assessment, incident update, and SHA-256 chained audit logging; wired `get_incident_triage_service` in `src/raahat/api/dependencies.py` and added `POST /api/v1/incidents/{incident_id}/triage` in `src/raahat/api/routes/incidents.py`.

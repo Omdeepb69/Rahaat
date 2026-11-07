@@ -21,7 +21,12 @@ def parse_wkb_point(raw_data: Any) -> PointCoordinates:
             return PointCoordinates.from_wkt(raw_data)
         raw = binascii.unhexlify(raw_data.strip())
     elif hasattr(raw_data, "data"):
-        raw = bytes(raw_data.data)
+        if isinstance(raw_data.data, str):
+            if "POINT" in raw_data.data.upper():
+                return PointCoordinates.from_wkt(raw_data.data)
+            raw = binascii.unhexlify(raw_data.data.strip())
+        else:
+            raw = bytes(raw_data.data)
     elif isinstance(raw_data, (bytes, memoryview)):
         raw = bytes(raw_data)
     else:
