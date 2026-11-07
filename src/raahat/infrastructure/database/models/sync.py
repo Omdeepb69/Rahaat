@@ -27,3 +27,4 @@ class SyncCursorModel(Base, UUIDPrimaryKeyMixin):
         nullable=False,
     )
     sync_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+

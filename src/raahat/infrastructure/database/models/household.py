@@ -50,3 +50,4 @@ class PersonModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     household = relationship("HouseholdModel", back_populates="persons")
+

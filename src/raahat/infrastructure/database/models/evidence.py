@@ -52,3 +52,4 @@ class EvidenceSpanModel(Base, UUIDPrimaryKeyMixin):
     source_reference: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
 
     evidence_item = relationship("EvidenceItemModel", back_populates="spans")
+

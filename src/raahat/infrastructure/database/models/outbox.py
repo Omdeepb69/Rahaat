@@ -33,3 +33,4 @@ class OutboxEventModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+

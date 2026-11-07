@@ -54,3 +54,4 @@ class OperationEventModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     assignment = relationship("AssignmentModel", back_populates="events")
     incident = relationship("IncidentModel")
+

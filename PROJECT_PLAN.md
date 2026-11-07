@@ -27,7 +27,7 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 - [ ] Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
   - [x] 1.1 Repository & Workspace Foundation
   - [x] 1.2 Database Schema & Migration Foundation (PostgreSQL + PostGIS)
-  - [ ] 1.3 Core Domain Entities & Value Objects
+  - [x] 1.3 Core Domain Entities & Value Objects
   - [ ] 1.4 Transactional Outbox & Background Worker Runtime
   - [ ] 1.5 Ingestion Gateway & Multi-Channel Ingestion Adapters
   - [ ] 1.6 IVR Pipeline Adapter Integration
@@ -261,19 +261,19 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 
 ## Current Task
 
-**Task ID:** 1.3
+**Task ID:** 1.4
 
-**Goal:** Implement immutable domain entities, value objects, and status enums for `Report`, `EvidenceItem`, `EvidenceSpan`, `Household`, `Person`, `Incident`, `LocationHypothesis`, and `PriorityAssessment` in pure Python.
+**Goal:** Implement the transactional outbox pattern and a database-backed background worker runner with row-level leasing (`FOR UPDATE SKIP LOCKED`), fencing tokens, and job lifecycle (`PENDING → CLAIMED → PROCESSING → SUCCEEDED / RETRYABLE_FAILURE / DEAD_LETTER`).
 
-**Inputs:** Entity contracts from `RAAHAT_SPEC.md` §4 and `ARCHITECTURE.md`.
+**Inputs:** Outbox table schema (`outbox_events`) from 1.2, domain events from 1.3.
 
-**Output:** Pure domain classes in `src/raahat/domain/` with zero database or web framework dependencies, complete type safety, validation rules, and comprehensive unit tests in `tests/unit/domain/`.
+**Output:** Outbox publisher protocol and DB-backed background worker loop in `src/raahat/workers/runner.py`.
 
-**Constraints:** Immutability for event records; strict validation; zero vendor/framework imports in `src/raahat/domain/`.
+**Constraints:** Short transactions; no open DB transactions during long-running tasks; worker lease expiration recovery; deterministic dead-letter promotion after configurable retry limit.
 
-**Verification:** Unit tests in `tests/unit/domain/` verifying domain entity creation, immutability, invalid state rejection, and serialization/deserialization; `mypy` and `ruff` pass cleanly.
+**Verification:** Unit tests verifying lease claiming, fencing, dead-letter promotion, and idempotent lease recovery; `mypy` and `ruff` pass cleanly.
 
-**Depends on:** 1.1
+**Depends on:** 1.2, 1.3
 
 ---
 
@@ -295,6 +295,12 @@ Phase 1 — Repository Baseline, Core Domain Models & Ingestion Pipeline
 ---
 
 ## Log
+
+### 2026-11-07 — Task 1.3 complete
+- Changed: Implemented all core domain entities and value objects as frozen Pydantic v2 models with zero database/framework dependencies: `PointCoordinates` (with Haversine `distance_to`, WKT round-trip), `Report`/`ReportSubmission` (with idempotency key derivation), `EvidenceItem`/`EvidenceSpan`, `Household`/`Person`, `Incident`/`IncidentLink`/`IncidentReportLink`, `LocationHypothesis`, `PriorityAssessment`, and `Resource`/`Assignment`/`OperationEvent` in `src/raahat/domain/operations/`.
+- Files: `src/raahat/domain/shared/enums.py`, `src/raahat/domain/shared/coordinates.py`, `src/raahat/domain/shared/__init__.py`, `src/raahat/domain/reports/report.py`, `src/raahat/domain/reports/__init__.py`, `src/raahat/domain/evidence/evidence.py`, `src/raahat/domain/evidence/__init__.py`, `src/raahat/domain/households/household.py`, `src/raahat/domain/households/__init__.py`, `src/raahat/domain/incidents/incident.py`, `src/raahat/domain/incidents/__init__.py`, `src/raahat/domain/geospatial/location_hypothesis.py`, `src/raahat/domain/geospatial/__init__.py`, `src/raahat/domain/triage/assessment.py`, `src/raahat/domain/triage/__init__.py`, `src/raahat/domain/operations/operation.py`, `src/raahat/domain/operations/__init__.py`, `tests/unit/domain/test_entities.py`.
+- Verified: 77 unit tests pass (`PYTHONPATH="" pytest tests/unit/`; 64 new domain entity tests + 13 prior geospatial tests); `mypy src/raahat tests` — 0 errors across 82 source files; `ruff check .` — 0 errors.
+- Limitations: `src/raahat/domain/resources/__init__.py` is an empty stub (resource domain is covered by `operations/`); can be removed or consolidated in a future cleanup task.
 
 ### 2026-11-07 — Task 1.2 complete
 - Changed: Implemented complete SQLAlchemy 2.0 declarative models and Alembic migrations for all 17 core Raahat 2.0 tables with PostGIS geography/geometry types, GIST indexes, and check constraints (`[0, 1]` ranges for probability and confidence, unique idempotency keys per disaster); set up engine/session factory in `src/raahat/infrastructure/database/session.py`; created integration test suite `tests/integration/test_migrations.py`.
