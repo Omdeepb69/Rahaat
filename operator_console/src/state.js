@@ -7,6 +7,7 @@ export class ConsoleState {
     this.activeWorkspace = "reports";
     this.selectedIncidentId = null;
     this.selectedReportId = null;
+    this.activeDisasterId = null;
     this.reports = [];
     this.incidents = [];
     this.resources = [];
@@ -30,6 +31,11 @@ export class ConsoleState {
   setWorkspace(workspace) {
     this.activeWorkspace = workspace;
     this.emit("workspace_changed", workspace);
+  }
+
+  setActiveDisaster(disasterId) {
+    this.activeDisasterId = disasterId;
+    this.emit("disaster_changed", disasterId);
   }
 
   setReports(reports) {

@@ -6,12 +6,22 @@
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border-color: #475569;
-  
+
   --priority-critical: #ef4444;
   --priority-urgent: #f97316;
   --priority-standard: #3b82f6;
   --priority-low: #64748b;
-  
+
+  /* P0–P3 priority level colours */
+  --p0-color: #ef4444;
+  --p0-bg: rgba(239, 68, 68, 0.15);
+  --p1-color: #f97316;
+  --p1-bg: rgba(249, 115, 22, 0.15);
+  --p2-color: #eab308;
+  --p2-bg: rgba(234, 179, 8, 0.12);
+  --p3-color: #3b82f6;
+  --p3-bg: rgba(59, 130, 246, 0.1);
+
   --status-confirmed: #10b981;
   --status-candidate: #f59e0b;
   --status-approximate: #8b5cf6;
@@ -399,4 +409,76 @@ main.console-body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* ── Priority-Level Visual Encoding (P0–P3) ── */
+
+/* Feed items coloured by triage priority */
+.feed-item.priority-p0 { border-left-color: var(--p0-color); background-color: rgba(239,68,68,0.06); }
+.feed-item.priority-p1 { border-left-color: var(--p1-color); background-color: rgba(249,115,22,0.05); }
+.feed-item.priority-p2 { border-left-color: var(--p2-color); }
+.feed-item.priority-p3 { border-left-color: var(--p3-color); }
+
+/* Priority level badges */
+.priority-p0 > .priority-label,
+span.priority-p0 {
+  color: var(--p0-color);
+  font-weight: 800;
+}
+span.priority-p1 { color: var(--p1-color); font-weight: 700; }
+span.priority-p2 { color: var(--p2-color); font-weight: 700; }
+span.priority-p3 { color: var(--p3-color); font-weight: 600; }
+
+.badge-p0 { background: var(--p0-bg); border: 1px solid var(--p0-color); color: #fca5a5; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.04em; }
+.badge-p1 { background: var(--p1-bg); border: 1px solid var(--p1-color); color: #fdba74; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; }
+.badge-p2 { background: var(--p2-bg); border: 1px solid var(--p2-color); color: #fde047; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; }
+.badge-p3 { background: var(--p3-bg); border: 1px solid var(--p3-color); color: #93c5fd; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; }
+
+/* P0 Critical pulse animation — draws eye to mass-casualty events */
+@keyframes pulse-critical {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  50%  { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.pulse-critical {
+  animation: pulse-critical 1.4s ease-in-out infinite;
+  border-color: var(--p0-color) !important;
+}
+
+/* ── Disaster Switcher ── */
+.disaster-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.disaster-switcher label {
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.disaster-select {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  min-width: 160px;
+  cursor: pointer;
+}
+
+.disaster-select:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 1px;
+}
+
+/* ── Responsive layout tweaks ── */
+@media (max-width: 900px) {
+  .panel-grid { grid-template-columns: 1fr; }
+  nav.workspace-tabs .tab-btn span { display: none; }
+  .disaster-switcher { display: none; }
 }

@@ -7,6 +7,9 @@
   <link rel="icon" type="image/svg+xml" href="/console/favicon.svg">
   <link rel="stylesheet" href="/console/css/console.css">
   <link rel="stylesheet" href="/console/css/map.css">
+  <!-- Leaflet for interactive situation map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
 <body>
   <!-- Top Navigation & Control Bar -->
@@ -36,6 +39,14 @@
         <span>04</span> Operations & Dispatch
       </button>
     </nav>
+
+    <!-- Active Disaster Context Switcher -->
+    <div class="disaster-switcher" id="disaster-switcher">
+      <label for="disaster-select">DISASTER:</label>
+      <select class="disaster-select" id="disaster-select" title="Switch active disaster context">
+        <option value="">Loading disasters...</option>
+      </select>
+    </div>
 
     <!-- System & Dispatcher Status -->
     <div class="system-status">
@@ -208,6 +219,8 @@
   </div>
 
   <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
   <script type="module" src="/console/src/app.js"></script>
 </body>
 </html>

@@ -2,6 +2,15 @@
  * Workspace 1: Incoming Reports Feed component.
  */
 
+/** Map channel names to emoji icons for quick visual scanning. */
+const CHANNEL_ICON = {
+  ivr: "📞",
+  sms: "💬",
+  web_sos: "🌐",
+  volunteer: "🙋",
+  radio: "📻",
+};
+
 export function initReportsFeed(api, state) {
   const container = document.getElementById("reports-feed-container");
   const searchInput = document.getElementById("report-search");
@@ -44,21 +53,26 @@ export function initReportsFeed(api, state) {
         const payload = r.raw_payload || {};
         const textPreview = payload.text || payload.transcript || payload.message || "No text transcript recorded";
         const channel = r.source_type || "web_sos";
+        const icon = CHANNEL_ICON[channel] || "📡";
         const time = new Date(r.received_at || r.created_at).toLocaleTimeString();
+        const processingStatus = r.processing_status || "pending";
+        const statusColor = processingStatus === "extracted" || processingStatus === "processed"
+          ? "var(--status-confirmed)" : processingStatus === "failed" ? "var(--priority-critical)" : "var(--text-muted)";
 
         return `
           <div class="feed-item" data-id="${r.id}" data-channel="${channel}">
             <div class="item-meta">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="channel-tag ${channel}">${channel.replace("_", " ")}</span>
-                <strong style="color: #cbd5e1;">${r.source_identity || "Unknown Source"}</strong>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="channel-tag ${channel}">${icon} ${channel.replace("_", " ")}</span>
+                <strong style="color:#cbd5e1;">${r.source_identity || "Unknown Source"}</strong>
               </div>
-              <span>${time}</span>
+              <span style="font-size:0.75rem;color:var(--text-muted);">${time}</span>
             </div>
-            <p style="font-size: 0.85rem; color: #f1f5f9; line-height: 1.4;">${escapeHtml(textPreview)}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.3rem;">
-              <span style="font-size: 0.75rem; color: var(--text-muted);">Status: <strong>${r.processing_status || "pending"}</strong></span>
-              <button class="btn-primary btn-inspect-report" data-id="${r.id}" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">Inspect</button>
+            <p style="font-size:0.85rem;color:#f1f5f9;line-height:1.4;margin-top:0.3rem;">${escapeHtml(textPreview)}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;">
+              <span style="font-size:0.75rem;color:${statusColor};font-weight:600;">● ${processingStatus}</span>
+              <button class="btn-primary btn-inspect-report" data-id="${r.id}"
+                      style="font-size:0.75rem;padding:0.2rem 0.5rem;">Inspect</button>
             </div>
           </div>
         `;
@@ -89,8 +103,14 @@ export function initReportsFeed(api, state) {
   statusFilter.addEventListener("change", loadReports);
   searchInput.addEventListener("input", () => renderReports(state.reports));
 
-  state.on("report_added", (newReport) => {
+  state.on("report_added", () => {
     renderReports(state.reports);
+    // Flash the first newly-arrived item
+    const firstItem = container.querySelector(".feed-item");
+    if (firstItem) {
+      firstItem.classList.add("new-arrival");
+      firstItem.addEventListener("animationend", () => firstItem.classList.remove("new-arrival"), { once: true });
+    }
   });
 
   // Initial load

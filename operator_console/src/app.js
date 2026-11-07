@@ -73,13 +73,59 @@ document.addEventListener("DOMContentLoaded", () => {
     switchWorkspace(ws);
   });
 
-  // 3. Initialize Workspace Components
+  // 3. Active Disaster Switcher
+  // No /api/v1/disasters endpoint exists; we derive the disaster list by
+  // inspecting incident records (each carries a disaster_id) and deduplicate.
+  const disasterSelect = document.getElementById("disaster-select");
+
+  async function loadDisasterList() {
+    try {
+      const data = await api.fetchIncidents({ limit: 100 }).catch(() => ({ items: [] }));
+      const incidents = data.items || data || [];
+
+      // Collect unique disaster IDs from incidents
+      const seen = new Set();
+      const disasters = [];
+      incidents.forEach((inc) => {
+        if (inc.disaster_id && !seen.has(inc.disaster_id)) {
+          seen.add(inc.disaster_id);
+          disasters.push(inc.disaster_id);
+        }
+      });
+
+      if (disasters.length === 0) {
+        disasterSelect.innerHTML = `<option value="">No active disaster</option>`;
+        return;
+      }
+
+      disasterSelect.innerHTML = disasters
+        .map((id) => `<option value="${id}">${id.slice(0, 8)}…</option>`)
+        .join("");
+
+      // Default to first (most recent) disaster
+      state.setActiveDisaster(disasters[0]);
+    } catch {
+      disasterSelect.innerHTML = `<option value="">Disaster list unavailable</option>`;
+    }
+  }
+
+  disasterSelect.addEventListener("change", () => {
+    const id = disasterSelect.value;
+    if (id) {
+      state.setActiveDisaster(id);
+    }
+  });
+
+  // 4. Initialize Workspace Components
   initReportsFeed(api, state);
   initSituationMap(api, state);
   initInvestigation(api, state);
   initOperations(api, state);
 
-  // 4. Live Event Stream (SSE) Integration
+  // Load disaster list after components are wired up so disaster_changed fires into them
+  loadDisasterList();
+
+  // 5. Live Event Stream (SSE) Integration
   const streamIndicator = document.getElementById("stream-indicator");
   const streamText = document.getElementById("stream-text");
 
@@ -98,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         }
       },
-      (err) => {
+      () => {
         if (streamIndicator) streamIndicator.classList.add("disconnected");
         if (streamText) streamText.textContent = "POLLING";
       }
