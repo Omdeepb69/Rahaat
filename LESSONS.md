@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## Explicit Type Imports for Pydantic v2 Models with Future Annotations
+- What happened: Under `from __future__ import annotations`, omitting runtime imports for types used in Pydantic models (such as `datetime` or `typing.Any`) passed module loading but raised `PydanticUserError: class is not fully defined; you should define X, then call Model.model_rebuild()` when FastAPI generated OpenAPI route response schemas.
+- Takeaway: Even with postponed annotation evaluation, Pydantic v2 evaluates type hints at schema generation time using the declaring module's global namespace; every type referenced in request/response models must be explicitly imported in that file.
+- Applies to: FastAPI and Pydantic v2 codebases using `from __future__ import annotations`.
+
 ## Explicit Intermediate Flushing for Independent Foreign-Key Dependent Models
 - What happened: Inserting a new parent entity (`IncidentModel`) and a child link model (`IncidentLinkModel`) in the same session without an explicit ORM `relationship()` caused an `IntegrityError: ForeignKeyViolation` because SQLAlchemy's topological sort had no dependency edge to order the INSERTs.
 - Takeaway: When two SQLAlchemy models share a foreign key relationship that is not mapped by an explicit ORM `relationship()` property, call `session.flush()` immediately after adding the parent entity before adding child entities referencing its generated UUID.

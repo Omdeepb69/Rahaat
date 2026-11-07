@@ -37,11 +37,11 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 2.3 Location Verification API & Hypotheses History
   - [x] 2.4 Offline Field Client Storage & Protocol (SQLite)
   - [x] 2.5 Idempotent Synchronization Endpoint & Sync Worker
-- [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
+- [x] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.1 Evidence Provenance Graph & Contradiction Detection
   - [x] 3.2 Conservative Entity Resolution & Incident Matcher
   - [x] 3.3 Human Verification & Reversible Incident Linking Workflow
-  - [ ] 3.4 Fact Extraction & Deterministic Safety Triage Policy
+  - [x] 3.4 Fact Extraction & Deterministic Safety Triage Policy
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
   - [ ] 4.1 Resource Registry & Availability Management
   - [ ] 4.2 Human-Approved Rescue Assignment & Operation Lifecycle
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 3.4 — Fact Extraction & Deterministic Safety Triage Policy
+**Task ID:** 4.1 — Resource Registry & Availability Management
 
-**Goal:** Implement decoupled fact extraction (`fact_extractor`) and deterministic safety triage policy (`priority_policy`) calculating incident priority (`critical_review`, `urgent`, `standard`, `low`) based on explicit rules, strictly preserving `unknown` fields.
+**Goal:** Implement domain models, PostGIS repositories, and API endpoints (`GET /api/v1/resources`, `POST /api/v1/resources`) for rescue assets (boats, medical teams, vehicles, shelters) with status tracking (`available`, `assigned`, `maintenance`, `offline`).
 
-**Inputs:** Evidence graph from 3.1; incident domain models from 1.3.
+**Inputs:** Database models from 1.2, domain entities from 1.3.
 
-**Output:** Pure policy module in `src/raahat/policies/triage.py` and triage application service.
+**Output:** Resource management service and API routes in `src/raahat/application/resources/` (or `operations/`) and `src/raahat/api/routes/resources.py`.
 
-**Constraints:** "Unknown never lowers priority" rule; missing fields remain explicitly `unknown`; no floating-point arbitrary weights; full decision explanation list.
+**Constraints:** Spatial indexing for resource coordinates; authenticated management.
 
-**Verification:** Unit tests verifying priority calculation for all rule combinations, `unknown` field preservation, and decision explanation completeness; `mypy` and `ruff` clean.
+**Verification:** Unit and integration tests for resource creation, spatial query, status transition, and API endpoint authorization; `mypy` and `ruff` clean.
 
-**Depends on:** 3.1.
+**Depends on:** 1.2, 1.3.
 
 ---
 
 ## Next Task
 
-**Task ID:** 4.1 — Resource Registry & Availability Management (or the next sequenced task in Phase 3/4 as defined in the spec above).
+**Task ID:** 4.2 — Human-Approved Rescue Assignment & Operation Lifecycle
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 3.4 complete
+- Changed: Implemented decoupled fact extraction (`EvidenceGraphFactExtractor`) and deterministic safety triage policy (`DeterministicSafetyPriorityPolicy`). Defined `SeverityFacts` domain model with explicit uncertainty preservation in `src/raahat/domain/triage/facts.py` (critical unknown fields automatically tracked, never coerced to negative observations); implemented `PriorityPolicy` protocol and `DeterministicSafetyPriorityPolicy` with zero arbitrary floating-point weights, explicit rule hierarchy (critical review, urgent, standard, low), full decision explanation lists, and strict enforcement of the "Unknown never lowers priority" rule in `src/raahat/policies/triage.py`; implemented `FactExtractor` protocol in `src/raahat/application/triage/protocol.py` and `EvidenceGraphFactExtractor` in `src/raahat/application/triage/extractor.py` aggregating observations and preserving contradictions; implemented `IncidentTriageService` in `src/raahat/application/triage/service.py` orchestrating evidence aggregation, policy assessment, incident update, and SHA-256 chained audit logging; wired `get_incident_triage_service` in `src/raahat/api/dependencies.py` and added `POST /api/v1/incidents/{incident_id}/triage` in `src/raahat/api/routes/incidents.py`.
+- Files: `src/raahat/domain/triage/facts.py` (new), `src/raahat/domain/triage/__init__.py` (updated), `src/raahat/policies/triage.py` (new), `src/raahat/policies/__init__.py` (new), `src/raahat/application/triage/protocol.py` (new), `src/raahat/application/triage/extractor.py` (new), `src/raahat/application/triage/service.py` (new), `src/raahat/application/triage/__init__.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/api/routes/incidents.py` (updated), `tests/unit/policies/test_triage_policy.py` (new), `tests/unit/application/test_fact_extractor.py` (new), `tests/unit/application/test_incident_triage_service.py` (new), `tests/integration/test_incident_triage.py` (new).
+- Verified: 309 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 270 prior + 39 new: 26 triage policy unit tests + 6 fact extractor unit tests + 4 triage service unit tests + 3 integration tests); `mypy src/raahat field_app tests` — 0 errors across 174 source files; `ruff check .` — 0 errors.
+- Limitations: AI/LLM-based multi-lingual fact extraction from unstructured raw transcripts will be layered as a pluggable extractor in Phase 5 benchmark evaluations without modifying the deterministic policy boundary.
 
 ### 2026-11-07 — Task 3.3 complete
 - Changed: Implemented human verification and reversible incident linking workflow. Added `IncidentReviewService` with `verify_incident()`, `review_link()` (dispatching to `_approve_merge()`, `_reject_merge()`, `_relate_cluster()`, `_unmerge()`), `get_incident_detail()`, and `list_incident_links()` in `src/raahat/application/incident_resolution/review.py`. Added `InMemoryAuditRepository` to `src/raahat/infrastructure/database/repositories/audit.py`. Added six REST endpoints in `src/raahat/api/routes/incidents.py` (`POST /verify`, `POST /links`, `POST /unmerge`, `GET /`, `GET /{id}`, `GET /{id}/links`). Wired `get_incident_review_service` dependency. Merge approvals create `EntityMergeEventModel` and reassign source reports with `linked_by=f"merge:{event.id}"`; unmerge reverses by setting event `status="reversed"`, re-opening source incident, and removing added report links — original records are never deleted.

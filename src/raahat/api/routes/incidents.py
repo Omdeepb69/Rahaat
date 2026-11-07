@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
+from datetime import datetime
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,6 +11,7 @@ from sqlalchemy import select
 
 from raahat.api.dependencies import (
     get_incident_review_service,
+    get_incident_triage_service,
     get_session_factory,
     require_dispatcher_id,
 )
@@ -20,6 +22,7 @@ from raahat.application.incident_resolution import (
     LinkReviewAction,
     MergeActionResult,
 )
+from raahat.application.triage import IncidentTriageService
 from raahat.domain.incidents.incident import Incident, IncidentLink
 from raahat.domain.shared.enums import IncidentStatus, PriorityLevel
 from raahat.infrastructure.database.models.incident import IncidentModel
@@ -58,6 +61,20 @@ class UnmergeRequest(BaseModel):
     merge_event_id: Optional[uuid.UUID] = None
 
 
+class IncidentTriageResponse(BaseModel):
+    """Response payload for incident triage assessment."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    incident_id: uuid.UUID
+    operational_priority: PriorityLevel
+    reasons: tuple[str, ...]
+    unknown_fields: tuple[str, ...]
+    requires_human_review: bool
+    assessed_at: datetime
+    severity_facts: dict[str, Any]
+
+
 @router.post(
     "/{incident_id}/verify",
     response_model=IncidentVerificationResult,
@@ -80,6 +97,35 @@ def verify_incident(
             operational_priority=payload.operational_priority,
         )
     except KeyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/{incident_id}/triage",
+    response_model=IncidentTriageResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Evaluate deterministic safety triage policy for an incident",
+)
+def triage_incident(
+    incident_id: uuid.UUID,
+    service: IncidentTriageService = Depends(get_incident_triage_service),
+) -> IncidentTriageResponse:
+    """Extract evidence facts, run deterministic safety triage policy, update incident, and audit."""
+    try:
+        updated_incident, assessment = service.triage_incident(incident_id=incident_id)
+        return IncidentTriageResponse(
+            incident_id=updated_incident.id,
+            operational_priority=updated_incident.operational_priority,
+            reasons=assessment.reasons,
+            unknown_fields=assessment.unknown_fields,
+            requires_human_review=assessment.requires_human_review,
+            assessed_at=assessment.assessed_at,
+            severity_facts=dict(updated_incident.severity_facts),
+        )
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),

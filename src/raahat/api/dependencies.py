@@ -9,6 +9,7 @@ if TYPE_CHECKING:
         IncidentResolutionService,
         IncidentReviewService,
     )
+    from raahat.application.triage import IncidentTriageService
     from raahat.domain.evidence import EvidenceGraphService
 
 from fastapi import Depends, Header, HTTPException, status
@@ -106,6 +107,23 @@ def get_incident_review_service(
     from raahat.application.incident_resolution import IncidentReviewService
 
     return IncidentReviewService(session_factory=session_factory)
+
+
+def get_incident_triage_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> IncidentTriageService:
+    """Provide IncidentTriageService instance."""
+    from raahat.application.triage import IncidentTriageService
+    from raahat.infrastructure.database.repositories.audit import PostgresAuditRepository
+    from raahat.infrastructure.database.repositories.evidence import PostgresEvidenceRepository
+
+    evidence_repo = PostgresEvidenceRepository(session_factory)
+    audit_repo = PostgresAuditRepository(session_factory)
+    return IncidentTriageService(
+        evidence_repo=evidence_repo,
+        audit_repo=audit_repo,
+        session_factory=session_factory,
+    )
 
 
 def require_dispatcher_id(
