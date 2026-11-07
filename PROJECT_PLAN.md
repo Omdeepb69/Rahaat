@@ -58,7 +58,7 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 - [ ] Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
   - [x] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
-  - [ ] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
+  - [x] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
   - [ ] 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
   - [ ] 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
 
@@ -306,22 +306,20 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Current Task
 
-### Task 6.3: Modernized Operator Console UI & Real-Time Situational Awareness
-- **Objective**: Upgrade the Operator Console (`/console/`) into a modern tactical emergency command center. Implement a dark tactical theme with high-contrast priority indicators (P0 pulsing red, P1 amber, P2 yellow, P3 blue), enhanced Leaflet map with custom icons (incident types, rescue units, coverage circles, cluster badges), active disaster switcher, live SSE stream with visual pulse on critical reports, and rich drill-down inspection modal showing evidence provenance, deterministic triage rule breakdown, and 1-click resource dispatch selector.
-- **Inputs**: `operator_console/public/`, `operator_console/src/`.
-- **Output**: Modernized, reliable operator console web application.
-- **Constraints**: Pure ES6 modules without fragile bundling steps; zero uncaught JavaScript console errors; responsive layout for dispatch operations; all existing console integration tests must pass.
+### Task 6.4: Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
+- **Objective**: Build a scripted end-to-end demo runner that injects a synthetic flood-disaster audio SOS into the ingestion pipeline, traces it through extraction → triage → incident creation → resource assignment → dispatcher approval, and surfaces each step as a loggable narrative with timings. Additionally wire up a one-command demo launcher (`scripts/demo_run.py` or similar) that seeds the DB, starts the API, runs the pipeline, and prints a structured play-by-play suitable for a live presentation.
+- **Inputs**: All implemented Phase 1–6.3 components; `tests/integration/` as reference patterns.
+- **Output**: `scripts/demo_run.py`, `docs/demo_guide.md`.
+- **Constraints**: No new external dependencies beyond those already in `pyproject.toml`; demo must work with the existing in-memory/DB setup; fully automated with human approval simulated via the dispatcher API.
 - **Verification Criterion**:
-  1. `GET /console/` returns 200 with updated HTML including disaster switcher and priority-colour classes.
-  2. All existing operator console integration tests in `tests/integration/test_operator_console.py` pass.
-  3. All JS files pass `node --check` syntax validation.
-  4. Full suite 438+ tests pass; mypy and ruff clean.
+  1. `python scripts/demo_run.py` exits 0 and prints at least 8 annotated pipeline steps.
+  2. Full suite 438+ tests still pass; mypy and ruff clean.
 
 ---
 
 ## Next Task
 
-**Task ID:** 6.4 — Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
+**Task ID:** 6.5 — End-to-End Demo Script, Presentation Runbook & Feature Showcase
 
 ---
 
@@ -337,6 +335,12 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.3 complete
+- Changed: Modernized the Operator Console UI with priority-colour visual encoding, disaster switcher, Leaflet interactive map, and enhanced dispatch workflow. Added P0–P3 CSS colour variables and classes (`--p0-color` through `--p3-color`, `.badge-p0`–`.badge-p3`, `.pulse-critical` keyframe animation for mass-casualty P0 incidents) to `console.css`; added disaster switcher `<select>` to `index.html` header with `.disaster-switcher` / `.disaster-select` CSS; added Leaflet 1.9.4 CDN stylesheet link (no bundler); upgraded `state.js` to track `activeDisasterId` and emit `disaster_changed`; rewrote `app.js` disaster switcher logic (derives unique disaster IDs from incident records since no `/api/v1/disasters` endpoint exists); upgraded `operations.js` with P0–P3 sort order, priority-labelled incident cards with `pulse-critical` on critical priority, improved resource registry (available-first sort, coloured borders); upgraded `reports_feed.js` with channel emoji icons, coloured processing-status dot, `new-arrival` flash on SSE push; upgraded `situation_map.js` with Leaflet interactive map (OSM tiles, coloured circle markers per location status, uncertainty circles, tooltip popups with Investigate/Dispatch buttons, `invalidateSize` on tab switch) with full SVG fallback when Leaflet not loaded.
+- Files: `operator_console/public/css/console.css` (updated), `operator_console/public/index.html` (updated — disaster switcher + Leaflet CDN), `operator_console/src/state.js` (updated — `activeDisasterId`), `operator_console/src/app.js` (updated — disaster switcher logic), `operator_console/src/components/operations.js` (updated — P0–P3 priority cards), `operator_console/src/components/reports_feed.js` (updated — emoji icons, status colour, flash), `operator_console/src/components/situation_map.js` (updated — Leaflet + fallback).
+- Verified: 438 tests pass (`PYTHONPATH=src pytest -p no:launch_testing_ros_pytest_entrypoint -q`); `mypy src/raahat field_app evaluation tests` — 0 errors across 238 source files; `ruff check .` — all checks passed; all 7 console JS files pass `node --check`; all 5 `test_operator_console.py` tests pass.
+- Limitations: Leaflet map uses pseudo-coordinates when incidents carry no real GPS (`location` field null); actual GPS coordinates from verified incidents will render accurately. Disaster switcher derives disaster IDs from incident records; a future `/api/v1/disasters` endpoint would simplify this.
 
 ### 2026-11-08 — Task 6.2 complete
 - Changed: Implemented the Citizen Emergency Web SOS & Audio Recording Portal. Created `citizen_portal/` with bilingual (Hindi/English) mobile-first emergency web portal at `/sos/`; `citizen_portal/public/index.html` — 1-tap SOS form with in-browser `MediaRecorder` voice note recording, 1-click GPS geolocation sharing, distress-type checkboxes, and Hindi/English bilingual labelling; `citizen_portal/public/track.html` — live rescue ticket status tracker with 4-stage stepper (received → processing → triaged → dispatched) polling `GET /api/v1/reports/{id}/ticket` every 3 seconds; `citizen_portal/public/css/sos.css` — dark tactical mobile-responsive stylesheet with animated pulse recording button; `citizen_portal/src/recorder.js` — `AudioRecorder` class wrapping `MediaRecorder` with MIME negotiation (webm/ogg/mp4), 2-minute cap, and microphone release on stop; `citizen_portal/src/geolocation.js` — high-accuracy `getLiveLocation()` with descriptive error messages; `citizen_portal/src/sos_app.js` — form orchestration, multipart audio upload, and standard JSON fallback for text-only SOS. Backend additions: `POST /api/v1/reports/channels/web/voice` multipart upload endpoint in `src/raahat/api/routes/reports.py` accepting audio file + form fields, persisting audio to `storage/audio/`, injecting into `ReportIngestionService`; `GET /api/v1/reports/{id}/ticket` ticket status endpoint returning stage, priority, assigned units, and bilingual message; `TicketStatusResponse` Pydantic model; citizen portal mounted at `/sos` and `/sos/src` in `src/raahat/api/app.py`.
