@@ -5,7 +5,10 @@ import uuid
 from typing import TYPE_CHECKING, Generator, Optional
 
 if TYPE_CHECKING:
-    from raahat.application.incident_resolution import IncidentResolutionService
+    from raahat.application.incident_resolution import (
+        IncidentResolutionService,
+        IncidentReviewService,
+    )
     from raahat.domain.evidence import EvidenceGraphService
 
 from fastapi import Depends, Header, HTTPException, status
@@ -94,6 +97,15 @@ def get_incident_resolution_service(
         resolver=resolver,
         session_factory=session_factory,
     )
+
+
+def get_incident_review_service(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> IncidentReviewService:
+    """Provide IncidentReviewService instance."""
+    from raahat.application.incident_resolution import IncidentReviewService
+
+    return IncidentReviewService(session_factory=session_factory)
 
 
 def require_dispatcher_id(

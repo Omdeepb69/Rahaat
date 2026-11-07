@@ -40,7 +40,7 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 - [ ] Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
   - [x] 3.1 Evidence Provenance Graph & Contradiction Detection
   - [x] 3.2 Conservative Entity Resolution & Incident Matcher
-  - [ ] 3.3 Human Verification & Reversible Incident Linking Workflow
+  - [x] 3.3 Human Verification & Reversible Incident Linking Workflow
   - [ ] 3.4 Fact Extraction & Deterministic Safety Triage Policy
 - [ ] Phase 4 — Operations Control Room, Resource Dispatch & Telephony
   - [ ] 4.1 Resource Registry & Availability Management
@@ -261,25 +261,25 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 
 ## Current Task
 
-**Task ID:** 3.3 — Human Verification & Reversible Incident Linking Workflow
+**Task ID:** 3.4 — Fact Extraction & Deterministic Safety Triage Policy
 
-**Goal:** Build `POST /api/v1/incidents/{id}/links` and `POST /api/v1/incidents/{id}/verify` endpoints, recording dispatcher merge approvals/rejections in `entity_merge_events` and supporting reversibility without data loss.
+**Goal:** Implement decoupled fact extraction (`fact_extractor`) and deterministic safety triage policy (`priority_policy`) calculating incident priority (`critical_review`, `urgent`, `standard`, `low`) based on explicit rules, strictly preserving `unknown` fields.
 
-**Inputs:** Incident matcher from 3.2, API framework from 1.5.
+**Inputs:** Evidence graph from 3.1; incident domain models from 1.3.
 
-**Output:** Incident verification routes and merge review service in `src/raahat/application/incident_resolution/` and `src/raahat/api/routes/incidents.py`.
+**Output:** Pure policy module in `src/raahat/policies/triage.py` and triage application service.
 
-**Constraints:** Original household and report records are never deleted; every merge action records reviewer ID, timestamp, and justification; full unmerge capability.
+**Constraints:** "Unknown never lowers priority" rule; missing fields remain explicitly `unknown`; no floating-point arbitrary weights; full decision explanation list.
 
-**Verification:** Unit and integration tests verifying merge approval, unmerge rollback, `entity_merge_events` logging, audit event generation, and REST endpoint authorization; `mypy` and `ruff` clean.
+**Verification:** Unit tests verifying priority calculation for all rule combinations, `unknown` field preservation, and decision explanation completeness; `mypy` and `ruff` clean.
 
-**Depends on:** 3.2.
+**Depends on:** 3.1.
 
 ---
 
 ## Next Task
 
-**Task ID:** 3.4 — Fact Extraction & Deterministic Safety Triage Policy.
+**Task ID:** 4.1 — Resource Registry & Availability Management (or the next sequenced task in Phase 3/4 as defined in the spec above).
 
 ---
 
@@ -295,6 +295,12 @@ Phase 3 — Evidence Graph, Entity Resolution & Safety Triage
 ---
 
 ## Log
+
+### 2026-11-07 — Task 3.3 complete
+- Changed: Implemented human verification and reversible incident linking workflow. Added `IncidentReviewService` with `verify_incident()`, `review_link()` (dispatching to `_approve_merge()`, `_reject_merge()`, `_relate_cluster()`, `_unmerge()`), `get_incident_detail()`, and `list_incident_links()` in `src/raahat/application/incident_resolution/review.py`. Added `InMemoryAuditRepository` to `src/raahat/infrastructure/database/repositories/audit.py`. Added six REST endpoints in `src/raahat/api/routes/incidents.py` (`POST /verify`, `POST /links`, `POST /unmerge`, `GET /`, `GET /{id}`, `GET /{id}/links`). Wired `get_incident_review_service` dependency. Merge approvals create `EntityMergeEventModel` and reassign source reports with `linked_by=f"merge:{event.id}"`; unmerge reverses by setting event `status="reversed"`, re-opening source incident, and removing added report links — original records are never deleted.
+- Files: `src/raahat/application/incident_resolution/review.py` (new), `src/raahat/application/incident_resolution/__init__.py` (updated), `src/raahat/api/routes/incidents.py` (new), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/api/app.py` (updated), `src/raahat/api/dependencies.py` (updated), `src/raahat/infrastructure/database/repositories/audit.py` (updated — added `InMemoryAuditRepository`), `src/raahat/infrastructure/database/repositories/__init__.py` (updated), `tests/unit/application/test_incident_review_service.py` (new), `tests/integration/test_incident_verification_api.py` (new).
+- Verified: 270 tests pass (`PYTHONPATH="" pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 259 prior + 11 new); `mypy src/raahat field_app tests` — 0 errors across 164 source files; `ruff check .` — 0 errors.
+- Limitations: Dispatcher authentication relies on `X-Dispatcher-Id` header only (no JWT/session validation); full authn will be implemented in Phase 5.
 
 ### 2026-11-07 — Task 3.2 complete
 - Changed: Implemented conservative entity resolution and incident matching engine. Defined domain repository protocol `IncidentRepository` and `InMemoryIncidentRepository` in `src/raahat/domain/incidents/repository.py`; defined application models (`ResolutionDecisionType`, `MatchSignal`, `IncidentCandidate`, `ResolutionDecision`, `ResolutionResult`, `IncidentSnapshot`) in `src/raahat/application/incident_resolution/models.py`; defined `IncidentMatcher` and `IncidentResolver` protocols in `src/raahat/application/incident_resolution/protocol.py`; implemented `ConservativeIncidentMatcher` evaluating phone normalization, spatial distance falloff (`distance_to`), name/household matching, and cross-report contradiction detection with score capping (<=0.50); implemented `ConservativeIncidentResolver` enforcing conservative auto-link thresholds (0.80), distance limits (<=150m), candidate margin requirements (>=0.15), and zero-tolerance contradiction routing to human review; implemented `IncidentResolutionService` orchestrating report resolution, duplicate report linking, and `pending_review` incident linking in `src/raahat/application/incident_resolution/service.py`; wired `get_incident_resolution_service` dependency in `src/raahat/api/dependencies.py`.

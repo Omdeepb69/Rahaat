@@ -163,3 +163,4 @@ class TestConservativeIncidentResolver:
         assert decision.matched_incident_id == cand1.incident_id
         assert decision.requires_review is True
         assert "Ambiguous match: margin between top candidates" in decision.rationale
+

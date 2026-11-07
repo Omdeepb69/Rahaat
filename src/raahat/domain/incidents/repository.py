@@ -150,3 +150,4 @@ class InMemoryIncidentRepository:
             for link in self._incident_links
             if link.incident_a_id == incident_id or link.incident_b_id == incident_id
         ]
+

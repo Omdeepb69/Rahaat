@@ -108,3 +108,52 @@ class PostgresAuditRepository:
             session.commit()
             session.refresh(audit_event)
             return audit_event
+
+
+class InMemoryAuditRepository:
+    """In-memory implementation of AuditRepository with hash chaining for unit tests."""
+
+    def __init__(self) -> None:
+        self.events: list[AuditEventModel] = []
+
+    def get_latest_event(
+        self,
+        entity_type: str,
+        entity_id: uuid.UUID,
+    ) -> Optional[AuditEventModel]:
+        matching = [
+            e for e in self.events
+            if e.entity_type == entity_type and e.entity_id == entity_id
+        ]
+        return matching[-1] if matching else None
+
+    def record_event(
+        self,
+        action: str,
+        actor_id: Optional[uuid.UUID],
+        entity_type: str,
+        entity_id: uuid.UUID,
+        payload: dict[str, Any],
+    ) -> AuditEventModel:
+        prev = self.get_latest_event(entity_type, entity_id)
+        prev_hash = prev.hash if prev else None
+        event_hash = compute_audit_hash(
+            prev_hash=prev_hash,
+            action=action,
+            actor_id=actor_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=payload,
+        )
+        model = AuditEventModel(
+            id=uuid.uuid4(),
+            action=action,
+            actor_id=actor_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            prev_hash=prev_hash,
+            hash=event_hash,
+            payload=payload,
+        )
+        self.events.append(model)
+        return model

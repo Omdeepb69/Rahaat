@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from .audit import (
     AuditRepository,
+    InMemoryAuditRepository,
     PostgresAuditRepository,
     compute_audit_hash,
 )
@@ -28,6 +29,7 @@ from .location_hypothesis import (
 __all__ = [
     "AuditRepository",
     "EvidenceRepository",
+    "InMemoryAuditRepository",
     "InMemoryEvidenceRepository",
     "InMemoryLandmarkRepository",
     "InMemoryLocationHypothesisRepository",

@@ -18,17 +18,29 @@ from .models import (
 )
 from .protocol import IncidentMatcher, IncidentResolver
 from .resolver import ConservativeIncidentResolver
+from .review import (
+    IncidentDetail,
+    IncidentReviewService,
+    IncidentVerificationResult,
+    LinkReviewAction,
+    MergeActionResult,
+)
 from .service import IncidentResolutionService
 
 __all__ = [
     "ConservativeIncidentMatcher",
     "ConservativeIncidentResolver",
     "IncidentCandidate",
+    "IncidentDetail",
     "IncidentMatcher",
     "IncidentResolutionService",
     "IncidentResolver",
+    "IncidentReviewService",
     "IncidentSnapshot",
+    "IncidentVerificationResult",
+    "LinkReviewAction",
     "MatchSignal",
+    "MergeActionResult",
     "ResolutionDecision",
     "ResolutionDecisionType",
     "ResolutionResult",
@@ -37,3 +49,4 @@ __all__ = [
     "extract_phone",
     "normalize_phone",
 ]
+
