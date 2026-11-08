@@ -12,11 +12,9 @@ import signal
 from datetime import datetime, timezone
 from pathlib import Path
 
-from raahat.infrastructure.database.repositories.outbox import PostgresOutboxRepository
-
 from raahat.infrastructure.database.repositories.callback import PostgresCallbackJobRepository
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
-from raahat.infrastructure.outbox import OutboxJob
+from raahat.infrastructure.outbox import OutboxJob, PostgresOutboxRepository
 from raahat.infrastructure.telephony import CallbackScheduler, StubTelephonyProvider
 from raahat.workers.callback_worker import CallbackWorker, CallbackWorkerConfig
 from raahat.workers.runner import OutboxWorker, OutboxWorkerConfig

@@ -132,3 +132,11 @@ def test_env_example_documentation(repo_root: Path) -> None:
 
     for var in ("POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "PORT_HTTP", "GRAFANA_ADMIN_PASSWORD"):
         assert f"{var}=" in content
+
+
+def test_worker_entrypoint_imports_cleanly() -> None:
+    """Verify background worker entrypoint module imports without missing dependency errors."""
+    import importlib
+
+    module = importlib.import_module("raahat.workers.main")
+    assert hasattr(module, "WorkerService")
