@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from raahat.application.workflow import AutomatedAudioTriageWorkflow
     from raahat.domain.evidence import EvidenceGraphService
     from raahat.infrastructure.audit import AuditService
+    from raahat.infrastructure.speech import SpeechRecognizer, TTSSynthesizer
     from raahat.infrastructure.telephony import CallbackScheduler
 
 from fastapi import Depends, Header, HTTPException, Query, status
@@ -211,6 +212,20 @@ def get_audio_triage_workflow(
         session_factory=session_factory,
         broadcaster=broadcaster,
     )
+
+
+def get_speech_recognizer() -> "SpeechRecognizer":
+    """Provide SpeechRecognizer instance (Gnani Prisma v3.0 by default)."""
+    from raahat.infrastructure.speech import PrismaRecognizer
+
+    return PrismaRecognizer()
+
+
+def get_tts_synthesizer() -> "TTSSynthesizer":
+    """Provide TTSSynthesizer instance (Gnani Timbre by default)."""
+    from raahat.infrastructure.speech import GnaniTimbreTTS
+
+    return GnaniTimbreTTS()
 
 
 def require_dispatcher_id(

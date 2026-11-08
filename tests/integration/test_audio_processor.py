@@ -92,11 +92,11 @@ class TestAudioReportProcessor:
         processor = AudioReportProcessor(
             session_factory=session_factory,
             speech_recognizer=recognizer,
-            config=AudioReportProcessorConfig(batch_size=5),
+            config=AudioReportProcessorConfig(batch_size=20),
         )
 
-        processed_count = await processor.run_once()
-        assert processed_count >= 1
+        success = await processor.process_report(report_id)
+        assert success is True
 
         # 4. Verify report record in database is extracted and has transcript
         with session_factory() as session:

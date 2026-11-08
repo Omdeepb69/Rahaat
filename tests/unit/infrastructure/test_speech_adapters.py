@@ -5,6 +5,7 @@ import pytest
 
 from raahat.infrastructure.speech import (
     AudioInput,
+    GnaniTimbreTTS,
     MockSpeechRecognizer,
     MockTTSSynthesizer,
     PiperTTS,
@@ -191,3 +192,37 @@ async def test_piper_tts_with_mock_voice() -> None:
     assert output.audio_bytes == b"RIFFWAVE_SYNTH_AUDIO"
     assert output.encoding == "wav"
     assert output.sample_rate == 22050
+
+
+@pytest.mark.asyncio
+async def test_timbre_tts_without_api_key() -> None:
+    tts = GnaniTimbreTTS(api_key=None, model="timbre-v3.0", voice="Shivani")
+    req = SynthesisInput(text="Namaskar, Raahat Emergency Helpline", language="hi")
+    output = await tts.synthesize(req)
+
+    assert isinstance(output, SynthesisOutput)
+    assert output.sample_rate == 16000
+    assert b"TIMBRE_MOCK:hi-IN:Namaskar" in output.audio_bytes
+
+
+@pytest.mark.asyncio
+async def test_timbre_tts_with_mock_client() -> None:
+    class DummyTimbreHttpClient:
+        def __init__(self, return_bytes: bytes) -> None:
+            self.return_bytes = return_bytes
+            self.calls: list[dict[str, object]] = []
+
+        async def post(self, url: str, **kwargs: object) -> bytes:
+            self.calls.append({"url": url, **kwargs})
+            return self.return_bytes
+
+    client = DummyTimbreHttpClient(return_bytes=b"RIFF_TIMBRE_WAV_BYTES")
+    tts = GnaniTimbreTTS(http_client=client, model="timbre-v3.0", voice="Shivani")
+    req = SynthesisInput(text="Emergency rescue team on the way", language="en")
+    output = await tts.synthesize(req)
+
+    assert output.audio_bytes == b"RIFF_TIMBRE_WAV_BYTES"
+    assert output.encoding == "wav"
+    assert len(client.calls) == 1
+    assert client.calls[0]["voice"] == "Shivani"
+    assert client.calls[0]["language"] == "en-IN"

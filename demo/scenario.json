@@ -1,5 +1,5 @@
 {
-  "disaster_id": "118a1e94-97dc-41a6-b255-ff926686a69e",
+  "disaster_id": "e028bc82-a46c-43e6-8240-99e3bbcfef20",
   "disaster_name": "Kerala Floods 2018 \u2014 Raahat Demo",
   "db_url": "postgresql://postgres:postgres@localhost:54329/raahat_test"
 }

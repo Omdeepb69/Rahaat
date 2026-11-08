@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAAHAT 112 — AI Emergency Voice Helpline (आपातकालीन कॉल)</title>
+  <link rel="icon" type="image/svg+xml" href="/sos/favicon.svg">
+  <link rel="stylesheet" href="/sos/css/sos.css">
+  <style>
+    .call-card {
+      background: #111827;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .call-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .status-standby { background: #374151; color: #9ca3af; }
+    .status-connected { background: #065f46; color: #34d399; }
+    .status-speaking { background: #1e3a8a; color: #60a5fa; }
+    .status-listening { background: #7c2d12; color: #f97316; }
+    .status-completed { background: #831843; color: #f472b6; }
+
+    .call-timer {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #f3f4f6;
+      margin: 8px 0;
+    }
+
+    .pulse-avatar {
+      width: 90px;
+      height: 90px;
+      margin: 16px auto;
+      border-radius: 50%;
+      background: #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      border: 3px solid #374151;
+      transition: all 0.3s ease;
+    }
+    .pulse-avatar.active {
+      border-color: #ef4444;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+      animation: pulse-ring 1.5s infinite;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.98); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(0.98); }
+    }
+
+    .dialog-log {
+      max-height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0;
+      text-align: left;
+      padding: 10px;
+      background: #0b0f19;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+    }
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      max-width: 85%;
+      line-height: 1.4;
+    }
+    .bubble.agent {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-left: 3px solid #3b82f6;
+      align-self: flex-start;
+    }
+    .bubble.user {
+      background: #312e81;
+      color: #e0e7ff;
+      border-right: 3px solid #818cf8;
+      align-self: flex-end;
+    }
+    .bubble .bubble-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.7;
+      margin-bottom: 2px;
+    }
+
+    .call-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .btn-call-action {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 1.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s, background-color 0.2s;
+    }
+    .btn-call-action:active { transform: scale(0.92); }
+    .btn-call-start { background: #059669; }
+    .btn-call-start:hover { background: #10b981; }
+    .btn-call-end { background: #dc2626; }
+    .btn-call-end:hover { background: #ef4444; }
+    .btn-call-mic {
+      background: #2563eb;
+      width: 65px;
+      height: 65px;
+      font-size: 1.6rem;
+    }
+    .btn-call-mic.recording {
+      background: #ea580c;
+      animation: pulse-ring 1s infinite;
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 260px;
+      margin: 14px auto 0;
+    }
+    .btn-keypad {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-keypad:active { background: #374151; }
+
+    .powered-by {
+      margin-top: 18px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+    .powered-by span {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .result-card {
+      display: none;
+      background: #064e3b;
+      border: 2px solid #10b981;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: left;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-badge">🚨 RAAHAT 112 EMERGENCY HELPLINE</div>
+      <h1>आपातकालीन वॉइस हेल्पलाइन</h1>
+      <p class="sub-header">AI-Powered Conversational Disaster Intake & Rescue Coordination</p>
+    </header>
+
+    <div class="call-card">
+      <div id="call-status-badge" class="call-status-badge status-standby">STANDBY — READY TO CALL</div>
+      <div id="call-timer" class="call-timer">00:00</div>
+
+      <div id="avatar" class="pulse-avatar">📞</div>
+
+      <!-- Language selector -->
+      <div style="margin: 12px auto; max-width: 240px;">
+        <label for="language-select" style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">भाषा चुनें (Select Language)</label>
+        <select id="language-select" class="form-control" style="background: #1f2937; color: white; border: 1px solid #374151; border-radius: 6px; padding: 6px 10px; width: 100%;">
+          <option value="hi" selected>हिंदी (Hindi)</option>
+          <option value="en">English (India / Hinglish)</option>
+          <option value="ml">മലയാളം (Malayalam)</option>
+          <option value="mr">मराठी (Marathi)</option>
+        </select>
+      </div>
+
+      <!-- Dialog conversation transcript bubbles -->
+      <div id="dialog-log" class="dialog-log">
+        <div class="bubble agent">
+          <div class="bubble-label">Raahat Helpline Agent</div>
+          कॉल शुरू करने के लिए नीचे हरा बटन दबाएं। (Press green button to start emergency call).
+        </div>
+      </div>
+
+      <!-- Dynamic Action Controls -->
+      <div class="call-controls">
+        <button type="button" id="btn-call-start" class="btn-call-action btn-call-start" title="Start Emergency Call">📞</button>
+        <button type="button" id="btn-call-mic" class="btn-call-action btn-call-mic" style="display: none;" title="Tap to Speak">🎤</button>
+        <button type="button" id="btn-call-end" class="btn-call-action btn-call-end" style="display: none;" title="End Call">✕</button>
+      </div>
+      <div id="mic-instruction" style="font-size: 0.85rem; color: #9ca3af; margin-top: 10px;">
+        Tap green phone button to connect to emergency dispatch
+      </div>
+
+      <!-- Quick DTMF Keypad (Collapsible) -->
+      <details style="margin-top: 16px; font-size: 0.85rem; color: #9ca3af;">
+        <summary style="cursor: pointer;">🔢 फोन कीपैड (Keypad for Number / DTMF Input)</summary>
+        <div class="keypad-grid">
+          <button type="button" class="btn-keypad" data-digit="1">1</button>
+          <button type="button" class="btn-keypad" data-digit="2">2</button>
+          <button type="button" class="btn-keypad" data-digit="3">3</button>
+          <button type="button" class="btn-keypad" data-digit="4">4</button>
+          <button type="button" class="btn-keypad" data-digit="5">5</button>
+          <button type="button" class="btn-keypad" data-digit="6">6</button>
+          <button type="button" class="btn-keypad" data-digit="7">7</button>
+          <button type="button" class="btn-keypad" data-digit="8">8</button>
+          <button type="button" class="btn-keypad" data-digit="9">9</button>
+          <button type="button" class="btn-keypad" data-digit="*">*</button>
+          <button type="button" class="btn-keypad" data-digit="0">0</button>
+          <button type="button" class="btn-keypad" data-digit="#">#</button>
+        </div>
+      </details>
+
+      <!-- Text input fallback -->
+      <div style="margin-top: 14px; display: flex; gap: 8px;">
+        <input type="text" id="text-override-input" placeholder="या टाइप करके जवाब दें (or type here)..." style="flex: 1; background: #1f2937; border: 1px solid #374151; color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">
+        <button type="button" id="btn-send-text" style="background: #3b82f6; border: none; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">Send</button>
+      </div>
+
+      <!-- Final Dispatch Card -->
+      <div id="result-card" class="result-card">
+        <h3 style="color: #6ee7b7; margin-bottom: 8px;">✔ आपातकालीन रिपोर्ट दर्ज हो गई (Report Registered)</h3>
+        <p style="font-size: 0.9rem; margin-bottom: 6px;">
+          <strong>Priority:</strong> <span id="res-priority" style="color: #fbbf24;"></span>
+        </p>
+        <p style="font-size: 0.9rem; margin-bottom: 6px;">
+          <strong>Proposed Unit:</strong> <span id="res-unit" style="color: #60a5fa;"></span>
+        </p>
+        <p style="font-size: 0.85rem; color: #d1fae5; margin-bottom: 12px;">
+          Human dispatcher has received your coordinates and is dispatching the nearest rescue team.
+        </p>
+        <a id="btn-track-ticket" href="#" class="btn-location" style="display: inline-block; text-align: center; text-decoration: none; padding: 8px 16px; background: #10b981; color: white; border-radius: 6px; font-weight: 700;">
+          📍 Track Rescue Ticket Live (लाइव स्थिति देखें)
+        </a>
+      </div>
+
+      <div class="powered-by">
+        Speech Perception powered by <span>Gnani Prisma v3.0</span> • Voice Synthesis by <span>Gnani Timbre</span>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="/sos/" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">← Back to Standard SOS Form (सामान्य SOS फॉर्म)</a>
+    </div>
+  </div>
+
+  <script src="/sos/src/call.js"></script>
+</body>
+</html>

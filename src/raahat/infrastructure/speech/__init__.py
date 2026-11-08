@@ -11,10 +11,12 @@ from .protocol import (
     TranscriptSegment,
     TTSSynthesizer,
 )
+from .timbre import GnaniTimbreTTS
 from .whisper import WhisperRecognizer
 
 __all__ = [
     "AudioInput",
+    "GnaniTimbreTTS",
     "MockSpeechRecognizer",
     "MockTTSSynthesizer",
     "PiperTTS",

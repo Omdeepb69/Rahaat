@@ -6,6 +6,7 @@ from .demo import router as demo_router
 from .devices import router as devices_router
 from .events import router as events_router
 from .incidents import router as incidents_router
+from .ivr import router as ivr_router
 from .locations import router as locations_router
 from .metrics import router as metrics_router
 from .operations import router as operations_router
@@ -19,6 +20,7 @@ __all__ = [
     "devices_router",
     "events_router",
     "incidents_router",
+    "ivr_router",
     "locations_router",
     "metrics_router",
     "operations_router",
