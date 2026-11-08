@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     )
     from raahat.application.resources import ResourceService
     from raahat.application.triage import IncidentTriageService
+    from raahat.application.workflow import AutomatedAudioTriageWorkflow
     from raahat.domain.evidence import EvidenceGraphService
     from raahat.infrastructure.audit import AuditService
     from raahat.infrastructure.telephony import CallbackScheduler
@@ -197,6 +198,19 @@ def get_callback_scheduler(
     repo = PostgresCallbackJobRepository(session_factory)
     provider = StubTelephonyProvider()
     return CallbackScheduler(repository=repo, provider=provider)
+
+
+def get_audio_triage_workflow(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+    broadcaster: EventBroadcaster = Depends(get_event_broadcaster),
+) -> AutomatedAudioTriageWorkflow:
+    """Provide AutomatedAudioTriageWorkflow instance backed by PostgreSQL and live SSE broadcaster."""
+    from raahat.application.workflow import AutomatedAudioTriageWorkflow
+
+    return AutomatedAudioTriageWorkflow(
+        session_factory=session_factory,
+        broadcaster=broadcaster,
+    )
 
 
 def require_dispatcher_id(

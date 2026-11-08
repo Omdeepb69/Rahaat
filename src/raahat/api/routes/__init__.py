@@ -10,6 +10,7 @@ from .metrics import router as metrics_router
 from .operations import router as operations_router
 from .reports import router as reports_router
 from .resources import router as resources_router
+from .workflow import router as workflow_router
 
 __all__ = [
     "audit_router",
@@ -21,4 +22,5 @@ __all__ = [
     "operations_router",
     "reports_router",
     "resources_router",
+    "workflow_router",
 ]

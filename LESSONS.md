@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## PostgreSQL JSONB Rejects UTF-8 Strings with Null Characters (\u0000); Sanitize Before Ingestion
+- What happened: Decoding raw binary audio or testing buffers with `.decode("utf-8")` produced strings containing null bytes (`\x00`), which caused PostgreSQL to raise `UntranslatableCharacter: unsupported Unicode escape sequence \u0000 cannot be converted to text` when saving JSONB payloads.
+- Takeaway: PostgreSQL text and JSONB types use C-strings internally and reject NUL characters (`\u0000`). Always check for `\x00` when checking if raw binary bytes are decodable as text, and sanitize text fields with `.replace("\x00", "")` before storing them in JSONB columns.
+- Applies to: Ingestion pipelines, speech-to-text decoders, binary upload handlers, and PostgreSQL JSON/JSONB persistence.
+
 ## SQLAlchemy JSON/JSONB In-Place Mutation Requires Reassignment or flag_modified
 - What happened: Mutating dictionary keys in-place on an ORM instance (e.g. `report.raw_payload["transcript"] = ...`) failed to persist to PostgreSQL on `session.commit()` because SQLAlchemy tracks object identity, not in-place nested mutable dictionary changes.
 - Takeaway: When updating JSON/JSONB columns, reassign a new dict (`report.raw_payload = dict(report.raw_payload)`) and explicitly call `from sqlalchemy.orm.attributes import flag_modified; flag_modified(report, "raw_payload")` before commit.

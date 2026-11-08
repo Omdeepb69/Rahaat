@@ -45,7 +45,7 @@ class MockSpeechRecognizer:
         # If audio_bytes can be decoded as utf-8 (for easy test mocking), use it
         try:
             decoded = audio.audio_bytes.decode("utf-8")
-            if decoded.strip():
+            if "\x00" not in decoded and decoded.strip():
                 return Transcript(
                     text=decoded.strip(),
                     confidence=self.default_confidence,

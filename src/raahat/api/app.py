@@ -17,6 +17,7 @@ from raahat.api.routes.metrics import router as metrics_router
 from raahat.api.routes.operations import router as operations_router
 from raahat.api.routes.reports import router as reports_router
 from raahat.api.routes.resources import router as resources_router
+from raahat.api.routes.workflow import router as workflow_router
 
 
 def create_app() -> FastAPI:
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(operations_router, prefix="/api/v1")
     app.include_router(audit_router, prefix="/api/v1")
     app.include_router(events_router, prefix="/api/v1")
+    app.include_router(workflow_router, prefix="/api/v1")
     app.include_router(metrics_router, prefix="/api/v1")
     app.include_router(metrics_router)  # exposes /metrics at root for standard Prometheus scraping
 

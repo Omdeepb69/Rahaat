@@ -64,7 +64,7 @@ class WhisperRecognizer(SpeechRecognizer):
         # Check if the bytes can be decoded as text (e.g. mock audio files in testing)
         try:
             decoded = audio.audio_bytes.decode("utf-8")
-            if decoded.strip():
+            if "\x00" not in decoded and decoded.strip():
                 text = decoded.strip()
                 return Transcript(
                     text=text,
