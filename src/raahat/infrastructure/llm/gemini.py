@@ -1,12 +1,13 @@
 """Google Gemini LLM client for real-time disaster distress understanding and dynamic dialogue."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import urllib.error
+import urllib.request
 from typing import Any, Mapping, Optional
-
-import httpx
 
 from .adaptive_engine import AdaptiveDistressReasoningEngine
 from .evon_openai import SYSTEM_EXTRACTION_PROMPT
@@ -81,23 +82,35 @@ class GeminiLLMClient(LLMClient):
             "generationConfig": gen_config,
         }
 
+        def _sync_request() -> Optional[str]:
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as resp:
+                    if resp.status == 200:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if parts:
+                                return str(parts[0].get("text", ""))
+            except urllib.error.HTTPError as exc:
+                body = exc.read().decode("utf-8", errors="ignore")
+                logger.warning("Gemini API HTTP %s: %s; falling back", exc.code, body[:120])
+            except Exception as exc:
+                logger.warning("Gemini API call failed: %s; falling back", exc)
+            return None
+
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                res = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
-                if res.status_code == 200:
-                    data = res.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            return str(parts[0].get("text", ""))
-                logger.warning(
-                    "Gemini API returned HTTP %s (%s); falling back to adaptive reasoning",
-                    res.status_code,
-                    res.text[:120],
-                )
+            result = await asyncio.to_thread(_sync_request)
+            if result is not None:
+                return result
         except Exception as exc:
-            logger.warning("Gemini API call failed: %s; falling back to adaptive reasoning", exc)
+            logger.warning("Gemini thread execution failed: %s; falling back", exc)
 
         return await self.fallback_engine.generate(
             prompt=prompt,

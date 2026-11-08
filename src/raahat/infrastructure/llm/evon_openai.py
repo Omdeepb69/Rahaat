@@ -6,12 +6,13 @@ adaptive reasoning engine.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import urllib.error
+import urllib.request
 from typing import Any, Mapping, Optional
-
-import httpx
 
 from .adaptive_engine import AdaptiveDistressReasoningEngine
 from .protocol import EmergencyFactExtraction, LLMClient
@@ -102,20 +103,32 @@ class EvonOpenAIClient(LLMClient):
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
 
+        def _sync_request() -> Optional[str]:
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as resp:
+                    if resp.status == 200:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                        return str(content)
+            except urllib.error.HTTPError as exc:
+                body = exc.read().decode("utf-8", errors="ignore")
+                logger.warning("Evon API HTTP %s: %s; falling back", exc.code, body[:200])
+            except Exception as exc:
+                logger.warning("Evon API call failed: %s; falling back", exc)
+            return None
+
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                res = await client.post(url, json=payload, headers=headers)
-                if res.status_code == 200:
-                    data = res.json()
-                    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    return str(content)
-                logger.warning(
-                    "Evon API returned non-200 (%s): %s; falling back",
-                    res.status_code,
-                    res.text[:200],
-                )
+            result = await asyncio.to_thread(_sync_request)
+            if result is not None:
+                return result
         except Exception as exc:
-            logger.warning("Evon API call failed: %s; falling back to reasoning engine", exc)
+            logger.warning("Evon thread execution failed: %s; falling back", exc)
 
         return await self.fallback_engine.generate(
             prompt=prompt,
