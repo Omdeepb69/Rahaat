@@ -222,10 +222,18 @@ def seed(db_url: str) -> dict[str, Any]:
         "db_url": db_url,
     }
 
-    out_path = Path(__file__).resolve().parent.parent / "demo" / "scenario.json"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(scenario, indent=2))
-    log.info("Wrote scenario to %s", out_path)
+    try:
+        out_path = Path(__file__).resolve().parent.parent / "demo" / "scenario.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(scenario, indent=2))
+        log.info("Wrote scenario to %s", out_path)
+    except Exception as exc:
+        log.warning("Could not persist scenario.json to demo dir: %s", exc)
+        try:
+            tmp_path = Path("/tmp/scenario.json")
+            tmp_path.write_text(json.dumps(scenario, indent=2))
+        except Exception:
+            pass
 
     return scenario
 

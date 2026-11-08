@@ -129,3 +129,4 @@ def get_disaster_detail(
             started_at=m.started_at,
             created_at=m.created_at,
         )
+
