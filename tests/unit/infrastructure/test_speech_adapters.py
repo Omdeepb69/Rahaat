@@ -86,6 +86,29 @@ async def test_whisper_recognizer_without_installed_package() -> None:
 
 
 @pytest.mark.asyncio
+async def test_whisper_recognizer_with_allow_fallback() -> None:
+    # When allow_fallback=True, should fallback to acoustic transcription without crashing
+    recognizer = WhisperRecognizer(model_name="base", allow_fallback=True)
+    audio = AudioInput(audio_bytes=b"Help! Family trapped on roof near Bund Garden Pune", sample_rate=16000)
+
+    result = await recognizer.transcribe(audio, language_hint="hi")
+    assert "Help! Family trapped" in result.text
+    assert result.confidence >= 0.8
+    assert result.language == "hi"
+
+
+@pytest.mark.asyncio
+async def test_whisper_recognizer_with_fallback_recognizer() -> None:
+    custom_fallback = MockSpeechRecognizer(default_text="custom fallback transcript", default_confidence=0.91)
+    recognizer = WhisperRecognizer(model_name="base", fallback_recognizer=custom_fallback)
+    audio = AudioInput(audio_bytes=b"\xff\xff\xff\xff", sample_rate=16000)
+
+    result = await recognizer.transcribe(audio)
+    assert result.text == "custom fallback transcript"
+    assert result.confidence == 0.91
+
+
+@pytest.mark.asyncio
 async def test_whisper_recognizer_with_model_instance() -> None:
     dummy_model = DummyWhisperModel(transcript_text="kaloor stadium junction", language="ml")
     recognizer = WhisperRecognizer(model_instance=dummy_model)

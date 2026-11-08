@@ -5,6 +5,10 @@ from .callback_worker import (
     CallbackWorker,
     CallbackWorkerConfig,
 )
+from .report_processor import (
+    AudioReportProcessor,
+    AudioReportProcessorConfig,
+)
 from .runner import (
     OutboxJobHandler,
     OutboxWorker,
@@ -16,6 +20,8 @@ from .sync_worker import (
 )
 
 __all__ = [
+    "AudioReportProcessor",
+    "AudioReportProcessorConfig",
     "CallbackWorker",
     "CallbackWorkerConfig",
     "OutboxJobHandler",

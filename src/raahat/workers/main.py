@@ -17,6 +17,7 @@ from raahat.infrastructure.database.session import create_sync_engine, get_sync_
 from raahat.infrastructure.outbox import OutboxJob, PostgresOutboxRepository
 from raahat.infrastructure.telephony import CallbackScheduler, StubTelephonyProvider
 from raahat.workers.callback_worker import CallbackWorker, CallbackWorkerConfig
+from raahat.workers.report_processor import AudioReportProcessor, AudioReportProcessorConfig
 from raahat.workers.runner import OutboxWorker, OutboxWorkerConfig
 from raahat.workers.sync_worker import SyncWorker, SyncWorkerConfig
 
@@ -75,6 +76,12 @@ class WorkerService:
             config=CallbackWorkerConfig(batch_size=10),
         )
 
+        # 4. Audio Speech & Report Extraction Processor
+        self.audio_processor = AudioReportProcessor(
+            session_factory=self.session_factory,
+            config=AudioReportProcessorConfig(batch_size=10),
+        )
+
     def update_heartbeat(self) -> None:
         """Touch heartbeat file to confirm worker liveness for container health checks."""
         try:
@@ -112,6 +119,14 @@ class WorkerService:
                     logger.debug("Callback worker dialed %d due calls", processed_calls)
             except Exception as e:
                 logger.error("Callback worker iteration error: %s", e)
+
+            # Tick 3: Audio speech transcription & report extraction
+            try:
+                processed_audio = await self.audio_processor.run_once()
+                if processed_audio > 0:
+                    logger.debug("Audio processor transcribed %d reports", processed_audio)
+            except Exception as e:
+                logger.error("Audio processor iteration error: %s", e)
 
             # Sleep between ticks
             await asyncio.sleep(tick_interval_seconds)
