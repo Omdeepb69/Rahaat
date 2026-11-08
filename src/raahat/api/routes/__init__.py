@@ -4,6 +4,7 @@ from __future__ import annotations
 from .audit import router as audit_router
 from .demo import router as demo_router
 from .devices import router as devices_router
+from .disasters import router as disasters_router
 from .events import router as events_router
 from .incidents import router as incidents_router
 from .ivr import router as ivr_router
@@ -18,6 +19,7 @@ __all__ = [
     "audit_router",
     "demo_router",
     "devices_router",
+    "disasters_router",
     "events_router",
     "incidents_router",
     "ivr_router",

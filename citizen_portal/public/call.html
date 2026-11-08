@@ -8,114 +8,198 @@
   <link rel="stylesheet" href="/sos/css/sos.css">
   <style>
     .call-card {
-      background: #111827;
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.6);
     }
+
+    .disaster-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
     .call-status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 12px;
+      transition: all 0.25s ease;
     }
-    .status-standby { background: #374151; color: #9ca3af; }
-    .status-connected { background: #065f46; color: #34d399; }
-    .status-speaking { background: #1e3a8a; color: #60a5fa; }
-    .status-listening { background: #7c2d12; color: #f97316; }
-    .status-completed { background: #831843; color: #f472b6; }
+    .status-standby { background: rgba(71, 85, 105, 0.3); border: 1px solid #64748b; color: #94a3b8; }
+    .status-connected { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+    .status-speaking { background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #a5b4fc; box-shadow: 0 0 14px rgba(99, 102, 241, 0.4); }
+    .status-listening { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fcd34d; box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); }
+    .status-completed { background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff8099; box-shadow: 0 0 16px rgba(255, 51, 102, 0.5); }
 
     .call-timer {
-      font-size: 2.2rem;
+      font-family: var(--font-mono);
+      font-size: 2.4rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      color: #f3f4f6;
-      margin: 8px 0;
+      color: #f8fafc;
+      letter-spacing: 0.05em;
+      margin: 4px 0 14px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
-    .pulse-avatar {
-      width: 90px;
-      height: 90px;
-      margin: 16px auto;
-      border-radius: 50%;
-      background: #1f2937;
+    /* Interactive Voice Orb & Canvas Visualizer */
+    .visualizer-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 10px auto 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.5rem;
-      border: 3px solid #374151;
+    }
+
+    #voice-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .orb-center {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #1e293b 0%, #07090e 100%);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
       transition: all 0.3s ease;
     }
-    .pulse-avatar.active {
-      border-color: #ef4444;
-      box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
-      animation: pulse-ring 1.5s infinite;
+
+    .orb-center.active-pulse {
+      border-color: #60a5fa;
+      box-shadow: 0 0 28px rgba(37, 99, 235, 0.5);
     }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.98); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(0.98); }
+
+    .orb-center.listening {
+      border-color: #f59e0b;
+      box-shadow: 0 0 28px rgba(245, 158, 11, 0.6);
+    }
+
+    .orb-center.speaking {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.7);
+    }
+
+    .orb-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .orb-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+      text-transform: uppercase;
     }
 
     .dialog-log {
-      max-height: 260px;
+      max-height: 250px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin: 16px 0;
+      gap: 12px;
+      margin: 18px 0;
       text-align: left;
-      padding: 10px;
-      background: #0b0f19;
-      border-radius: 12px;
-      border: 1px solid #1f2937;
+      padding: 14px;
+      background: rgba(7, 9, 14, 0.7);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
     }
+
     .bubble {
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 12px;
       font-size: 0.9rem;
-      max-width: 85%;
-      line-height: 1.4;
+      max-width: 86%;
+      line-height: 1.45;
+      word-wrap: break-word;
+      animation: bubble-fade 0.2s ease-out;
     }
+
+    @keyframes bubble-fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .bubble.agent {
-      background: #1e293b;
-      color: #e2e8f0;
+      background: rgba(30, 41, 59, 0.85);
+      color: #f1f5f9;
+      border: 1px solid rgba(59, 130, 246, 0.3);
       border-left: 3px solid #3b82f6;
       align-self: flex-start;
     }
+
     .bubble.user {
-      background: #312e81;
+      background: rgba(49, 46, 129, 0.85);
       color: #e0e7ff;
+      border: 1px solid rgba(129, 140, 248, 0.3);
       border-right: 3px solid #818cf8;
       align-self: flex-end;
     }
+
     .bubble .bubble-label {
-      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
       text-transform: uppercase;
       font-weight: 700;
-      opacity: 0.7;
-      margin-bottom: 2px;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
     }
 
     .call-controls {
       display: flex;
       justify-content: center;
-      gap: 16px;
+      align-items: center;
+      gap: 20px;
       margin-top: 20px;
     }
+
     .btn-call-action {
-      width: 70px;
-      height: 70px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       border: none;
       color: white;
@@ -124,22 +208,39 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s, background-color 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
     }
     .btn-call-action:active { transform: scale(0.92); }
-    .btn-call-start { background: #059669; }
-    .btn-call-start:hover { background: #10b981; }
-    .btn-call-end { background: #dc2626; }
-    .btn-call-end:hover { background: #ef4444; }
+    .btn-call-start {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: 2px solid rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+    .btn-call-start:hover {
+      box-shadow: 0 0 28px rgba(16, 185, 129, 0.7);
+      transform: scale(1.05);
+    }
+
+    .btn-call-end {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: 2px solid rgba(248, 113, 113, 0.4);
+    }
+    .btn-call-end:hover {
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.6);
+      transform: scale(1.05);
+    }
+
     .btn-call-mic {
-      background: #2563eb;
-      width: 65px;
-      height: 65px;
-      font-size: 1.6rem;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      border: 2px solid rgba(96, 165, 250, 0.4);
+      width: 72px;
+      height: 72px;
     }
     .btn-call-mic.recording {
-      background: #ea580c;
-      animation: pulse-ring 1s infinite;
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      border-color: #fb923c;
+      animation: pulse-ring-glow 1.4s infinite;
     }
 
     .keypad-grid {
@@ -149,36 +250,46 @@
       max-width: 260px;
       margin: 14px auto 0;
     }
+
     .btn-keypad {
-      background: #1f2937;
-      border: 1px solid #374151;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border-subtle);
       color: white;
       padding: 12px;
-      border-radius: 8px;
-      font-size: 1.2rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.15s;
     }
-    .btn-keypad:active { background: #374151; }
-
-    .powered-by {
-      margin-top: 18px;
-      font-size: 0.78rem;
-      color: #94a3b8;
-    }
-    .powered-by span {
-      color: #38bdf8;
-      font-weight: 600;
+    .btn-keypad:active {
+      background: rgba(59, 130, 246, 0.4);
+      border-color: #60a5fa;
+      transform: scale(0.95);
     }
 
     .result-card {
       display: none;
-      background: #064e3b;
-      border: 2px solid #10b981;
-      border-radius: 12px;
-      padding: 18px;
+      background: rgba(6, 78, 59, 0.4);
+      border: 1px solid #10b981;
+      border-radius: var(--radius-md);
+      padding: 20px;
       text-align: left;
-      margin-top: 18px;
+      margin-top: 20px;
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
+      animation: bubble-fade 0.3s ease-out;
+    }
+
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #94a3b8;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+      margin-top: 16px;
     }
   </style>
 </head>
@@ -187,23 +298,36 @@
     <header>
       <div class="logo-badge">🚨 RAAHAT 112 EMERGENCY HELPLINE</div>
       <h1>आपातकालीन वॉइस हेल्पलाइन</h1>
-      <p class="sub-header">AI-Powered Conversational Disaster Intake & Rescue Coordination</p>
+      <p class="sub-header">AI-Powered Multilingual Conversational Helpline · Powered by Gnani Prisma v3.0 & Timbre</p>
     </header>
 
     <div class="call-card">
-      <div id="call-status-badge" class="call-status-badge status-standby">STANDBY — READY TO CALL</div>
+      <div id="disaster-name-badge" class="disaster-badge">ZONE: CONNECTING TO ACTIVE DISASTER...</div>
+      <div>
+        <div id="call-status-badge" class="call-status-badge status-standby">STANDBY — READY TO CALL</div>
+      </div>
       <div id="call-timer" class="call-timer">00:00</div>
 
-      <div id="avatar" class="pulse-avatar">📞</div>
+      <!-- Tactical Voice Orb & Waveform Canvas -->
+      <div class="visualizer-container">
+        <canvas id="voice-canvas" width="220" height="220"></canvas>
+        <div id="orb-center" class="orb-center">
+          <div id="avatar" class="orb-icon">🎙️</div>
+          <div id="orb-label" class="orb-label">STANDBY</div>
+        </div>
+      </div>
 
-      <!-- Language selector -->
-      <div style="margin: 12px auto; max-width: 240px;">
-        <label for="language-select" style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">भाषा चुनें (Select Language)</label>
-        <select id="language-select" class="form-control" style="background: #1f2937; color: white; border: 1px solid #374151; border-radius: 6px; padding: 6px 10px; width: 100%;">
-          <option value="hi" selected>हिंदी (Hindi)</option>
-          <option value="en">English (India / Hinglish)</option>
-          <option value="ml">മലയാളം (Malayalam)</option>
-          <option value="mr">मराठी (Marathi)</option>
+      <!-- Language Selector -->
+      <div style="margin: 8px auto 14px; max-width: 260px;">
+        <label for="language-select" style="font-size: 0.78rem; font-family: var(--font-mono); color: #94a3b8; display: block; margin-bottom: 4px;">LANGUAGE / भाषा:</label>
+        <select id="language-select" style="background: rgba(7, 9, 14, 0.85); color: white; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 7px 10px; width: 100%; font-size: 0.85rem;">
+          <option value="indic-auto" selected>Auto-Detect / Hinglish (Prisma v3.0)</option>
+          <option value="hi-IN">हिंदी (Hindi)</option>
+          <option value="en-IN">English (India)</option>
+          <option value="ml-IN">മലയാളം (Malayalam)</option>
+          <option value="mr-IN">मराठी (Marathi)</option>
+          <option value="ta-IN">தமிழ் (Tamil)</option>
+          <option value="te-IN">తెలుగు (Telugu)</option>
         </select>
       </div>
 
@@ -211,7 +335,7 @@
       <div id="dialog-log" class="dialog-log">
         <div class="bubble agent">
           <div class="bubble-label">Raahat Helpline Agent</div>
-          कॉल शुरू करने के लिए नीचे हरा बटन दबाएं। (Press green button to start emergency call).
+          कॉल शुरू करने के लिए नीचे हरा बटन दबाएं। (Press green button below to start emergency call).
         </div>
       </div>
 
@@ -221,13 +345,13 @@
         <button type="button" id="btn-call-mic" class="btn-call-action btn-call-mic" style="display: none;" title="Tap to Speak">🎤</button>
         <button type="button" id="btn-call-end" class="btn-call-action btn-call-end" style="display: none;" title="End Call">✕</button>
       </div>
-      <div id="mic-instruction" style="font-size: 0.85rem; color: #9ca3af; margin-top: 10px;">
+      <div id="mic-instruction" style="font-size: 0.85rem; color: #94a3b8; margin-top: 14px; font-family: var(--font-mono);">
         Tap green phone button to connect to emergency dispatch
       </div>
 
       <!-- Quick DTMF Keypad (Collapsible) -->
-      <details style="margin-top: 16px; font-size: 0.85rem; color: #9ca3af;">
-        <summary style="cursor: pointer;">🔢 फोन कीपैड (Keypad for Number / DTMF Input)</summary>
+      <details style="margin-top: 18px; font-size: 0.85rem; color: #94a3b8;">
+        <summary style="cursor: pointer; font-family: var(--font-mono); font-size: 0.78rem;">🔢 फोन कीपैड (Keypad for Number / DTMF Input)</summary>
         <div class="keypad-grid">
           <button type="button" class="btn-keypad" data-digit="1">1</button>
           <button type="button" class="btn-keypad" data-digit="2">2</button>
@@ -246,38 +370,34 @@
 
       <!-- Text input fallback -->
       <div style="margin-top: 14px; display: flex; gap: 8px;">
-        <input type="text" id="text-override-input" placeholder="या टाइप करके जवाब दें (or type here)..." style="flex: 1; background: #1f2937; border: 1px solid #374151; color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">
-        <button type="button" id="btn-send-text" style="background: #3b82f6; border: none; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">Send</button>
+        <input type="text" id="text-override-input" placeholder="या टाइप करके जवाब दें (or type here)..." style="flex: 1; background: rgba(7, 9, 14, 0.8); border: 1px solid var(--border-subtle); color: white; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem;">
+        <button type="button" id="btn-send-text" class="btn-primary" style="padding: 10px 16px;">Send</button>
       </div>
 
-      <!-- Final Dispatch Card -->
+      <!-- Rescue Dispatch Proposed Result Card -->
       <div id="result-card" class="result-card">
-        <h3 style="color: #6ee7b7; margin-bottom: 8px;">✔ आपातकालीन रिपोर्ट दर्ज हो गई (Report Registered)</h3>
-        <p style="font-size: 0.9rem; margin-bottom: 6px;">
-          <strong>Priority:</strong> <span id="res-priority" style="color: #fbbf24;"></span>
-        </p>
-        <p style="font-size: 0.9rem; margin-bottom: 6px;">
-          <strong>Proposed Unit:</strong> <span id="res-unit" style="color: #60a5fa;"></span>
-        </p>
-        <p style="font-size: 0.85rem; color: #d1fae5; margin-bottom: 12px;">
-          Human dispatcher has received your coordinates and is dispatching the nearest rescue team.
-        </p>
-        <a id="btn-track-ticket" href="#" class="btn-location" style="display: inline-block; text-align: center; text-decoration: none; padding: 8px 16px; background: #10b981; color: white; border-radius: 6px; font-weight: 700;">
-          📍 Track Rescue Ticket Live (लाइव स्थिति देखें)
+        <div style="font-weight: 800; font-size: 1.05rem; color: #34d399; margin-bottom: 8px;">
+          ✓ RESCUE DISPATCH AUTHORIZED (राहत दल रवाना)
+        </div>
+        <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 6px;">
+          Priority Level: <span id="res-priority" class="badge-priority badge-p0">P0 CRITICAL</span>
+        </div>
+        <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 14px;">
+          Proposed Resource: <strong id="res-unit" style="color: #67e8f9;">NDRF Motorboat Unit</strong>
+        </div>
+        <a id="btn-track-ticket" href="#" class="btn-success" style="display: block; text-align: center; text-decoration: none; padding: 10px 14px; font-size: 0.9rem;">
+          Track Rescue Ticket Live (लाइव स्थिति ट्रैक करें) →
         </a>
       </div>
 
-      <div class="powered-by">
-        Speech Perception powered by <span>Gnani Prisma v3.0</span> • Voice Synthesis by <span>Gnani Timbre</span>
+      <div class="telemetry-row">
+        <span>ASR: GNANI PRISMA v3.0</span>
+        <span>TTS: GNANI TIMBRE</span>
+        <span>SAFETY: DETERMINISTIC P0–P3</span>
       </div>
-    </div>
-
-    <div style="text-align: center; margin-bottom: 24px;">
-      <a href="/sos/" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">← Back to Standard SOS Form (सामान्य SOS फॉर्म)</a>
     </div>
   </div>
 
   <script src="/sos/src/call.js"></script>
 </body>
 </html>
-

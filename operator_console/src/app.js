@@ -73,37 +73,29 @@ document.addEventListener("DOMContentLoaded", () => {
     switchWorkspace(ws);
   });
 
-  // 3. Active Disaster Switcher
-  // No /api/v1/disasters endpoint exists; we derive the disaster list by
-  // inspecting incident records (each carries a disaster_id) and deduplicate.
+  // 3. Active Disaster Switcher (Fully Dynamic from /api/v1/disasters)
   const disasterSelect = document.getElementById("disaster-select");
 
   async function loadDisasterList() {
     try {
-      const data = await api.fetchIncidents({ limit: 100 }).catch(() => ({ items: [] }));
-      const incidents = data.items || data || [];
-
-      // Collect unique disaster IDs from incidents
-      const seen = new Set();
-      const disasters = [];
-      incidents.forEach((inc) => {
-        if (inc.disaster_id && !seen.has(inc.disaster_id)) {
-          seen.add(inc.disaster_id);
-          disasters.push(inc.disaster_id);
-        }
-      });
-
-      if (disasters.length === 0) {
-        disasterSelect.innerHTML = `<option value="">No active disaster</option>`;
+      const disasters = await api.fetchDisasters({ limit: 50 }).catch(() => []);
+      if (!disasters || disasters.length === 0) {
+        disasterSelect.innerHTML = `<option value="">No registered disasters</option>`;
         return;
       }
 
       disasterSelect.innerHTML = disasters
-        .map((id) => `<option value="${id}">${id.slice(0, 8)}…</option>`)
+        .map((d) => `<option value="${d.id}">${d.name} [${d.status.toUpperCase()}]</option>`)
         .join("");
 
-      // Default to first (most recent) disaster
-      state.setActiveDisaster(disasters[0]);
+      // Attempt to set active disaster
+      const active = await api.fetchActiveDisaster().catch(() => disasters[0]);
+      if (active && active.id) {
+        disasterSelect.value = active.id;
+        state.setActiveDisaster(active.id);
+      } else {
+        state.setActiveDisaster(disasters[0].id);
+      }
     } catch {
       disasterSelect.innerHTML = `<option value="">Disaster list unavailable</option>`;
     }
@@ -115,6 +107,18 @@ document.addEventListener("DOMContentLoaded", () => {
       state.setActiveDisaster(id);
     }
   });
+
+  // Live Operations Room Clock (IST)
+  const clockEl = document.getElementById("telemetry-clock");
+  if (clockEl) {
+    function updateClock() {
+      const now = new Date();
+      const options = { timeZone: "Asia/Kolkata", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" };
+      clockEl.textContent = `${now.toLocaleTimeString("en-GB", options)} IST`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
 
   // 4. Initialize Workspace Components
   initReportsFeed(api, state);

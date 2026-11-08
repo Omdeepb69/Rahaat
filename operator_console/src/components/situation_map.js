@@ -54,8 +54,12 @@ export function initSituationMap(api, state) {
 
       leafletMap = window.L.map("situation-map").setView([DEFAULT_LAT, DEFAULT_LON], 11);
       window.L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OpenStreetMap contributors", maxZoom: 18 }
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: "abcd",
+          maxZoom: 20,
+        }
       ).addTo(leafletMap);
 
       leafletLayerGroup = window.L.layerGroup().addTo(leafletMap);
@@ -108,25 +112,28 @@ export function initSituationMap(api, state) {
       });
 
       circleMarker.bindPopup(`
-        <div style="min-width:200px;font-family:sans-serif;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <strong style="color:#1d4ed8;">Incident #${String(inc.id).slice(0, 8)}</strong>
-            <span style="font-size:0.65rem;padding:1px 5px;border-radius:9999px;
-                         background:rgba(0,0,0,0.1);border:1px solid ${color};color:${color};">
+        <div style="min-width:220px;font-family:var(--font-sans, sans-serif);color:#f8fafc;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <strong style="color:#60a5fa;font-family:var(--font-mono, monospace);font-size:0.85rem;">INCIDENT #${String(inc.id).slice(0, 8)}</strong>
+            <span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:9999px;font-family:var(--font-mono, monospace);
+                         background:rgba(0,0,0,0.3);border:1px solid ${color};color:${color};">
               ${meta.label}
             </span>
           </div>
-          <div style="font-size:0.8rem;color:#374151;">
-            Priority: <strong>${priority}</strong> · ±${radiusM}m
+          <div style="font-size:0.8rem;color:#cbd5e1;margin-bottom:4px;">
+            Priority: <strong style="color:${color};text-transform:uppercase;">${priority}</strong> · <span style="font-family:var(--font-mono, monospace);">±${radiusM}m</span>
           </div>
-          ${inc.needs_summary ? `<div style="font-size:0.78rem;margin-top:4px;color:#374151;">${escapeHtml(inc.needs_summary)}</div>` : ""}
-          <div style="display:flex;gap:6px;margin-top:8px;">
+          <div style="font-size:0.75rem;color:#94a3b8;font-family:var(--font-mono, monospace);margin-bottom:6px;">
+            GPS: ${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E
+          </div>
+          ${inc.needs_summary ? `<div style="font-size:0.78rem;margin-bottom:8px;color:#e2e8f0;background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:4px;">${escapeHtml(inc.needs_summary)}</div>` : ""}
+          <div style="display:flex;gap:6px;margin-top:6px;">
             <button onclick="window.__raahatInvestigate('${inc.id}')"
-                    style="font-size:0.72rem;padding:2px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    class="btn-primary" style="font-size:0.72rem;padding:4px 10px;border-radius:4px;cursor:pointer;">
               Investigate
             </button>
             <button onclick="window.__raahatDispatch('${inc.id}')"
-                    style="font-size:0.72rem;padding:2px 8px;background:#059669;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    class="btn-success" style="font-size:0.72rem;padding:4px 10px;border-radius:4px;cursor:pointer;">
               Dispatch
             </button>
           </div>

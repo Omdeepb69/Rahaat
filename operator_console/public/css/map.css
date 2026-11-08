@@ -1,26 +1,28 @@
-/* Situation Map CSS with Critical Evidence Safety Visual Encodings */
+/* Situation Map CSS with Tactical Evidence Visual Encodings */
 
 .map-container-wrapper {
   position: relative;
   width: 100%;
   height: calc(100vh - 140px);
   min-height: 480px;
-  background-color: #0b1120;
+  background-color: #07090e;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6);
 }
 
 #situation-map {
   width: 100%;
   height: 100%;
+  background-color: #07090e;
 }
 
 /* Fallback SVG / Canvas Map View */
 .map-canvas-fallback {
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  background: radial-gradient(circle at center, #111827 0%, #07090e 100%);
   display: flex;
   position: relative;
   overflow: hidden;
@@ -31,26 +33,28 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: rgba(15, 23, 42, 0.95);
-  border: 1px solid var(--border-color);
+  background: rgba(11, 15, 25, 0.9);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  z-index: 10;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   font-size: 0.75rem;
 }
 
 .legend-title {
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-weight: 800;
   text-transform: uppercase;
   color: #94a3b8;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.3rem;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.4rem;
   margin-bottom: 0.2rem;
 }
 
@@ -58,65 +62,70 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  color: #cbd5e1;
 }
 
 .legend-badge {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
+  display: inline-block;
   flex-shrink: 0;
 }
 
 /* 1. Confirmed Location Pin */
-.pin-confirmed {
-  background-color: #10b981;
-  border: 2px solid #ffffff;
+.pin-confirmed, .legend-badge.pin-confirmed {
+  background-color: var(--status-confirmed);
+  border: 1.5px solid #ffffff;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
 }
 
 /* 2. Candidate Location Pin (Dashed border, unverified warning) */
-.pin-candidate {
-  background-color: #f59e0b;
-  border: 2px dashed #ffffff;
-  animation: pulse-candidate 2s infinite ease-in-out;
+.pin-candidate, .legend-badge.pin-candidate {
+  background-color: var(--status-candidate);
+  border: 1.5px dashed #ffffff;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
 }
 
-@keyframes pulse-candidate {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
 /* 3. Approximate Area (Translucent polygon / circle) */
-.pin-approximate {
-  background-color: #8b5cf6;
-  border: 2px dotted #c4b5fd;
+.pin-approximate, .legend-badge.pin-approximate {
+  background-color: var(--status-approximate);
+  border: 1.5px dotted #c4b5fd;
   opacity: 0.85;
 }
 
 /* 4. Stale Location (>2 hours old) */
-.pin-stale {
-  background-color: #64748b;
-  border: 2px solid #94a3b8;
+.pin-stale, .legend-badge.pin-stale {
+  background-color: var(--status-stale);
+  border: 1.5px solid #94a3b8;
   filter: grayscale(100%);
   opacity: 0.65;
 }
 
 /* 5. Contradictory Location (Conflict alert) */
-.pin-contradictory {
-  background-color: #ef4444;
-  border: 2px solid #ffffff;
+.pin-contradictory, .legend-badge.pin-contradictory {
+  background-color: var(--status-contradictory);
+  border: 1.5px solid #ffffff;
   box-shadow: 0 0 12px #ef4444;
-  animation: alert-flash 1s infinite alternate;
 }
 
-@keyframes alert-flash {
-  from { opacity: 0.8; transform: scale(1); }
-  to { opacity: 1; transform: scale(1.2); }
+/* Uncertainty Bounding Ring */
+.uncertainty-circle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  border: 1px dashed rgba(245, 158, 11, 0.8);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.02) 80%);
 }
 
-/* Map Markers on Map Canvas */
+.uncertainty-circle.approximate {
+  border: 1px dashed rgba(139, 92, 246, 0.8);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.02) 80%);
+}
+
+/* Map Markers on Fallback Canvas */
 .map-marker {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -143,22 +152,6 @@
   color: white;
   font-size: 11px;
   font-weight: 700;
-}
-
-/* Uncertainty Bounding Ring */
-.uncertainty-circle {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 2;
-  border: 1px dashed rgba(245, 158, 11, 0.8);
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.02) 80%);
-}
-
-.uncertainty-circle.approximate {
-  border: 1px dashed rgba(139, 92, 246, 0.8);
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.02) 80%);
 }
 
 /* Resource Markers */
@@ -203,4 +196,58 @@
 
 .map-popup.visible {
   display: flex;
+}
+
+/* Tactical Dark Matter Leaflet Popup Overrides */
+.leaflet-popup-content-wrapper {
+  background: rgba(11, 15, 25, 0.95) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(11, 15, 25, 0.95) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 6px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #fff !important;
+}
+
+/* Pulsing Radar Ring on Map for Critical P0 Incidents */
+@keyframes map-radar-ring {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+.p0-radar-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p0-radar-marker::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--p0-color);
+  animation: map-radar-ring 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
 }

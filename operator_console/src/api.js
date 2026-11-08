@@ -61,6 +61,15 @@ export class RaahatAPI {
     return res.json();
   }
 
+  // Disasters
+  async fetchDisasters(params = {}) {
+    return this.get("/disasters", params);
+  }
+
+  async fetchActiveDisaster() {
+    return this.get("/disasters/active");
+  }
+
   // Reports
   async fetchReports(params = {}) {
     return this.get("/reports", params);

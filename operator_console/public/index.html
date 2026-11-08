@@ -50,6 +50,8 @@
 
     <!-- System & Dispatcher Status -->
     <div class="system-status">
+      <div id="telemetry-clock" class="telemetry-clock" title="Operations Room Time (IST)">--:--:-- IST</div>
+
       <div class="stream-status" title="Live SSE Event Stream">
         <span class="pulse-dot" id="stream-indicator"></span>
         <span id="stream-text" style="color: var(--text-muted);">LIVE SSE</span>
@@ -214,6 +216,22 @@
       <input type="text" class="search-input" id="input-dispatcher-id" value="00000000-0000-0000-0000-000000000001">
       <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
         <button class="btn-primary" id="btn-save-dispatcher">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dispatch Assignment Modal -->
+  <div class="modal-overlay" id="dispatch-assignment-modal">
+    <div class="modal-content">
+      <div class="card-header">
+        <h3 id="modal-incident-title" style="font-size: 1.1rem; color: #f8fafc;">Propose Rescue Unit Assignment</h3>
+        <button type="button" id="btn-close-dispatch-modal" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;">✕</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        Select an available rescue asset from the district inventory to assign:
+      </p>
+      <div id="modal-resource-list" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 280px; overflow-y: auto;">
+        <!-- Dynamically rendered resource cards -->
       </div>
     </div>
   </div>

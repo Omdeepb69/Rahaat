@@ -243,37 +243,64 @@ export function initOperations(api, state) {
     }
   }
 
+  const dispatchModal = document.getElementById("dispatch-assignment-modal");
+  const modalIncidentTitle = document.getElementById("modal-incident-title");
+  const modalResourceList = document.getElementById("modal-resource-list");
+  const btnCloseDispatchModal = document.getElementById("btn-close-dispatch-modal");
+
+  if (btnCloseDispatchModal && dispatchModal) {
+    btnCloseDispatchModal.addEventListener("click", () => {
+      dispatchModal.classList.remove("open");
+    });
+    dispatchModal.addEventListener("click", (e) => {
+      if (e.target === dispatchModal) {
+        dispatchModal.classList.remove("open");
+      }
+    });
+  }
+
   function openDispatchModal(incidentId) {
     const availableResources = (state.resources || []).filter((r) => r.availability_status === "available");
+    if (!dispatchModal || !modalResourceList) return;
+
+    modalIncidentTitle.textContent = `Assign Unit to Incident #${String(incidentId).slice(0, 8)}`;
+
     if (availableResources.length === 0) {
-      alert("No available rescue resources in the registry. Free up a resource first.");
+      modalResourceList.innerHTML = `<div style="color:var(--text-muted);padding:1rem;text-align:center;">No available rescue resources in registry. Free up a resource first.</div>`;
+      dispatchModal.classList.add("open");
       return;
     }
 
-    const resList = availableResources
-      .map((r) => `${r.name} (${r.resource_type})`)
-      .join("\n- ");
-
-    const choice = prompt(
-      `Select resource to assign to Incident #${incidentId}:\n\n- ${resList}\n\nEnter exact resource name:`,
-      availableResources[0].name
-    );
-    if (!choice) return;
-
-    const matched = availableResources.find((r) => r.name.toLowerCase() === choice.toLowerCase());
-    if (!matched) {
-      alert("Resource name not recognized.");
-      return;
-    }
-
-    api.proposeAssignment(incidentId, matched.id)
-      .then(() => {
-        alert("Assignment proposed! Click 'Approve Dispatch' to authorize deployment.");
-        loadIncidentAssignments(incidentId);
+    modalResourceList.innerHTML = availableResources
+      .map((r) => {
+        const icon = r.resource_type === "boat" ? "🚤" : r.resource_type === "medical" ? "🏥" : r.resource_type === "vehicle" ? "🚒" : "🔧";
+        return `
+          <div class="feed-item" data-res-id="${r.id}" style="cursor:pointer;padding:0.65rem 0.85rem;display:flex;justify-content:space-between;align-items:center;background:rgba(20,29,47,0.7);border:1px solid rgba(255,255,255,0.08);">
+            <div>
+              <div style="font-weight:700;font-size:0.85rem;color:#f8fafc;">${icon} ${escapeHtml(r.name)}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">${r.resource_type} · ${r.capacity_total ? `Capacity: ${r.capacity_total}` : "Rapid Unit"}</div>
+            </div>
+            <button class="btn-success btn-select-res" data-res-id="${r.id}" style="font-size:0.75rem;padding:0.35rem 0.75rem;">Assign →</button>
+          </div>
+        `;
       })
-      .catch((err) => {
-        alert(`Failed proposing assignment: ${err.message}`);
+      .join("");
+
+    modalResourceList.querySelectorAll(".btn-select-res").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const resId = btn.getAttribute("data-res-id");
+        dispatchModal.classList.remove("open");
+        api.proposeAssignment(incidentId, resId)
+          .then(() => {
+            loadIncidentAssignments(incidentId);
+          })
+          .catch((err) => {
+            alert(`Failed proposing assignment: ${err.message}`);
+          });
       });
+    });
+
+    dispatchModal.classList.add("open");
   }
 
   function escapeHtml(str) {
