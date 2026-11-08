@@ -36,8 +36,8 @@ _NEARBY_RESOURCES_SQL = text(
         disaster_id = :disaster_id
         AND location IS NOT NULL
         AND ST_DWithin(location, ST_MakePoint(:lon, :lat)::geography, :radius_m)
-        AND (:type_filter IS NULL OR resource_type = :type_filter)
-        AND (:status_filter IS NULL OR availability_status = :status_filter)
+        AND (cast(:type_filter as text) IS NULL OR resource_type = cast(:type_filter as text))
+        AND (cast(:status_filter as text) IS NULL OR availability_status = cast(:status_filter as text))
     ORDER BY distance_m ASC
     LIMIT :max_results
     """

@@ -92,13 +92,19 @@ COMMON_LANDMARK_TERMS = [
     "bridge",
     "station",
     "temple",
+    "mandir",
+    "masjid",
+    "gurudwara",
     "church",
     "school",
     "college",
+    "hospital",
+    "chowk",
     "junction",
     "road",
     "nagar",
     "colony",
+    "basti",
 ]
 
 
@@ -249,25 +255,36 @@ class AdaptiveDistressReasoningEngine(LLMClient):
         for lm in COMMON_LANDMARK_TERMS:
             if lm in text_lower:
                 idx = text_lower.find(lm)
-                # Capture phrase up to 40 characters around landmark
-                start = max(0, text_clean.rfind(" ", 0, idx) + 1 if text_clean.rfind(" ", 0, idx) != -1 else 0)
+                # Capture phrase up to 25 chars before and 20 chars after landmark
+                start = max(0, idx - 25)
+                space_pos = text_clean.find(" ", start)
+                if start > 0 and space_pos != -1 and space_pos < idx:
+                    start = space_pos + 1
                 end = min(len(text_clean), idx + len(lm) + 20)
                 candidate = text_clean[start:end].strip(" .,!?")
-                candidate = re.sub(r"\b(ke pass|ke paas|mein|me|near|at|par)\b", "", candidate, flags=re.IGNORECASE).strip()
+                candidate = re.sub(
+                    r"\b(ke pass|ke paas|mein|me|near|at|par|phanse|phansa|hoon|hai)\b",
+                    "",
+                    candidate,
+                    flags=re.IGNORECASE,
+                ).strip()
+                candidate = re.sub(r"^(?:main|hum|we|i\s+am|we\s+are)\s+", "", candidate, flags=re.IGNORECASE).strip()
+                candidate = re.sub(r"\s+", " ", candidate).strip()
                 if candidate:
                     return candidate.title()
                 return lm.title()
 
         # Extract prepositional phrases ("... ke pass", "... ke paas", "near ...", "at ...")
         prep_patterns = [
-            r"(?:near|at)\s+([A-Za-z0-9\s]{3,35})(?:,|\.|$)",
-            r"([A-Za-z0-9\u0900-\u097F\s]{3,35})\s+(?:ke\s+paas|ke\s+pass|me\s+phanse|mein)",
+            r"(?:\bnear\b|\bat\b)\s+([A-Za-z0-9\s]{3,35})(?:,|\.|$)",
+            r"([A-Za-z0-9\u0900-\u097F\s]{3,35})\s+(?:ke\s+paas|ke\s+pass|ke\s+samne|me\s+phanse|mein)",
         ]
         for pat in prep_patterns:
             m = re.search(pat, text_clean, re.IGNORECASE)
             if m:
                 loc = m.group(1).strip()
-                if len(loc.split()) <= 6 and not any(loc.lower() == w for w in ["hum", "we", "log", "madad"]):
+                loc = re.sub(r"^(?:main|hum|we|i\s+am|we\s+are)\s+", "", loc, flags=re.IGNORECASE).strip()
+                if len(loc.split()) <= 6 and not any(loc.lower() == w for w in ["hum", "we", "log", "madad", "chhat", "pani", "paani"]):
                     return loc.title()
 
         return None

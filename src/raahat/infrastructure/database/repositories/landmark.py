@@ -105,7 +105,7 @@ _FIND_WITHIN_RADIUS_SQL = text(
     FROM landmarks
     WHERE
         ST_DWithin(location, ST_MakePoint(:lon, :lat)::geography, :radius_m)
-        AND (:kind_filter IS NULL OR kind = :kind_filter)
+        AND (cast(:kind_filter as text) IS NULL OR kind = cast(:kind_filter as text))
     ORDER BY distance_m ASC, salience DESC
     LIMIT :max_results
     """
