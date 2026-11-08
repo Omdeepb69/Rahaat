@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from raahat.application.workflow import AutomatedAudioTriageWorkflow
     from raahat.domain.evidence import EvidenceGraphService
     from raahat.infrastructure.audit import AuditService
+    from raahat.infrastructure.llm import LLMClient
     from raahat.infrastructure.speech import SpeechRecognizer, TTSSynthesizer
     from raahat.infrastructure.telephony import CallbackScheduler
 
@@ -226,6 +227,13 @@ def get_tts_synthesizer() -> "TTSSynthesizer":
     from raahat.infrastructure.speech import GnaniTimbreTTS
 
     return GnaniTimbreTTS()
+
+
+def get_llm_client() -> "LLMClient":
+    """Provide LLMClient instance (Evon, local transformer, or adaptive reasoning engine)."""
+    from raahat.infrastructure.llm import create_llm_client
+
+    return create_llm_client()
 
 
 def require_dispatcher_id(

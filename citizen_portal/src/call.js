@@ -429,6 +429,33 @@
     addBubble("agent", "Raahat Helpline Agent", data.prompt_text);
     playAudioBase64(data.prompt_audio_base64);
 
+    // Update real-time AI cognitive telemetry panel
+    const telemetryPanel = document.getElementById("ai-telemetry-panel");
+    const telLoc = document.getElementById("telemetry-location");
+    const telCount = document.getElementById("telemetry-count");
+    const telNeeds = document.getElementById("telemetry-needs");
+    const aiPriority = document.getElementById("ai-priority-badge");
+
+    if (telemetryPanel) {
+      telemetryPanel.style.display = "block";
+      if (telLoc && data.extracted_location) {
+        telLoc.textContent = data.extracted_location;
+        telLoc.style.color = "#38bdf8";
+      }
+      if (telCount && data.extracted_people_count !== null && data.extracted_people_count !== undefined) {
+        telCount.textContent = `${data.extracted_people_count} individuals`;
+        telCount.style.color = "#fbbf24";
+      }
+      if (telNeeds && data.extracted_needs && data.extracted_needs.length) {
+        telNeeds.textContent = data.extracted_needs.join(", ").toUpperCase();
+        telNeeds.style.color = "#ec4899";
+      }
+      if (aiPriority && data.assessed_priority) {
+        aiPriority.textContent = `PRIORITY ${data.assessed_priority}`;
+        aiPriority.className = `badge-priority badge-${data.assessed_priority.toLowerCase()}`;
+      }
+    }
+
     if (data.is_completed) {
       setStatus("CALL COMPLETED — RESCUE AUTHORIZED", "status-completed");
       stopTimer();

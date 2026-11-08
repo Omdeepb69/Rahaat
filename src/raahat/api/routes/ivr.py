@@ -21,11 +21,13 @@ from raahat.adapters.channels.ivr import IVRCallAgent, IVRCallSession
 from raahat.api.dependencies import (
     get_audio_triage_workflow,
     get_ingestion_service,
+    get_llm_client,
     get_speech_recognizer,
     get_tts_synthesizer,
 )
 from raahat.application.ingestion import ReportIngestionService
 from raahat.application.workflow import AutomatedAudioTriageWorkflow
+from raahat.infrastructure.llm import LLMClient
 from raahat.infrastructure.speech import (
     AudioInput,
     SpeechRecognizer,
@@ -64,6 +66,11 @@ class CallTurnResponse(BaseModel):
     incident_id: Optional[uuid.UUID] = None
     priority: Optional[str] = None
     proposed_resource: Optional[str] = None
+    extracted_location: Optional[str] = None
+    extracted_people_count: Optional[int] = None
+    extracted_needs: list[str] = []
+    assessed_priority: Optional[str] = None
+    situation_summary: Optional[str] = None
 
 
 class CallSessionStatusResponse(BaseModel):
@@ -77,6 +84,7 @@ class CallSessionStatusResponse(BaseModel):
     location_text: Optional[str] = None
     people_count: Optional[int] = None
     people_count_confirmed: bool = False
+    situation_description: Optional[str] = None
     needs: list[str] = []
     language_code: str = "hi"
     transcripts: list[dict[str, Any]] = []
@@ -108,6 +116,7 @@ async def start_call(
     ingestion: ReportIngestionService = Depends(get_ingestion_service),
     speech_recognizer: SpeechRecognizer = Depends(get_speech_recognizer),
     tts: TTSSynthesizer = Depends(get_tts_synthesizer),
+    llm_client: LLMClient = Depends(get_llm_client),
 ) -> CallTurnResponse:
     """Initialize an emergency voice dialog session.
 
@@ -125,6 +134,7 @@ async def start_call(
     agent = IVRCallAgent(
         speech_recognizer=speech_recognizer,
         ingestion_service=None,
+        llm_client=llm_client,
     )
 
     turn_res = await agent.handle_turn(session)
@@ -138,6 +148,11 @@ async def start_call(
         prompt_audio_base64=audio_b64,
         expect_input=turn_res.expect_input,
         is_completed=turn_res.is_completed,
+        extracted_location=session.location_text,
+        extracted_people_count=session.people_count,
+        extracted_needs=list(session.needs),
+        assessed_priority=turn_res.extraction.assessed_priority if turn_res.extraction else "P1",
+        situation_summary=session.situation_description,
     )
 
 
@@ -156,6 +171,7 @@ async def process_turn(
     speech_recognizer: SpeechRecognizer = Depends(get_speech_recognizer),
     tts: TTSSynthesizer = Depends(get_tts_synthesizer),
     workflow: AutomatedAudioTriageWorkflow = Depends(get_audio_triage_workflow),
+    llm_client: LLMClient = Depends(get_llm_client),
 ) -> CallTurnResponse:
     """Process caller response (voice audio or DTMF) through Gnani Prisma ASR and IVR dialog state machine.
 
@@ -197,6 +213,7 @@ async def process_turn(
     agent = IVRCallAgent(
         speech_recognizer=speech_recognizer,
         ingestion_service=None,
+        llm_client=llm_client,
     )
 
     turn_res = await agent.handle_turn(
@@ -229,6 +246,14 @@ async def process_turn(
         except Exception as exc:
             logger.error("Downstream triage after IVR completion failed: %s", exc, exc_info=True)
 
+    assessed_p = (
+        priority
+        or (turn_res.extraction.assessed_priority if turn_res.extraction else "P1")
+    )
+    summary = session.situation_description or (
+        turn_res.extraction.situation_summary if turn_res.extraction else None
+    )
+
     return CallTurnResponse(
         call_sid=call_sid,
         state=turn_res.next_state.value,
@@ -242,6 +267,11 @@ async def process_turn(
         incident_id=incident_id,
         priority=priority,
         proposed_resource=proposed_resource,
+        extracted_location=session.location_text,
+        extracted_people_count=session.people_count,
+        extracted_needs=list(session.needs),
+        assessed_priority=assessed_p,
+        situation_summary=summary,
     )
 
 
@@ -268,6 +298,7 @@ def get_call_session(call_sid: str) -> CallSessionStatusResponse:
         location_text=session.location_text,
         people_count=session.people_count,
         people_count_confirmed=session.people_count_confirmed,
+        situation_description=session.situation_description,
         needs=session.needs,
         language_code=session.language_code,
         transcripts=[
