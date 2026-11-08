@@ -10,12 +10,15 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.26",
     "pydantic>=2.0",
-    "sqlalchemy>=2.0",
+    # asyncio extra installs greenlet, required by sqlalchemy.ext.asyncio
+    "sqlalchemy[asyncio]>=2.0",
     "geoalchemy2>=0.14",
     "alembic>=1.12",
     "asyncpg>=0.28",
     "psycopg2-binary>=2.9",
     "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
