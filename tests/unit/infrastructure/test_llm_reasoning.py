@@ -109,7 +109,7 @@ async def test_gemini_client_fallback_on_unreachable_api() -> None:
     """Verify Gemini client gracefully falls back to adaptive reasoning when API fails."""
     from raahat.infrastructure.llm.gemini import GeminiLLMClient
 
-    client = GeminiLLMClient(api_key="invalid_test_key", model="gemini-2.5-flash-lite")
+    client = GeminiLLMClient(api_key="invalid_test_key", model="gemini-3.1-flash-lite")
     extraction = await client.extract_and_respond(
         dialog_history=[],
         current_facts={},

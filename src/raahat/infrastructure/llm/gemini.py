@@ -14,7 +14,7 @@ from .protocol import EmergencyFactExtraction, LLMClient
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite"
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
@@ -163,3 +163,4 @@ class GeminiLLMClient(LLMClient):
             latest_user_utterance=latest_user_utterance,
             language_code=language_code,
         )
+
