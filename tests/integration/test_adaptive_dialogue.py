@@ -118,3 +118,4 @@ class TestAdaptiveDialogueFlow:
             assert "boat" in d_status["needs"]
         finally:
             app.dependency_overrides.clear()
+

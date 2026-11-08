@@ -93,6 +93,30 @@ async def test_adaptive_extraction_sequential_turns() -> None:
 
 @pytest.mark.asyncio
 async def test_create_llm_client_factory() -> None:
-    """Verify create_llm_client instantiates adaptive engine by default."""
-    client = create_llm_client()
-    assert isinstance(client, AdaptiveDistressReasoningEngine)
+    """Verify create_llm_client instantiates correct client based on provider."""
+    # Explicit provider
+    gemini_client = create_llm_client(provider="gemini", api_key="dummy_gemini_key")
+    from raahat.infrastructure.llm.gemini import GeminiLLMClient
+    assert isinstance(gemini_client, GeminiLLMClient)
+    assert gemini_client.api_key == "dummy_gemini_key"
+
+    default_client = create_llm_client(provider="adaptive")
+    assert isinstance(default_client, AdaptiveDistressReasoningEngine)
+
+
+@pytest.mark.asyncio
+async def test_gemini_client_fallback_on_unreachable_api() -> None:
+    """Verify Gemini client gracefully falls back to adaptive reasoning when API fails."""
+    from raahat.infrastructure.llm.gemini import GeminiLLMClient
+
+    client = GeminiLLMClient(api_key="invalid_test_key", model="gemini-2.5-flash-lite")
+    extraction = await client.extract_and_respond(
+        dialog_history=[],
+        current_facts={},
+        latest_user_utterance="Alappuzha Boat Jetty ke pass 4 log phanse hain",
+        language_code="hi",
+    )
+    # Even with bad key/unreachable network, extraction succeeds via fallback!
+    assert extraction.location_text is not None
+    assert "Alappuzha" in extraction.location_text
+    assert extraction.people_count == 4

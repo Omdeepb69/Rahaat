@@ -48,6 +48,10 @@ services:
       WEB_CONCURRENCY: "${WEB_CONCURRENCY:-2}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       ENVIRONMENT: "${ENVIRONMENT:-production}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-2.5-flash-lite}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-gemini}"
+      GNANI_API_KEY_TTS_STT: "${GNANI_API_KEY_TTS_STT:-}"
     depends_on:
       db:
         condition: service_healthy
@@ -77,6 +81,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-raahat}
       ENVIRONMENT: "${ENVIRONMENT:-production}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-2.5-flash-lite}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-gemini}"
+      GNANI_API_KEY_TTS_STT: "${GNANI_API_KEY_TTS_STT:-}"
     depends_on:
       db:
         condition: service_healthy

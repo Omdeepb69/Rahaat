@@ -6,6 +6,7 @@ from typing import Optional
 
 from .adaptive_engine import AdaptiveDistressReasoningEngine
 from .evon_openai import EvonOpenAIClient
+from .gemini import GeminiLLMClient
 from .local_transformers import LocalTransformersLLMClient
 from .protocol import LLMClient
 
@@ -19,11 +20,18 @@ def create_llm_client(
     """Create an LLMClient instance according to environment or explicit arguments.
 
     Order of evaluation:
-    1. If provider == "openai" or "evon", or EVON_API_BASE is set -> EvonOpenAIClient
-    2. If provider == "transformers" or USE_LOCAL_TRANSFORMERS == "true" -> LocalTransformersLLMClient
-    3. Default -> AdaptiveDistressReasoningEngine (zero-latency, highly accurate on Indic disaster entities)
+    1. If provider == "gemini" or GEMINI_API_KEY is set -> GeminiLLMClient
+    2. If provider == "openai" or "evon", or EVON_API_BASE is set -> EvonOpenAIClient
+    3. If provider == "transformers" or USE_LOCAL_TRANSFORMERS == "true" -> LocalTransformersLLMClient
+    4. Default -> AdaptiveDistressReasoningEngine (zero-latency, highly accurate on Indic disaster entities)
     """
     selected_provider = (provider or os.getenv("LLM_PROVIDER") or "").lower()
+
+    if selected_provider == "gemini" or os.getenv("GEMINI_API_KEY"):
+        return GeminiLLMClient(
+            api_key=api_key or os.getenv("GEMINI_API_KEY"),
+            model=model or os.getenv("GEMINI_MODEL"),
+        )
 
     if selected_provider in ("evon", "openai") or os.getenv("EVON_API_BASE"):
         return EvonOpenAIClient(
@@ -37,3 +45,4 @@ def create_llm_client(
 
     # High-reliability adaptive reasoning engine with entity extraction & dialogue policy
     return AdaptiveDistressReasoningEngine()
+
