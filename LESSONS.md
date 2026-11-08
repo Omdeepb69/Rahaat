@@ -37,6 +37,11 @@ first without needing to search.
 
 ---
 
+## SQLAlchemy JSON/JSONB In-Place Mutation Requires Reassignment or flag_modified
+- What happened: Mutating dictionary keys in-place on an ORM instance (e.g. `report.raw_payload["transcript"] = ...`) failed to persist to PostgreSQL on `session.commit()` because SQLAlchemy tracks object identity, not in-place nested mutable dictionary changes.
+- Takeaway: When updating JSON/JSONB columns, reassign a new dict (`report.raw_payload = dict(report.raw_payload)`) and explicitly call `from sqlalchemy.orm.attributes import flag_modified; flag_modified(report, "raw_payload")` before commit.
+- Applies to: SQLAlchemy ORM models with JSON, JSONB, or ARRAY mutable columns.
+
 ## Browser EventSource Lacks Custom Header Support; Authenticate SSE via Query Parameter
 - What happened: The web console failed to establish a live event stream because `new EventSource("/api/v1/events/stream")` cannot set custom HTTP headers (`X-Dispatcher-Id`), triggering a 401 Unauthorized rejection from the backend.
 - Takeaway: Standard browser `EventSource` (and WebSocket) APIs cannot transmit arbitrary request headers. Endpoints using dependency injection for authentication must accept credentials from either HTTP headers or URL query parameters (`?dispatcher_id=...` or `?token=...`).

@@ -59,7 +59,7 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
   - [x] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
   - [x] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
-  - [ ] 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
+  - [x] 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
   - [ ] 6.5 Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
   - [ ] 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
   - [ ] 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
@@ -330,21 +330,25 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Current Task
 
-### Task 6.4: Real Audio Processing Worker & Local Speech Recognition Pipeline
-- **Objective**: Implement active background processing for citizen voice uploads and IVR audio recordings. Integrate an optional lightweight local speech recognition model (`faster-whisper` or `whisper-tiny`/`whisper-base` with fast CPU inference) in `src/raahat/infrastructure/speech/whisper.py`, paired with Silero VAD / energy-based voice activity detection. Wire a background worker task (`AudioReportProcessor`) that leases pending audio reports from `storage/audio/`, executes speech transcription, populates transcript text, updates report `processing_status` to `extracted`, and emits an outbox event. Include transparent fallback: if whisper weights are unavailable or offline, fallback to deterministic acoustic feature extractor and mock with explicit provenance marking.
-- **Inputs**: `src/raahat/infrastructure/speech/`, `src/raahat/workers/`, `storage/audio/`.
-- **Output**: Functional background audio processing worker, local Whisper/VAD integration, unit and integration tests.
-- **Constraints**: Never crash or hang if GPU/whisper is not installed; graceful fallback; strict separation between audio perception and domain logic.
+### Task 6.5: Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
+- **Objective**: Implement the core `AutomatedAudioTriageWorkflow` application service defined in `ARCHITECTURE.md`. Chain the full pipeline:
+  `Transcribed Audio Report -> Severity & Vulnerability Fact Extraction -> PostGIS Landmark Candidate Matching -> Canonical Incident Match/Create -> Deterministic Safety Policy Triage (P0-P3) -> Nearest Rescue Unit Propose -> Real-Time SSE Broadcast -> Citizen Ticket Status Progress (stage: triaged/dispatched)`.
+  Ensure every operational state transition produces an append-only SHA-256 audit entry.
+- **Inputs**: `application/ingestion`, `application/triage`, `application/location`, `application/incident_resolution`, `application/dispatch`.
+- **Output**: `src/raahat/application/workflow/audio_triage.py`, API trigger endpoint, integration tests.
+- **Constraints**: Zero autonomous dispatch without human approval (workflow proposes assignment, marks status `proposed`); deterministic triage guarantees "Unknown never lowers priority"; audit logging on every mutation.
 - **Verification Criterion**:
-  1. Uploading a `.wav` / `.webm` audio distress file transitions `processing_status` from `pending` to `extracted` with non-empty transcript.
-  2. Integration test in `tests/integration/test_audio_processor.py` passes.
+  1. Single workflow invocation takes raw distress audio, creates incident, evaluates priority, links nearest rescue resource, and updates citizen ticket status.
+  2. Integration test in `tests/integration/test_audio_triage_workflow.py` passes.
   3. Mypy and ruff clean.
 
 ---
 
 ## Next Task
 
-**Task ID:** 6.5 — Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
+**Task ID:** 6.6 — One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
+
+---
 
 ---
 
@@ -360,6 +364,12 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.4 complete
+- Changed: Implemented the background audio report processor worker and enhanced local Whisper speech recognition with deterministic acoustic VAD fallback. Created `AudioReportProcessor` and `AudioReportProcessorConfig` in `src/raahat/workers/report_processor.py` leasing pending audio reports from `storage/audio/`, executing VAD via `EnergyVADDetector` and speech transcription via `SpeechRecognizer`, updating report `processing_status` to `extracted`, populating `raw_payload["transcript"]` and `raw_payload["text"]`, and publishing transactional outbox event `report.extracted`; updated `WhisperRecognizer` in `src/raahat/infrastructure/speech/whisper.py` with `allow_fallback` and `fallback_recognizer` parameters to gracefully fall back to deterministic acoustic analysis when Whisper library/weights are uninstalled without breaking existing public error contracts; wired `AudioReportProcessor` into `WorkerService` in `src/raahat/workers/main.py` tick loop; exported worker classes in `src/raahat/workers/__init__.py`; created unit tests in `tests/unit/infrastructure/test_speech_adapters.py` and integration tests in `tests/integration/test_audio_processor.py`.
+- Files: `src/raahat/workers/report_processor.py` (new), `src/raahat/infrastructure/speech/whisper.py` (updated), `src/raahat/workers/main.py` (updated), `src/raahat/workers/__init__.py` (updated), `tests/unit/infrastructure/test_speech_adapters.py` (updated), `tests/integration/test_audio_processor.py` (new).
+- Verified: 443 tests pass (`PYTHONPATH=src pytest -p no:launch_testing_ros_pytest_entrypoint -q`; 438 prior + 5 new unit & integration tests); `mypy src/raahat field_app evaluation tests` — 0 errors across 240 source files; `ruff check .` — all checks passed; verified voice upload at `/api/v1/reports/channels/web/voice` transitions ticket stage from `received` to `processing` upon background worker execution.
+- Limitations: Next task implements `AutomatedAudioTriageWorkflow` to complete downstream incident creation, deterministic triage, and dispatch proposal from the extracted report.
 
 ### 2026-11-08 — Task 6.3 complete
 - Changed: Modernized the Operator Console UI with priority-colour visual encoding, disaster switcher, Leaflet interactive map, and enhanced dispatch workflow. Added P0–P3 CSS colour variables and classes (`--p0-color` through `--p3-color`, `.badge-p0`–`.badge-p3`, `.pulse-critical` keyframe animation for mass-casualty P0 incidents) to `console.css`; added disaster switcher `<select>` to `index.html` header with `.disaster-switcher` / `.disaster-select` CSS; added Leaflet 1.9.4 CDN stylesheet link (no bundler); upgraded `state.js` to track `activeDisasterId` and emit `disaster_changed`; rewrote `app.js` disaster switcher logic (derives unique disaster IDs from incident records since no `/api/v1/disasters` endpoint exists); upgraded `operations.js` with P0–P3 sort order, priority-labelled incident cards with `pulse-critical` on critical priority, improved resource registry (available-first sort, coloured borders); upgraded `reports_feed.js` with channel emoji icons, coloured processing-status dot, `new-arrival` flash on SSE push; upgraded `situation_map.js` with Leaflet interactive map (OSM tiles, coloured circle markers per location status, uncertainty circles, tooltip popups with Investigate/Dispatch buttons, `invalidateSize` on tab switch) with full SVG fallback when Leaflet not loaded.
