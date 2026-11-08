@@ -55,14 +55,14 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 5.3 Ablation Studies & Research Evaluation Runner
   - [x] 5.4 Docker Compose Stack & Infrastructure Scaffolding
   - [x] 5.5 Observability Dashboards, Runbook & Limitations Documentation
-- [ ] Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
+- [x] Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
   - [x] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
   - [x] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
   - [x] 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
   - [x] 6.5 Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
   - [x] 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
-  - [ ] 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
+  - [x] 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
 
 ---
 
@@ -330,20 +330,13 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Current Task
 
-### Task 6.7: Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
-- **Objective**: Author a comprehensive, honest, and technically rigorous demo presentation guide and system model card in `docs/demo_runbook.md` and `docs/model_card.md`. Clearly delineate the architectural boundary: explain that triage and dispatch decisions are powered by deterministic spatial indexing and safety-first expert policy rules (P0-P3 explainability) rather than opaque neural hallucination; document the Indic speech perception pipeline (Whisper / acoustic VAD fallback) with its capabilities and fallback contracts; provide instructions for live presentation (split-screen operator console, citizen tracking view, and live runner execution).
-- **Inputs**: `docs/`, `PROJECT_PLAN.md`, completed tasks 6.1 through 6.6.
-- **Output**: `docs/demo_runbook.md`, `docs/model_card.md`.
-- **Constraints**: Follow the `/critic` architectural transparency principles; zero unsupported AI hype; accurately document that models are decision-support tools with strict human authorization.
-- **Verification Criterion**:
-  1. Documentation accurately reflects all code, API endpoints, and scripts without fabricated capabilities.
-  2. Formatting and links adhere to project standards.
+**Status:** All tasks across Phase 1 through Phase 6 are complete. The platform is fully operational, verified, and ready for contest demonstration.
 
 ---
 
 ## Next Task
 
-**Task ID:** None (Phase 6 complete upon 6.7 verification)
+**Task ID:** None (All Phases 1–6 complete. Ongoing contest submission & presentation).
 
 ---
 
@@ -361,6 +354,11 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.7 complete
+- Changed: Completed the Demo Presentation Runbook, System Model Card, and Architectural Transparency documentation. Authored `docs/demo_runbook.md` detailing the 60-second video presentation script (beat-by-beat dialogue, actions, and timings), an 8-milestone live interactive presentation walkthrough, a comprehensive Gnani API credit budget analysis and conservation strategy, real contest audio clip generation guidance, and contest submission checklist; authored `docs/model_card.md` providing an exhaustive technical specification of Gnani Prisma v3.0 STT, Gnani Timbre v3.0 TTS, energy VAD, local Whisper fallback, IVR state machine, fact extraction rules, P0–P3 safety policy, PostGIS spatial landmark disambiguation, conservative entity resolution, human-in-the-loop dispatch safety invariants, and documented system boundaries; created `README.md` presenting the system overview, architecture diagram, perception vs. policy division, quickstart instructions (Docker & local), application endpoints, and test coverage; created symlink `docs/demo_guide.md` pointing to `docs/demo_runbook.md`.
+- Files: `docs/demo_runbook.md` (new), `docs/model_card.md` (new), `README.md` (new), `docs/demo_guide.md` (new symlink), `PROJECT_PLAN.md` (updated).
+- Verified: All 457 tests pass (`PYTHONPATH=src pytest -p no:launch_testing_ros_pytest_entrypoint -q`); `mypy src/raahat field_app evaluation tests scripts` clean (0 errors across 252 source files); `ruff check .` clean (0 errors); documentation formatting and links verified.
 
 ### 2026-11-08 — Gnani AI Prisma v3.0 & Timbre Interactive Helpline Integration
 - Changed: Upgraded the speech perception and voice generation pipeline to natively integrate with Gnani.ai's official models for "The Great Indian AI Internship Challenge": upgraded `PrismaRecognizer` in `src/raahat/infrastructure/speech/prisma.py` to target the Gnani Prisma v3.0 ASR endpoint (`https://api.vachana.ai/stt/v3`) supporting `indic-auto` language detection, ITN formatting (`format=transcribe`), and emergency distress keyterm boosting; implemented `GnaniTimbreTTS` in `src/raahat/infrastructure/speech/timbre.py` targeting the Gnani Timbre TTS endpoint (`https://api.vachana.ai/api/v1/tts/inference`) with the `Shivani` neural voice for low-latency natural speech synthesis across 10 Indian languages; implemented interactive emergency voice call API routes in `src/raahat/api/routes/ivr.py` (`POST /api/v1/ivr/calls/start`, `POST /api/v1/ivr/calls/{call_sid}/turn`, `GET /api/v1/ivr/calls/{call_sid}`) orchestrating turn-taking dialog, speech transcription, audio synthesis, atomic report ingestion, and real-time dispatch proposal; added DI dependencies `get_speech_recognizer` and `get_tts_synthesizer` in `src/raahat/api/dependencies.py`; created the interactive emergency calling web application in `citizen_portal/public/call.html` and `citizen_portal/src/call.js` with live microphone capture, audio waveform visualizer, real-time chat bubbles, audio playback, and instant tracking ticket link; created `scripts/generate_contest_audio.py` producing 4 targeted evaluation audio clips in `demo/audio/contest_showcase/` covering Hinglish code-mixing, Hindi medical crisis, Malayalam regional flood distress, and Marathi urban flooding with ambient noise simulation; added comprehensive integration tests in `tests/integration/test_ivr_api.py`.

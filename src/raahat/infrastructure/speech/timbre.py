@@ -136,3 +136,4 @@ class GnaniTimbreTTS(TTSSynthesizer):
         except Exception as exc:
             logger.error("Gnani Timbre TTS synthesis failed: %s", exc)
             raise RuntimeError(f"Gnani Timbre TTS request failed: {exc}") from exc
+
