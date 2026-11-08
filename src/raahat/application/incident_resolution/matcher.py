@@ -468,10 +468,19 @@ class ConservativeIncidentMatcher:
             )
             report_models = session.scalars(rep_stmt).all()
             for r_m in report_models:
+                try:
+                    s_type = SourceType(r_m.source_type)
+                except ValueError:
+                    s_type = SourceType.WEB
+                try:
+                    p_stat = ProcessingStatus(r_m.processing_status)
+                except ValueError:
+                    p_stat = ProcessingStatus.PROCESSED
+
                 reports.append(DomainReport(
                     id=r_m.id,
                     disaster_id=r_m.disaster_id,
-                    source_type=SourceType(r_m.source_type),
+                    source_type=s_type,
                     source_event_id=r_m.source_event_id,
                     source_identity=r_m.source_identity,
                     device_id=r_m.device_id,
@@ -480,7 +489,7 @@ class ConservativeIncidentMatcher:
                     received_at=r_m.received_at,
                     client_created_at=r_m.client_created_at,
                     language_code=r_m.language_code,
-                    processing_status=ProcessingStatus(r_m.processing_status),
+                    processing_status=p_stat,
                     idempotency_key=r_m.idempotency_key,
                 ))
 

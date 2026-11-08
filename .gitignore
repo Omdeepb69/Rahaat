@@ -38,3 +38,6 @@ htmlcov/
 .idea/
 .vscode/
 
+# Local runtime storage
+storage/
+

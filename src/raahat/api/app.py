@@ -9,6 +9,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from raahat.api.routes.audit import router as audit_router
+from raahat.api.routes.demo import router as demo_router
 from raahat.api.routes.devices import router as devices_router
 from raahat.api.routes.events import router as events_router
 from raahat.api.routes.incidents import router as incidents_router
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_router, prefix="/api/v1")
     app.include_router(events_router, prefix="/api/v1")
     app.include_router(workflow_router, prefix="/api/v1")
+    app.include_router(demo_router, prefix="/api/v1")
     app.include_router(metrics_router, prefix="/api/v1")
     app.include_router(metrics_router)  # exposes /metrics at root for standard Prometheus scraping
 

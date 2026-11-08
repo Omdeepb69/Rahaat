@@ -61,7 +61,7 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
   - [x] 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
   - [x] 6.5 Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
-  - [ ] 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
+  - [x] 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
   - [ ] 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
 
 ---
@@ -330,21 +330,20 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Current Task
 
-### Task 6.6: One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
-- **Objective**: Create a one-command interactive demo runner (`scripts/demo_run.py`) and API trigger (`POST /api/v1/demo/run-scenario`). Implement a database seeder (`scripts/seed_demo_data.py`) with realistic Pune / Mumbai flood scenario: NDRF motorboats, medical rescue teams, flood shelters, and real landmarks (Bund Garden, Shaniwar Wada, Ferguson College, riverside colonies). Provide sample emergency audio files in `demo/audio/`. The demo script steps through 8 annotated milestones with live console output, timed pacing for presentations, auto-refreshing the Operator Console via live SSE and updating the Citizen SOS ticket tracker (`/sos/track.html`).
-- **Inputs**: `scripts/`, `demo/`, completed 6.4 and 6.5.
-- **Output**: `scripts/seed_demo_data.py`, `scripts/demo_run.py`, `POST /api/v1/demo/run-scenario` route, sample Indic flood audio.
-- **Constraints**: Must run against both Docker Compose stack (`http://localhost:8080`) and local dev server; clear step-by-step terminal output suitable for projection during a live presentation.
+### Task 6.7: Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
+- **Objective**: Author a comprehensive, honest, and technically rigorous demo presentation guide and system model card in `docs/demo_runbook.md` and `docs/model_card.md`. Clearly delineate the architectural boundary: explain that triage and dispatch decisions are powered by deterministic spatial indexing and safety-first expert policy rules (P0-P3 explainability) rather than opaque neural hallucination; document the Indic speech perception pipeline (Whisper / acoustic VAD fallback) with its capabilities and fallback contracts; provide instructions for live presentation (split-screen operator console, citizen tracking view, and live runner execution).
+- **Inputs**: `docs/`, `PROJECT_PLAN.md`, completed tasks 6.1 through 6.6.
+- **Output**: `docs/demo_runbook.md`, `docs/model_card.md`.
+- **Constraints**: Follow the `/critic` architectural transparency principles; zero unsupported AI hype; accurately document that models are decision-support tools with strict human authorization.
 - **Verification Criterion**:
-  1. `python3 scripts/seed_demo_data.py` seeds Pune flood scenario successfully.
-  2. `python3 scripts/demo_run.py --dry-run` or API endpoint executes milestones cleanly.
-  3. Mypy and ruff clean.
+  1. Documentation accurately reflects all code, API endpoints, and scripts without fabricated capabilities.
+  2. Formatting and links adhere to project standards.
 
 ---
 
 ## Next Task
 
-**Task ID:** 6.7 — Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
+**Task ID:** None (Phase 6 complete upon 6.7 verification)
 
 ---
 
@@ -362,6 +361,12 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 ---
 
 ## Log
+
+### 2026-11-08 — Task 6.6 complete
+- Changed: Implemented the live demo runner, scenario seeder, and scenario orchestration API for the Raahat platform using archival flood audio from the Kerala Flood 2018 dataset (Christ College DSpace repository). Created `scripts/seed_demo_data.py` providing idempotent seeding of real Kerala landmarks (Alappuzha Boat Jetty, Ernakulam General Hospital, Shakthan Thampuran Bus Stand, Munnar Town Centre, Marine Drive Kochi, Pamba River Ghat, Chalakudy River Bridge) and rescue assets (NDRF motorboats, Army medical team, SDRF rescue unit, flood relief camp) into PostgreSQL/PostGIS and persisting `demo/scenario.json`; created API route `POST /api/v1/demo/run-scenario` in `src/raahat/api/routes/demo.py` and mounted it in `src/raahat/api/app.py` and `src/raahat/api/routes/__init__.py`; created `scripts/demo_run.py` offering an annotated 8-milestone terminal runner suitable for live presentation with `--dry-run`, `--base-url`, and `--pause` support; converted all 14 archival Kerala recordings into 16kHz mono WAV in `demo/audio/kerala_2018_wav/`; added defensive parsing in `src/raahat/application/incident_resolution/matcher.py` and `src/raahat/domain/evidence/service.py` ensuring unexpected or legacy `source_type` and `processing_status` strings safely fall back rather than halting entity resolution; added comprehensive integration tests in `tests/integration/test_demo_scenario.py`.
+- Files: `scripts/seed_demo_data.py` (new), `scripts/demo_run.py` (new), `src/raahat/api/routes/demo.py` (new), `src/raahat/api/app.py` (updated), `src/raahat/api/routes/__init__.py` (updated), `src/raahat/application/incident_resolution/matcher.py` (updated), `src/raahat/domain/evidence/service.py` (updated), `tests/integration/test_demo_scenario.py` (new), `.gitignore` (updated).
+- Verified: All 4 integration tests in `tests/integration/test_demo_scenario.py` pass; full test suite of 452 tests passes (`PYTHONPATH=src pytest -p no:launch_testing_ros_pytest_entrypoint -q`); `mypy src/raahat field_app evaluation tests scripts` clean (0 errors across 248 source files); `ruff check .` clean (0 errors); verified `python3 scripts/seed_demo_data.py` seeds database idempotently; verified `python3 scripts/demo_run.py --dry-run` executes all 8 presentation milestones cleanly.
+- Limitations: Next task (6.7) creates the formal demo runbook, presentation guidelines, and architectural model card.
 
 ### 2026-11-08 — Task 6.5 complete
 - Changed: Implemented the `AutomatedAudioTriageWorkflow` application service in `src/raahat/application/workflow/audio_triage.py` orchestrating end-to-end voice intake, speech perception, PostGIS landmark disambiguation, structured evidence fact extraction, canonical incident linking, deterministic safety policy triage (P0-P3 explainability), nearest rescue resource recommendation, human-in-the-loop dispatch proposal, real-time live SSE broadcast, and citizen ticket status tracking; exported `AutomatedAudioTriageWorkflow` and `WorkflowResult` in `src/raahat/application/workflow/__init__.py`; created API dependency `get_audio_triage_workflow` in `src/raahat/api/dependencies.py`; added workflow API endpoints `POST /api/v1/workflow/audio-triage` (multipart audio upload with caller coordinates and phone) and `POST /api/v1/workflow/reports/{report_id}/run` in `src/raahat/api/routes/workflow.py`; mounted router in `src/raahat/api/app.py` and exported in `src/raahat/api/routes/__init__.py`; fixed binary null byte handling in `WhisperRecognizer` and `MockSpeechRecognizer`; implemented comprehensive integration tests in `tests/integration/test_audio_triage_workflow.py`.

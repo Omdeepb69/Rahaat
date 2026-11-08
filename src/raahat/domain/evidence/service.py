@@ -26,10 +26,20 @@ logger = logging.getLogger(__name__)
 
 def _model_to_report(model: ReportModel) -> Report:
     """Helper to convert ReportModel to domain Report."""
+    try:
+        source_type = SourceType(model.source_type)
+    except ValueError:
+        source_type = SourceType.WEB
+
+    try:
+        proc_status = ProcessingStatus(model.processing_status)
+    except ValueError:
+        proc_status = ProcessingStatus.PROCESSED
+
     return Report(
         id=model.id,
         disaster_id=model.disaster_id,
-        source_type=SourceType(model.source_type),
+        source_type=source_type,
         source_event_id=model.source_event_id,
         source_identity=model.source_identity,
         device_id=model.device_id,
@@ -38,7 +48,7 @@ def _model_to_report(model: ReportModel) -> Report:
         received_at=model.received_at,
         client_created_at=model.client_created_at,
         language_code=model.language_code,
-        processing_status=ProcessingStatus(model.processing_status),
+        processing_status=proc_status,
         idempotency_key=model.idempotency_key,
     )
 
