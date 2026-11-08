@@ -176,3 +176,11 @@ deployment/                  — Docker Compose, Prometheus, Grafana configs, an
   3. Create `/sos/` citizen emergency portal supporting in-browser voice note recording (`MediaRecorder`) and one-click geolocation.
   4. Implement `AutomatedAudioTriageWorkflow` orchestrating voice ingestion, speech transcription, acoustic distress analysis, landmark resolution, deterministic triage, and nearest-unit dispatch.
 - **Reasoning**: Standard web platform constraints (EventSource lacks custom header support) require query-based auth; citizens in distress require low-friction voice reporting; evaluators and dispatch leaders require an end-to-end demonstrable pipeline showing voice input flowing through to automated rescue unit dispatch.
+
+### 2026-11-08 — Strict Separation of Sensory AI Perception vs Deterministic Safety Policy
+- **Context**: Ambiguity regarding what role machine learning models play versus deterministic domain policies in disaster operations.
+- **Decision**:
+  1. Machine learning (Whisper / ASR / VAD / acoustic models) is strictly restricted to **sensory perception** — transcribing audio waveforms into text and detecting speech boundaries.
+  2. Domain triage, fact extraction validation, location disambiguation, and rescue resource matching are strictly **deterministic, explainable, and audit-logged**. Generative LLMs are never permitted to autonomously decide operational priority or dispatch rescue units.
+  3. When speech models or hardware accelerators are unavailable, the platform gracefully degrades to deterministic keyword/metadata ingestion and transparently tags the provenance as uncalibrated rather than fabricating confidence scores.
+- **Reasoning**: In life-or-death disaster logistics, stochastic generative hallucinations create unacceptable liability and catastrophic failure modes. Deterministic policies guarantee explainable decision-making and verifiable compliance with the "Unknown never lowers priority" safety invariant.

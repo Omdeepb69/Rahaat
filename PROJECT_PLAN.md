@@ -59,8 +59,10 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
   - [x] 6.1 API Ergonomics, Query Filtering & SSE Authentication Fallbacks
   - [x] 6.2 Citizen-Facing Web SOS & Audio Recording Portal (`/sos/`)
   - [x] 6.3 Modernized Operator Console UI & Real-Time Situational Awareness
-  - [ ] 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
-  - [ ] 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
+  - [ ] 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
+  - [ ] 6.5 Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
+  - [ ] 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
+  - [ ] 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
 
 ---
 
@@ -288,38 +290,61 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 - Constraints: Pure ES6 modules without fragile bundling steps; zero uncaught JavaScript console errors; responsive layout for dispatch operations.
 - Depends on: 6.1.
 
-### 6.4 Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
-- Objective: Implement an automated end-to-end orchestration service `AutomatedAudioTriageWorkflow` that connects: `Voice Ingestion -> VAD & Indic Speech Recognition -> Acoustic Distress Classifier -> Severity/Location Fact Extraction -> PostGIS Landmark Resolution -> Canonical Incident Merge/Create -> Deterministic Safety Triage (P0-P3) -> Nearest Rescue Unit Propose/Dispatch -> Real-Time SSE Event Broadcast`. Build realistic demo data seed script (`scripts/seed_demo_data.py`) with Pune/Mumbai flood landmarks and standby rescue teams (NDRF boats, ambulances), pre-packaged Indic emergency audio samples, and an interactive CLI/API demo runner (`demo/run_demo.py` and `POST /api/v1/demo/run-scenario`).
-- Inputs: Speech adapters (`infrastructure/speech`), Triage (`application/triage`), Dispatch (`application/dispatch`), Ingestion (`application/ingestion`).
-- Output: End-to-end automated audio-to-dispatch workflow service, seeded demo dataset, and interactive demo runner.
-- Constraints: Deterministic execution; robust fallback to fast mock recognizer when heavyweight GPU models are absent; clear console logs explaining each architectural stage.
+### 6.4 Real Audio Processing Worker & Local Speech Recognition Pipeline
+- Objective: Implement active background processing for citizen voice uploads and IVR audio recordings. Integrate an optional lightweight local speech recognition model (`faster-whisper` or `whisper-tiny`/`whisper-base` with fast CPU inference) in `src/raahat/infrastructure/speech/whisper.py`, paired with Silero VAD / energy-based voice activity detection. Wire a background worker task (`AudioReportProcessor`) that leases pending audio reports from `storage/audio/`, executes speech transcription, populates transcript text, updates report `processing_status` to `extracted`, and emits an outbox event. Include transparent fallback: if whisper weights are unavailable or offline, fallback to deterministic acoustic feature extractor and mock with explicit provenance marking.
+- Inputs: `src/raahat/infrastructure/speech/`, `src/raahat/workers/`, `storage/audio/`.
+- Output: Functional background audio processing worker, local Whisper/VAD integration, unit and integration tests.
+- Constraints: Never crash or hang if GPU/whisper is not installed; graceful fallback; strict separation between audio perception and domain logic.
 - Depends on: 6.1, 6.2, 6.3.
 
-### 6.5 End-to-End Demo Script, Presentation Runbook & Feature Showcase
-- Objective: Author a comprehensive presentation guide and interactive feature showcase in `docs/demo_guide.md` and update `README.md`. Provide a step-by-step speaker script for live demonstrations walking through: 1. Citizen voice SOS submission, 2. Automated audio-to-dispatch pipeline execution, 3. Real-time operator console visualization, and 4. Guided explanations of all key architectural differentiators (offline CRDT field sync, reversible unmerge, active landmark disambiguation, cryptographic audit log, and RaahatBench research benchmarks).
-- Inputs: `docs/`, `RAAHAT_SPEC.md`, `ARCHITECTURE.md`, completed Phase 6 components.
-- Output: `docs/demo_guide.md` and updated `README.md` with demo commands and talking points.
-- Constraints: Grounded in verifiable commands; clear distinction between automated demo actions and human-in-the-loop operational safety rules.
+### 6.5 Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
+- Objective: Implement the core `AutomatedAudioTriageWorkflow` application service defined in `ARCHITECTURE.md`. Chain the full pipeline:
+  `Transcribed Audio Report -> Severity & Vulnerability Fact Extraction -> PostGIS Landmark Candidate Matching -> Canonical Incident Match/Create -> Deterministic Safety Policy Triage (P0-P3) -> Nearest Rescue Unit Propose -> Real-Time SSE Broadcast -> Citizen Ticket Status Progress (stage: triaged/dispatched)`.
+  Ensure every operational state transition produces an append-only SHA-256 audit entry.
+- Inputs: `application/ingestion`, `application/triage`, `application/location`, `application/incident_resolution`, `application/dispatch`.
+- Output: `src/raahat/application/workflow/audio_triage.py`, API trigger endpoint, integration tests.
+- Constraints: Zero autonomous dispatch without human approval (workflow proposes assignment, marks status `proposed`); deterministic triage guarantees "Unknown never lowers priority"; audit logging on every mutation.
 - Depends on: 6.4.
+
+### 6.6 One-Command Live Demo Runner, Scenario Seeder & Real-Time Orchestration API
+- Objective: Create a one-command interactive demo runner (`scripts/demo_run.py`) and API trigger (`POST /api/v1/demo/run-scenario`). Implement a database seeder (`scripts/seed_demo_data.py`) with realistic Pune / Mumbai flood scenario: NDRF motorboats, medical rescue teams, flood shelters, and real landmarks (Bund Garden, Shaniwar Wada, Ferguson College, riverside colonies). Provide sample emergency audio files in `demo/audio/`. The demo script steps through 8 annotated milestones with live console output, timed pacing for presentations, auto-refreshing the Operator Console via live SSE and updating the Citizen SOS ticket tracker (`/sos/track.html`).
+- Inputs: `scripts/`, `demo/`, completed 6.4 and 6.5.
+- Output: `scripts/seed_demo_data.py`, `scripts/demo_run.py`, `POST /api/v1/demo/run-scenario` route, sample Indic flood audio.
+- Constraints: Must run against both Docker Compose stack (`http://localhost:8080`) and local dev server; clear step-by-step terminal output suitable for projection during a live presentation.
+- Depends on: 6.5.
+
+### 6.7 Demo Presentation Runbook, System Model Card & Architectural Transparency Guide
+- Objective: Author a comprehensive presentation guide in `docs/demo_guide.md`, an AI/system model card in `docs/model_card.md`, and update `README.md`. Detail the exact division of labor: sensory perception models (Whisper/VAD) vs deterministic safety policies (triage/dispatch). Provide a 5-minute speaker script with click-by-click instructions for demonstrating:
+  1. Citizen SOS Voice note submission.
+  2. Background audio processing and transcript extraction.
+  3. Real-time Leaflet Situation Map update with spatial uncertainty bounding.
+  4. Decision-support triage breakdown (P0-P3 explainability).
+  5. 1-click Dispatcher Authorization and cryptographic audit verification.
+  6. Reversible unmerge and offline volunteer sync.
+- Inputs: Completed Phase 6 system, `ARCHITECTURE.md`, `RAAHAT_SPEC.md`.
+- Output: `docs/demo_guide.md`, `docs/model_card.md`, updated `README.md`.
+- Constraints: 100% factual and grounded in actual codebase capabilities; no ungrounded claims about uninstalled models; clear explanation of why life-critical dispatch must be deterministic.
+- Depends on: 6.6.
 
 ---
 
 ## Current Task
 
-### Task 6.4: Automated Audio-to-Dispatch Orchestrator & Live Demo Runner
-- **Objective**: Build a scripted end-to-end demo runner that injects a synthetic flood-disaster audio SOS into the ingestion pipeline, traces it through extraction → triage → incident creation → resource assignment → dispatcher approval, and surfaces each step as a loggable narrative with timings. Additionally wire up a one-command demo launcher (`scripts/demo_run.py` or similar) that seeds the DB, starts the API, runs the pipeline, and prints a structured play-by-play suitable for a live presentation.
-- **Inputs**: All implemented Phase 1–6.3 components; `tests/integration/` as reference patterns.
-- **Output**: `scripts/demo_run.py`, `docs/demo_guide.md`.
-- **Constraints**: No new external dependencies beyond those already in `pyproject.toml`; demo must work with the existing in-memory/DB setup; fully automated with human approval simulated via the dispatcher API.
+### Task 6.4: Real Audio Processing Worker & Local Speech Recognition Pipeline
+- **Objective**: Implement active background processing for citizen voice uploads and IVR audio recordings. Integrate an optional lightweight local speech recognition model (`faster-whisper` or `whisper-tiny`/`whisper-base` with fast CPU inference) in `src/raahat/infrastructure/speech/whisper.py`, paired with Silero VAD / energy-based voice activity detection. Wire a background worker task (`AudioReportProcessor`) that leases pending audio reports from `storage/audio/`, executes speech transcription, populates transcript text, updates report `processing_status` to `extracted`, and emits an outbox event. Include transparent fallback: if whisper weights are unavailable or offline, fallback to deterministic acoustic feature extractor and mock with explicit provenance marking.
+- **Inputs**: `src/raahat/infrastructure/speech/`, `src/raahat/workers/`, `storage/audio/`.
+- **Output**: Functional background audio processing worker, local Whisper/VAD integration, unit and integration tests.
+- **Constraints**: Never crash or hang if GPU/whisper is not installed; graceful fallback; strict separation between audio perception and domain logic.
 - **Verification Criterion**:
-  1. `python scripts/demo_run.py` exits 0 and prints at least 8 annotated pipeline steps.
-  2. Full suite 438+ tests still pass; mypy and ruff clean.
+  1. Uploading a `.wav` / `.webm` audio distress file transitions `processing_status` from `pending` to `extracted` with non-empty transcript.
+  2. Integration test in `tests/integration/test_audio_processor.py` passes.
+  3. Mypy and ruff clean.
 
 ---
 
 ## Next Task
 
-**Task ID:** 6.5 — End-to-End Demo Script, Presentation Runbook & Feature Showcase
+**Task ID:** 6.5 — Automated Audio-to-Dispatch Orchestrator Service (`AutomatedAudioTriageWorkflow`)
 
 ---
 
