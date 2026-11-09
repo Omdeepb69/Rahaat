@@ -8,17 +8,29 @@
   <link rel="stylesheet" href="/sos/css/sos.css">
   <style>
     .call-card {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--dash-glass-bg-card);
+      backdrop-filter: var(--dash-glass-blur);
+      -webkit-backdrop-filter: var(--dash-glass-blur);
+      border: 1px solid var(--dash-glass-border);
       border-radius: var(--radius-lg);
       padding: 28px 24px;
       text-align: center;
       margin-bottom: 24px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.6);
+      box-shadow: var(--dash-glass-shadow);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .call-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      pointer-events: none;
     }
 
     .disaster-badge {
@@ -26,45 +38,48 @@
       font-family: var(--font-mono);
       font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       color: var(--accent-cyan);
       background: rgba(6, 182, 212, 0.1);
       border: 1px solid rgba(6, 182, 212, 0.3);
-      padding: 3px 10px;
-      border-radius: 9999px;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
       margin-bottom: 12px;
       text-transform: uppercase;
+      box-shadow: 0 0 14px rgba(6, 182, 212, 0.2);
     }
 
     .call-status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
-      border-radius: 9999px;
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
       font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 12px;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .status-standby { background: rgba(71, 85, 105, 0.3); border: 1px solid #64748b; color: #94a3b8; }
-    .status-connected { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
-    .status-speaking { background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #a5b4fc; box-shadow: 0 0 14px rgba(99, 102, 241, 0.4); }
-    .status-listening { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fcd34d; box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); }
-    .status-completed { background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff8099; box-shadow: 0 0 16px rgba(255, 51, 102, 0.5); }
+    .status-connected { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; box-shadow: 0 0 14px rgba(16, 185, 129, 0.35); }
+    .status-speaking { background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #a5b4fc; box-shadow: 0 0 16px rgba(99, 102, 241, 0.45); }
+    .status-listening { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fcd34d; box-shadow: 0 0 16px rgba(245, 158, 11, 0.45); }
+    .status-completed { background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff8099; box-shadow: 0 0 18px rgba(255, 51, 102, 0.55); }
 
     .call-timer {
       font-family: var(--font-mono);
-      font-size: 2.4rem;
+      font-size: 2.5rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       color: #f8fafc;
       letter-spacing: 0.05em;
       margin: 4px 0 14px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     }
 
     /* Interactive Voice Orb & Canvas Visualizer */
@@ -89,44 +104,44 @@
 
     .orb-center {
       position: relative;
-      width: 90px;
-      height: 90px;
+      width: 92px;
+      height: 92px;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #1e293b 0%, #07090e 100%);
-      border: 2px solid rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 2;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
-      transition: all 0.3s ease;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .orb-center.active-pulse {
       border-color: #60a5fa;
-      box-shadow: 0 0 28px rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 32px rgba(37, 99, 235, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .orb-center.listening {
       border-color: #f59e0b;
-      box-shadow: 0 0 28px rgba(245, 158, 11, 0.6);
+      box-shadow: 0 0 34px rgba(245, 158, 11, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .orb-center.speaking {
       border-color: #8b5cf6;
-      box-shadow: 0 0 30px rgba(139, 92, 246, 0.7);
+      box-shadow: 0 0 36px rgba(139, 92, 246, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .orb-icon {
-      font-size: 2rem;
+      font-size: 2.1rem;
       line-height: 1;
     }
 
     .orb-label {
       font-family: var(--font-mono);
       font-size: 0.625rem;
-      font-weight: 700;
+      font-weight: 800;
       color: #94a3b8;
       letter-spacing: 0.08em;
       margin-top: 4px;
@@ -141,21 +156,22 @@
       gap: 12px;
       margin: 18px 0;
       text-align: left;
-      padding: 14px;
-      background: rgba(7, 9, 14, 0.7);
+      padding: 16px;
+      background: var(--dash-glass-input-bg);
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--dash-glass-border);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
     .bubble {
       padding: 12px 16px;
       border-radius: 12px;
       font-size: 0.9rem;
-      max-width: 86%;
+      max-width: 88%;
       line-height: 1.45;
       word-wrap: break-word;
       animation: bubble-fade 0.2s ease-out;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
 
     @keyframes bubble-fade {
@@ -166,17 +182,21 @@
     .bubble.agent {
       background: rgba(30, 41, 59, 0.85);
       color: #f1f5f9;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.35);
       border-left: 3px solid #3b82f6;
       align-self: flex-start;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .bubble.user {
       background: rgba(49, 46, 129, 0.85);
       color: #e0e7ff;
-      border: 1px solid rgba(129, 140, 248, 0.3);
+      border: 1px solid rgba(129, 140, 248, 0.35);
       border-right: 3px solid #818cf8;
       align-self: flex-end;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .bubble .bubble-label {
@@ -198,44 +218,44 @@
     }
 
     .btn-call-action {
-      width: 72px;
-      height: 72px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       border: none;
       color: white;
-      font-size: 1.8rem;
+      font-size: 1.85rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     .btn-call-action:active { transform: scale(0.92); }
     .btn-call-start {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       border: 2px solid rgba(52, 211, 153, 0.4);
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     .btn-call-start:hover {
-      box-shadow: 0 0 28px rgba(16, 185, 129, 0.7);
-      transform: scale(1.05);
+      box-shadow: 0 0 32px rgba(16, 185, 129, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transform: scale(1.06);
     }
 
     .btn-call-end {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       border: 2px solid rgba(248, 113, 113, 0.4);
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     .btn-call-end:hover {
-      box-shadow: 0 0 24px rgba(239, 68, 68, 0.6);
-      transform: scale(1.05);
+      box-shadow: 0 0 32px rgba(239, 68, 68, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transform: scale(1.06);
     }
 
     .btn-call-mic {
       background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       border: 2px solid rgba(96, 165, 250, 0.4);
-      width: 72px;
-      height: 72px;
+      box-shadow: 0 0 24px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     .btn-call-mic.recording {
       background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
@@ -252,8 +272,8 @@
     }
 
     .btn-keypad {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid var(--border-subtle);
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--dash-glass-border);
       color: white;
       padding: 12px;
       border-radius: var(--radius-sm);
@@ -261,6 +281,8 @@
       font-size: 1.15rem;
       font-weight: 700;
       cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       transition: all 0.15s;
     }
     .btn-keypad:active {
@@ -271,14 +293,17 @@
 
     .result-card {
       display: none;
-      background: rgba(6, 78, 59, 0.4);
+      background: linear-gradient(135deg, rgba(6, 78, 59, 0.6) 0%, rgba(6, 95, 70, 0.5) 100%);
       border: 1px solid #10b981;
+      backdrop-filter: var(--dash-glass-blur);
+      -webkit-backdrop-filter: var(--dash-glass-blur);
       border-radius: var(--radius-md);
-      padding: 20px;
+      padding: 22px;
       text-align: left;
       margin-top: 20px;
-      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 12px 36px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       animation: bubble-fade 0.3s ease-out;
+      position: relative;
     }
 
     .telemetry-row {
@@ -287,9 +312,24 @@
       font-family: var(--font-mono);
       font-size: 0.75rem;
       color: #94a3b8;
-      border-top: 1px solid var(--border-subtle);
-      padding-top: 10px;
-      margin-top: 16px;
+      border-top: 1px solid var(--dash-glass-border);
+      padding-top: 12px;
+      margin-top: 18px;
+    }
+
+    .telemetry-glass-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin: 12px auto 14px;
+      max-width: 440px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      text-align: left;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
   </style>
 </head>
@@ -318,9 +358,9 @@
       </div>
 
       <!-- Language Selector -->
-      <div style="margin: 8px auto 14px; max-width: 260px;">
-        <label for="language-select" style="font-size: 0.78rem; font-family: var(--font-mono); color: #94a3b8; display: block; margin-bottom: 4px;">LANGUAGE / भाषा:</label>
-        <select id="language-select" style="background: rgba(7, 9, 14, 0.85); color: white; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 7px 10px; width: 100%; font-size: 0.85rem;">
+      <div style="margin: 8px auto 14px; max-width: 280px;">
+        <label for="language-select" style="font-size: 0.78rem; font-family: var(--font-mono); color: #94a3b8; display: block; margin-bottom: 6px;">LANGUAGE / भाषा:</label>
+        <select id="language-select" style="padding: 9px 12px; font-size: 0.85rem; border-radius: var(--radius-sm);">
           <option value="indic-auto" selected>Auto-Detect / Hinglish (Prisma v3.0)</option>
           <option value="hi-IN">हिंदी (Hindi)</option>
           <option value="en-IN">English (India)</option>
@@ -332,12 +372,12 @@
       </div>
 
       <!-- Dynamic Real-time AI Situation Telemetry -->
-      <div id="ai-telemetry-panel" style="display: none; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-sm); padding: 8px 12px; margin: 10px auto 14px; max-width: 420px; font-family: var(--font-mono); font-size: 0.72rem; text-align: left;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <div id="ai-telemetry-panel" class="telemetry-glass-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span style="color: #38bdf8; font-weight: 700;">🧠 AI SITUATION UNDERSTANDING</span>
-          <span id="ai-priority-badge" class="badge-priority badge-p1" style="font-size: 0.65rem; padding: 2px 6px;">ASSESSING...</span>
+          <span id="ai-priority-badge" class="badge-priority badge-p1" style="font-size: 0.65rem; padding: 2px 8px;">ASSESSING...</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; color: #cbd5e1;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: #cbd5e1;">
           <div>📍 <span style="color: #94a3b8;">LOC:</span> <span id="telemetry-location" style="color: #f8fafc; font-weight: 600;">Detecting...</span></div>
           <div>👥 <span style="color: #94a3b8;">VICTIMS:</span> <span id="telemetry-count" style="color: #f8fafc; font-weight: 600;">Detecting...</span></div>
           <div style="grid-column: span 2;">🆘 <span style="color: #94a3b8;">NEEDS:</span> <span id="telemetry-needs" style="color: #38bdf8;">Listening...</span></div>
@@ -382,9 +422,9 @@
       </details>
 
       <!-- Text input fallback -->
-      <div style="margin-top: 14px; display: flex; gap: 8px;">
-        <input type="text" id="text-override-input" placeholder="या टाइप करके जवाब दें (or type here)..." style="flex: 1; background: rgba(7, 9, 14, 0.8); border: 1px solid var(--border-subtle); color: white; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem;">
-        <button type="button" id="btn-send-text" class="btn-primary" style="padding: 10px 16px;">Send</button>
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <input type="text" id="text-override-input" placeholder="या टाइप करके जवाब दें (or type here)..." style="flex: 1; padding: 11px 14px; font-size: 0.88rem;">
+        <button type="button" id="btn-send-text" class="btn-primary" style="padding: 11px 20px; font-size: 0.88rem;">Send</button>
       </div>
 
       <!-- Rescue Dispatch Proposed Result Card -->
@@ -398,7 +438,7 @@
         <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 14px;">
           Proposed Resource: <strong id="res-unit" style="color: #67e8f9;">NDRF Motorboat Unit</strong>
         </div>
-        <a id="btn-track-ticket" href="#" class="btn-success" style="display: block; text-align: center; text-decoration: none; padding: 10px 14px; font-size: 0.9rem;">
+        <a id="btn-track-ticket" href="#" class="btn-success" style="display: block; text-align: center; text-decoration: none; padding: 12px 18px; font-size: 0.92rem; border-radius: var(--radius-sm);">
           Track Rescue Ticket Live (लाइव स्थिति ट्रैक करें) →
         </a>
       </div>
