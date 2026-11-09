@@ -1,0 +1,71 @@
+/* ==========================================================================
+   RAAHAT 2.0 Command Center — Tactical Glassmorphism Design Tokens
+   Adapted from ModularMonolith & Upgraded for Mission-Critical Operations
+   ========================================================================== */
+
+:root {
+  /* ── Accent & Brand Palette ── */
+  --dash-accent: #0284c7;
+  --dash-accent-hover: #0369a1;
+  --dash-accent-dark: #075985;
+  --dash-accent-light: rgba(56, 189, 248, 0.12);
+
+  --dash-emergency-red: #ff3366;
+  --dash-emergency-amber: #f59e0b;
+  --dash-emergency-green: #10b981;
+  --dash-emergency-cyan: #06b6d4;
+
+  /* ── High-Contrast Typography ── */
+  --dash-text-primary: #f8fafc;
+  --dash-text-secondary: #cbd5e1;
+  --dash-text-muted: #94a3b8;
+  --dash-text-dim: #64748b;
+
+  /* ── Dark Tactical Glass Surfaces ── */
+  --dash-glass-bg: rgba(15, 23, 42, 0.72);
+  --dash-glass-bg-subtle: rgba(15, 23, 42, 0.45);
+  --dash-glass-bg-hover: rgba(22, 34, 60, 0.84);
+  --dash-glass-input-bg: rgba(8, 12, 22, 0.65);
+  --dash-glass-border: rgba(255, 255, 255, 0.09);
+  --dash-glass-border-hover: rgba(56, 189, 248, 0.4);
+  --dash-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 36px -8px rgba(0, 0, 0, 0.65);
+
+  /* ── Status Badge Colors ── */
+  --badge-p0-bg: rgba(255, 51, 102, 0.2);
+  --badge-p0-border: #ff3366;
+  --badge-p0-text: #ff8099;
+
+  --badge-p1-bg: rgba(245, 158, 11, 0.2);
+  --badge-p1-border: #f59e0b;
+  --badge-p1-text: #fcd34d;
+
+  --badge-p2-bg: rgba(59, 130, 246, 0.2);
+  --badge-p2-border: #3b82f6;
+  --badge-p2-text: #93c5fd;
+
+  --badge-p3-bg: rgba(100, 116, 139, 0.2);
+  --badge-p3-border: #64748b;
+  --badge-p3-text: #cbd5e1;
+
+  --badge-verified-bg: rgba(16, 185, 129, 0.2);
+  --badge-pending-bg: rgba(245, 158, 11, 0.2);
+  --badge-flagged-bg: rgba(239, 68, 68, 0.2);
+  --badge-review-bg: rgba(59, 130, 246, 0.2);
+
+  /* ── Layout Dimensions ── */
+  --dash-sidebar-w: 260px;
+  --dash-topbar-h: 64px;
+
+  /* ── Border Radii ── */
+  --dash-radius-sm: 8px;
+  --dash-radius-md: 12px;
+  --dash-radius-lg: 16px;
+  --dash-radius-pill: 9999px;
+
+  /* ── Shadows ── */
+  --dash-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --dash-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --dash-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+}

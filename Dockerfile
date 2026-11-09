@@ -57,6 +57,7 @@ COPY --chown=raahat:raahat src/ /app/src/
 COPY --chown=raahat:raahat field_app/ /app/field_app/
 COPY --chown=raahat:raahat operator_console/ /app/operator_console/
 COPY --chown=raahat:raahat citizen_portal/ /app/citizen_portal/
+COPY --chown=raahat:raahat dashboard/ /app/dashboard/
 COPY --chown=raahat:raahat evaluation/ /app/evaluation/
 COPY --chown=raahat:raahat deployment/ /app/deployment/
 

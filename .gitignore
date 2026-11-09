@@ -41,3 +41,9 @@ htmlcov/
 # Local runtime storage
 storage/
 
+# Frontend Node / Vite
+node_modules/
+dist/
+dashboard/dist/
+dashboard/node_modules/
+

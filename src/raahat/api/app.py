@@ -75,6 +75,11 @@ def create_app() -> FastAPI:
             app.mount("/sos/src", StaticFiles(directory=str(citizen_dir / "src")), name="sos-src")
         app.mount("/sos", StaticFiles(directory=str(citizen_dir / "public"), html=True), name="sos")
 
+    # Mount React TypeScript Mission Control Dashboard
+    dashboard_dist = Path(__file__).resolve().parent.parent.parent.parent / "dashboard" / "dist"
+    if dashboard_dist.exists():
+        app.mount("/dashboard", StaticFiles(directory=str(dashboard_dist), html=True), name="dashboard")
+
     @app.get("/", include_in_schema=False)
     def root_redirect() -> RedirectResponse:
         return RedirectResponse(url="/console/")

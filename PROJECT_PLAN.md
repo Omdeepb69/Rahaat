@@ -355,6 +355,22 @@ Phase 6 — Interactive Demo, Citizen SOS Portal & Operator Console Polish
 
 ## Log
 
+### 2026-11-09 — React + TypeScript Mission Control Dashboard Integration
+- Changed: Migrated the frontend to a modern React + TypeScript + Vite architecture based on the component system from `/mnt/data/projects/modularMonolith/dashboard`, housed under `dashboard/`.
+  - Purged all legacy KYC/fraud intelligence mock pages, documents, and sample data.
+  - Reused the complete frosted glass design system (`GlassPanel`, `MetricCard`, `StatusBadge`, `DataTable`, `TopBar`, `Sidebar`, `AppShell`, `PrimaryButton`, `SecondaryButton`, `ConfirmationModal`, `ToastNotification`, etc.).
+  - Implemented 5 dedicated RAAHAT 2.0 TypeScript workspaces:
+    1. `DashboardHome.tsx` — Real-time emergency incidents triage queue, live 4-card metric banner, priority filters, trapped toggle, universal search, and instant dispatch authorization modal.
+    2. `OperationsPage.tsx` — Rescue operations fleet registry (NDRF boats, ambulances, drones, SDRF teams) with mission assignment workflow.
+    3. `ReportsFeedPage.tsx` — Multichannel distress intake stream (AI voice call ASR transcripts, Web SOS, SMS, radio) with audio previews.
+    4. `SituationMapPage.tsx` — Tactical geospatial visualization with safety visual encodings (Confirmed, Candidate, Approximate, Contradictory).
+    5. `IncidentDetailPage.tsx` — Full incident dossier with candidate landmark hypotheses, evidence provenance graph, and unknown field tracking.
+  - Built `raahatService.ts` strictly connected to live `/api/v1/*` endpoints and real-time SSE stream.
+  - Configured Vite base path `/dashboard/`, proxy to `:8080`, and verified zero-error TypeScript build (`tsc -b && vite build` in 332ms).
+  - Mounted `/dashboard` in FastAPI (`app.py`), configured Nginx routing in `deployment/nginx/nginx.conf`, updated Dockerfile and `.dockerignore`.
+- Files: `dashboard/` (new React/TypeScript codebase), `src/raahat/api/app.py` (updated), `deployment/nginx/nginx.conf` (updated), `Dockerfile` (updated), `.dockerignore` (new), `.gitignore` (updated), `PROJECT_PLAN.md` (updated).
+- Verified: Full test suite passes: `tests/integration/test_operator_console.py` (5/5), `tests/integration/test_citizen_portal.py` (5/5), `tests/integration/test_ivr_api.py` (3/3), `tests/unit/policies/test_triage_policy.py` (26/26); live HTTP 200 responses verified on `http://localhost:8080/dashboard/` and its compiled JS/CSS bundles.
+
 ### 2026-11-09 — Tactical Glassmorphism Redesign: Operator Console & Citizen SOS Portal
 - Changed: Completely redesigned the web user interfaces for both the Operator Control Room (`operator_console/`) and the Citizen SOS Portal (`citizen_portal/`) using a unified dark glassmorphism design system inspired by modern command-center aesthetics, with zero dead weight and 100% dynamic API data.
   - Operator Console: Implemented `--dash-glass-bg`, `--dash-glass-border`, `--dash-glass-shadow`, and `--dash-glass-blur` tokens in `operator_console/public/css/console.css`; created atmospheric layered radial gradients; redesigned header with frosted blur and SVG brand mark; added pill-shaped workspace navigation tabs and status badges; implemented a live 4-card metric KPI banner (`#kpi-p0`, `#kpi-trapped`, `#kpi-reports`, `#kpi-resources`); added dynamic `refreshKPIs()` in `operator_console/src/app.js` pulling from `/api/v1/incidents`, `/api/v1/resources`, and `/api/v1/reports` with real-time updates hooked to SSE events.
