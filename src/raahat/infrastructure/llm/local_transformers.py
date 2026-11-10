@@ -12,7 +12,7 @@ from .protocol import EmergencyFactExtraction, LLMClient
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LOCAL_MODEL = "HuggingFaceTB/SmolLM-135M"
+DEFAULT_LOCAL_MODEL = "gnani/gnani-evon-v3.3-30B-A3B"
 
 
 class LocalTransformersLLMClient(LLMClient):

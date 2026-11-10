@@ -27,21 +27,21 @@ def create_llm_client(
     """
     selected_provider = (provider or os.getenv("LLM_PROVIDER") or "").lower()
 
+    if selected_provider in ("evon", "openai") or os.getenv("EVON_API_BASE"):
+        return EvonOpenAIClient(
+            api_base=api_base,
+            api_key=api_key,
+            model=model or os.getenv("EVON_MODEL") or "gnani/gnani-evon-v3.3-30B-A3B",
+        )
+
+    if selected_provider == "transformers" or os.getenv("USE_LOCAL_TRANSFORMERS", "").lower() == "true":
+        return LocalTransformersLLMClient(model_id=model or "gnani/gnani-evon-v3.3-30B-A3B")
+
     if selected_provider == "gemini" or os.getenv("GEMINI_API_KEY"):
         return GeminiLLMClient(
             api_key=api_key or os.getenv("GEMINI_API_KEY"),
             model=model or os.getenv("GEMINI_MODEL"),
         )
-
-    if selected_provider in ("evon", "openai") or os.getenv("EVON_API_BASE"):
-        return EvonOpenAIClient(
-            api_base=api_base,
-            api_key=api_key,
-            model=model,
-        )
-
-    if selected_provider == "transformers" or os.getenv("USE_LOCAL_TRANSFORMERS", "").lower() == "true":
-        return LocalTransformersLLMClient(model_id=model)
 
     # High-reliability adaptive reasoning engine with entity extraction & dialogue policy
     return AdaptiveDistressReasoningEngine()

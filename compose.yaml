@@ -50,7 +50,8 @@ services:
       ENVIRONMENT: "${ENVIRONMENT:-production}"
       GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.1-flash-lite}"
-      LLM_PROVIDER: "${LLM_PROVIDER:-gemini}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-evon}"
+      EVON_MODEL: "${EVON_MODEL:-gnani/gnani-evon-v3.3-30B-A3B}"
       GNANI_API_KEY_TTS_STT: "${GNANI_API_KEY_TTS_STT:-}"
     depends_on:
       db:
@@ -84,7 +85,8 @@ services:
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.1-flash-lite}"
-      LLM_PROVIDER: "${LLM_PROVIDER:-gemini}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-evon}"
+      EVON_MODEL: "${EVON_MODEL:-gnani/gnani-evon-v3.3-30B-A3B}"
       GNANI_API_KEY_TTS_STT: "${GNANI_API_KEY_TTS_STT:-}"
     depends_on:
       db:

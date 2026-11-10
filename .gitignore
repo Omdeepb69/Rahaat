@@ -47,6 +47,8 @@ dist/
 dashboard/dist/
 dashboard/node_modules/
 
-# Manim video artifacts
-animations/media/
+# Media, Animations & Audio
+animations/
+demo_audios/
+demo/audio/
 
