@@ -9,6 +9,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from raahat.api.routes.audit import router as audit_router
+from raahat.api.routes.auth import router as auth_router
 from raahat.api.routes.demo import router as demo_router
 from raahat.api.routes.devices import router as devices_router
 from raahat.api.routes.disasters import router as disasters_router
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
         return {"status": "ok", "service": "raahat-api"}
 
     # Register API routers
+    app.include_router(auth_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
     app.include_router(incidents_router, prefix="/api/v1")
     app.include_router(disasters_router, prefix="/api/v1")

@@ -92,6 +92,8 @@ async def execute_audio_triage(
     latitude: Optional[float] = Form(None, description="Optional caller GPS latitude"),
     longitude: Optional[float] = Form(None, description="Optional caller GPS longitude"),
     language_hint: Optional[str] = Form(None, description="Optional Indic speech language hint (mr, hi, en)"),
+    district_code: Optional[str] = Form(None, description="Optional routed DEOC district code (e.g. KL-EKM, GA-MGO)"),
+    state_code: Optional[str] = Form(None, description="Optional routed SEOC state code (e.g. KL, GA)"),
     workflow: AutomatedAudioTriageWorkflow = Depends(get_audio_triage_workflow),
 ) -> WorkflowExecutionResponse:
     """Execute the end-to-end Automated Audio-to-Dispatch Orchestrator pipeline on distress audio:
@@ -126,6 +128,10 @@ async def execute_audio_triage(
         caller_info["longitude"] = longitude
     if language_hint:
         caller_info["language_hint"] = language_hint
+    if district_code:
+        caller_info["district_code"] = district_code
+    if state_code:
+        caller_info["state_code"] = state_code
 
     try:
         result = await workflow.run(

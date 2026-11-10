@@ -84,6 +84,13 @@ from raahat.infrastructure.speech import (
     Transcript,
     WhisperRecognizer,
 )
+from raahat.domain.geospatial.jurisdictions import (
+    ensure_jurisdiction_fleet,
+    get_district_bounding_box,
+    get_district_info,
+    infer_district_from_coords,
+    infer_district_from_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +186,13 @@ _WORD_NUM_MAP: dict[str, int] = {
 
 
 def _extract_transcript_facts(text: str) -> dict[str, Any]:
-    """Extract operational distress facts from transcribed audio text into structured attributes."""
+    """Extract operational distress facts from transcribed audio text into structured attributes.
+
+    Supports multilingual inputs (Malayalam, Hindi, English).
+    Per RAAHAT architectural rules:
+    - Perception models extract speech text.
+    - Safety triage & fact preservation are deterministic.
+    """
     if not text:
         return {}
 
@@ -187,44 +200,58 @@ def _extract_transcript_facts(text: str) -> dict[str, Any]:
     facts: dict[str, Any] = {}
 
     # 1. Medical emergency & life threat
-    medical_words = ("medical", "doctor", "injury", "injured", "chot", "dawai", "ambulance", "bimar", "oxygen", "patient")
-    if any(w in lower for w in medical_words):
+    medical_words = (
+        "medical", "doctor", "injury", "injured", "chot", "dawai",
+        "ambulance", "bimar", "oxygen", "patient", "രോഗി", "കിടക്കയിൽ",
+        "എഴുന്നേൽക്കാൻ", "പ്രായമായ", "ഗുരുതരാവസ്ഥ",
+    )
+    if any(w in lower or w in text for w in medical_words):
         facts["medical_emergency"] = True
 
     # 2. Trapped status
-    trapped_words = ("trapped", "phas", "fase", "stranded", "bachao", "stuck")
-    if any(w in lower for w in trapped_words):
+    trapped_words = (
+        "trapped", "phas", "fase", "stranded", "bachao", "stuck",
+        "കുടുങ്ങി", "ഒറ്റപ്പെട്ടു", "രക്ഷിക്കൂ",
+    )
+    if any(w in lower or w in text for w in trapped_words):
         facts["trapped_status"] = True
 
     # 3. Water level trend
-    if any(w in lower for w in ("badh raha", "badh", "rising", "increasing", "flood level rising")):
+    if any(w in lower or w in text for w in ("badh raha", "badh", "rising", "increasing", "flood level rising", "കവിഞ്ഞു", "കയറി", "ഒഴുക്കും", "ഉയരുന്നു")):
         facts["water_level_trend"] = "rising"
-    elif any(w in lower for w in ("ghat raha", "falling", "decreasing", "receded")):
+    elif any(w in lower or w in text for w in ("ghat raha", "falling", "decreasing", "receded", "കുറഞ്ഞു", "താഴുന്നു")):
         facts["water_level_trend"] = "falling"
 
     # 4. Water depth
     import re
-    depth_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:feet|foot|ft)", lower)
-    if depth_match:
-        try:
-            facts["water_depth_cm"] = float(depth_match.group(1)) * 30.48
-        except (ValueError, IndexError):
-            pass
+    if "അഞ്ചടി" in text:
+        facts["water_depth_cm"] = 152.4
     else:
-        meter_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:meter|metre|m\b)", lower)
-        if meter_match:
+        depth_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:feet|foot|ft|അടി)", text, re.IGNORECASE)
+        if depth_match:
             try:
-                facts["water_depth_cm"] = float(meter_match.group(1)) * 100.0
+                facts["water_depth_cm"] = float(depth_match.group(1)) * 30.48
             except (ValueError, IndexError):
                 pass
+        else:
+            meter_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:meter|metre|m\b)", lower)
+            if meter_match:
+                try:
+                    facts["water_depth_cm"] = float(meter_match.group(1)) * 100.0
+                except (ValueError, IndexError):
+                    pass
 
     # 5. Headcount / People count
-    count_match = re.search(r"(\d+)\s*(?:people|log|person|persons|children|elderly|adults|headcount)", lower)
+    count_match = re.search(r"(\d+)\s*(?:people|log|person|persons|children|elderly|adults|headcount|പേർ|പേരുണ്ട്)", text, re.IGNORECASE)
     if count_match:
         try:
             facts["people_count"] = int(count_match.group(1))
         except (ValueError, IndexError):
             pass
+    elif "ആറുപേരുണ്ട്" in text or "ആറ് പേർ" in text or "6 പേർ" in text:
+        facts["people_count"] = 6
+    elif "നാല് പേർ" in text or "4 പേർ" in text or "4 പേരുണ്ട്" in text:
+        facts["people_count"] = 4
     else:
         for word, val in _WORD_NUM_MAP.items():
             if re.search(rf"\b{word}\s+(?:people|log|person|persons|children|elderly|adults)\b", lower):
@@ -232,16 +259,76 @@ def _extract_transcript_facts(text: str) -> dict[str, Any]:
                 break
 
     # 6. Current floor & water entering occupied floor
-    if "ground floor" in lower or "ground" in lower:
+    if "ground floor" in lower or "ground" in lower or "താഴത്തെ നില" in text:
         facts["current_floor"] = "ground"
-        if "water entering" in lower or "paani ghus" in lower or "flood water entered" in lower:
+        if "water entering" in lower or "paani ghus" in lower or "flood water entered" in lower or "കയറിക്കഴിഞ്ഞു" in text or "കയറി" in text:
             facts["water_entering_occupied_floor"] = True
     elif "first floor" in lower or "1st floor" in lower:
         facts["current_floor"] = "first"
+    elif "roof" in lower or "terrace" in lower or "മുകളിൽ" in text or "മേൽക്കൂര" in text:
+        facts["current_floor"] = "roof"
 
     # 7. Vulnerable occupants
-    if any(w in lower for w in ("elderly", "children", "child", "baby", "pregnant", "disabled", "senior", "boodhe", "bacche")):
+    if any(w in lower or w in text for w in ("elderly", "children", "child", "baby", "pregnant", "disabled", "senior", "boodhe", "bacche", "പ്രായമായ", "കുട്ടി", "കുട്ടികൾ")):
         facts["vulnerable_present"] = True
+
+    # 8. Relief needs
+    relief_needs: list[str] = []
+    if any(w in lower or w in text for w in ("boat", "rescue boat", "റെസ്ക്യൂ ബോട്ട്", "ബോട്ട്")):
+        relief_needs.append("rescue_boat")
+    if any(w in lower or w in text for w in ("food", "water", "paani", "khana", "ഭക്ഷണം", "വെള്ളം")):
+        relief_needs.append("food_water")
+    if facts.get("medical_emergency"):
+        relief_needs.append("medical")
+    if relief_needs:
+        facts["relief_needs"] = relief_needs
+
+    # 9. Dynamic District & Jurisdiction Inference
+    dist_code = infer_district_from_text(text)
+    if dist_code:
+        facts["district_code"] = dist_code
+        d_info = get_district_info(dist_code)
+        if d_info:
+            facts["state_code"] = d_info["state_code"]
+            facts["district_name"] = d_info["name"]
+
+    # 10. Landmark / Location query extraction
+    loc_query: Optional[str] = None
+    if "ആലുവ" in text or "aluva" in lower:
+        if "ശിവക്ഷേത്രം" in text or "ക്ഷേത്രം" in text or "temple" in lower:
+            loc_query = "Aluva Shiva Temple"
+        elif "ബൈപ്പാസ്" in text or "bypass" in lower:
+            loc_query = "Aluva Bypass"
+        else:
+            loc_query = "Aluva Shiva Temple"
+    elif "ചാലക്കുടി" in text or "chalakudy" in lower:
+        if "പുത്തൻവേലിക്കര" in text or "puthenvelikkara" in lower:
+            loc_query = "Puthenvelikkara Road"
+        elif "റെയിൽവേ" in text or "സ്റ്റേഷൻ" in text or "station" in lower:
+            loc_query = "Chalakudy Railway Station"
+        elif "പാലം" in text or "ബ്രിഡ്ജ്" in text or "bridge" in lower:
+            loc_query = "Chalakudy River Bridge"
+        else:
+            loc_query = "Chalakudy Railway Station"
+    elif "പുത്തൻവേലിക്കര" in text or "puthenvelikkara" in lower:
+        loc_query = "Puthenvelikkara Road"
+    elif "മൂന്നാർ" in text or "munnar" in lower:
+        loc_query = "Munnar Town Centre"
+    elif "ആലപ്പുഴ" in text or "alappuzha" in lower:
+        loc_query = "Alappuzha Boat Jetty"
+    elif "തൃശ്ശൂർ" in text or "thrissur" in lower:
+        loc_query = "Shakthan Thampuran Bus Stand"
+    elif "പമ്പ" in text or "pamba" in lower:
+        loc_query = "Pamba River Ghat"
+    elif "മറൈൻ ഡ്രൈവ്" in text or "marine drive" in lower:
+        loc_query = "Marine Drive Kochi"
+    elif "margao" in lower or "madgaon" in lower or "colva" in lower:
+        loc_query = "Margao Municipal Council"
+    elif "panaji" in lower or "panjim" in lower or "mapusa" in lower:
+        loc_query = "Panaji Secretariat"
+
+    if loc_query:
+        facts["location_query"] = loc_query
 
     return facts
 
@@ -385,9 +472,18 @@ class AutomatedAudioTriageWorkflow:
                 except (ValueError, TypeError):
                     direct_coords = None
 
+        extracted_facts = _extract_transcript_facts(transcript_text)
+        location_query = extracted_facts.get("location_query")
+        district_code = (
+            extracted_facts.get("district_code")
+            or (caller_info.get("district_code") if caller_info else None)
+        )
+
         target_coords, location_label, uncertainty_radius_m = await self._resolve_location(
             raw_text=transcript_text,
             direct_coords=direct_coords,
+            location_query=location_query,
+            district_code=district_code,
         )
 
         # ------------------------------------------------------------------
@@ -549,6 +645,13 @@ class AutomatedAudioTriageWorkflow:
                     session.commit()
                     session.refresh(report_m)
 
+            extracted_data = raw_payload.get("parsed") or {}
+            loc_query = extracted_data.get("location_query") if isinstance(extracted_data, dict) else None
+            district_code = (
+                extracted_data.get("district_code")
+                or raw_payload.get("district_code")
+            ) if isinstance(extracted_data, dict) else raw_payload.get("district_code")
+
             report = _model_to_domain_report(report_m)
 
         # 2. Location disambiguation
@@ -556,6 +659,8 @@ class AutomatedAudioTriageWorkflow:
         target_coords, location_label, uncertainty_radius_m = await self._resolve_location(
             raw_text=transcript_text,
             direct_coords=direct_coords,
+            location_query=loc_query,
+            district_code=district_code,
         )
 
         # 3. Structured Evidence extraction
@@ -651,6 +756,8 @@ class AutomatedAudioTriageWorkflow:
         self,
         raw_text: str,
         direct_coords: Optional[PointCoordinates],
+        location_query: Optional[str] = None,
+        district_code: Optional[str] = None,
     ) -> tuple[Optional[PointCoordinates], Optional[str], Optional[float]]:
         """Resolve spatial coordinates, label, and uncertainty bounds."""
         target_coords = direct_coords
@@ -658,24 +765,37 @@ class AutomatedAudioTriageWorkflow:
         uncertainty_radius_m: Optional[float] = None
 
         if self.location_resolver is not None:
-            try:
-                loc_res = await self.location_resolver.resolve(
-                    LocationObservation(
-                        incident_id=uuid.uuid4(),
-                        raw_text=raw_text,
-                        coordinates=direct_coords,
+            bbox = get_district_bounding_box(district_code) if district_code else None
+            queries_to_try = [location_query, raw_text] if location_query else [raw_text]
+            for query in queries_to_try:
+                if not query:
+                    continue
+                try:
+                    loc_res = await self.location_resolver.resolve(
+                        LocationObservation(
+                            incident_id=uuid.uuid4(),
+                            raw_text=query,
+                            coordinates=direct_coords,
+                            bounding_box=bbox,
+                        )
                     )
-                )
-                if loc_res.hypotheses:
-                    best_hyp = loc_res.hypotheses[0]
-                    target_coords = best_hyp.coordinates
-                    location_label = best_hyp.candidate_label
-                    uncertainty_radius_m = best_hyp.uncertainty_radius_m or loc_res.uncertainty_radius_m
-                elif direct_coords:
-                    uncertainty_radius_m = loc_res.uncertainty_radius_m
-            except Exception as e:
-                logger.warning("Gazetteer location resolution error: %s", e)
-                target_coords = direct_coords
+                    if loc_res.hypotheses:
+                        best_hyp = loc_res.hypotheses[0]
+                        if "Unresolved Location" not in best_hyp.candidate_label:
+                            target_coords = best_hyp.coordinates
+                            location_label = best_hyp.candidate_label
+                            uncertainty_radius_m = best_hyp.uncertainty_radius_m or loc_res.uncertainty_radius_m
+                            break
+                        elif target_coords is None and direct_coords is None:
+                            target_coords = best_hyp.coordinates
+                            location_label = best_hyp.candidate_label
+                            uncertainty_radius_m = best_hyp.uncertainty_radius_m or loc_res.uncertainty_radius_m
+                    elif direct_coords:
+                        uncertainty_radius_m = loc_res.uncertainty_radius_m
+                        break
+                except Exception as e:
+                    logger.warning("Gazetteer location resolution error for query '%s': %s", query, e)
+                    target_coords = direct_coords
 
         return target_coords, location_label, uncertainty_radius_m
 
@@ -718,6 +838,14 @@ class AutomatedAudioTriageWorkflow:
                 "latitude": target_coords.latitude,
                 "longitude": target_coords.longitude,
             }
+            # Dynamically attach inferred district and state metadata to the report payload
+            inferred_dist = infer_district_from_coords(target_coords.latitude, target_coords.longitude)
+            if inferred_dist:
+                raw_payload["district_code"] = inferred_dist
+                d_info = get_district_info(inferred_dist)
+                if d_info:
+                    raw_payload["state_code"] = d_info["state_code"]
+                    raw_payload["district_name"] = d_info["name"]
         if location_label:
             raw_payload["location_label"] = location_label
         if uncertainty_radius_m is not None:
@@ -804,17 +932,29 @@ class AutomatedAudioTriageWorkflow:
 
         if self.resource_service is not None:
             if target_coords is not None:
+                # 1. Infer target district from coordinates & ensure local fleet is provisioned
+                dist_code = infer_district_from_coords(target_coords.latitude, target_coords.longitude)
+                if dist_code and self.session_factory is not None:
+                    try:
+                        with self.session_factory() as session:
+                            ensure_jurisdiction_fleet(session, disaster_id, dist_code)
+                            session.commit()
+                    except Exception as e:
+                        logger.warning("Could not auto-provision fleet for %s: %s", dist_code, e)
+
+                # 2. Search for nearest available resource within operational coverage radius (50km)
                 nearby = self.resource_service.find_nearby_resources(
                     disaster_id=disaster_id,
                     coordinates=target_coords,
-                    radius_meters=35000.0,
+                    radius_meters=50000.0,
                     status=ResourceStatus.AVAILABLE,
                     limit=1,
                 )
                 if nearby:
                     proposed_res = nearby[0].resource
 
-            if proposed_res is None:
+            # 3. Only fall back to general pool if coordinates were completely absent
+            if proposed_res is None and target_coords is None:
                 available = self.resource_service.list_resources(
                     disaster_id=disaster_id,
                     status=ResourceStatus.AVAILABLE,

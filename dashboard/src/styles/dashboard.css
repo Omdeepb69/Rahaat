@@ -1518,3 +1518,53 @@ body {
   margin-top: 0.25rem;
 }
 
+/* ========================================================================
+   Tactical Leaflet Geospatial Map Encodings
+   ======================================================================== */
+
+@keyframes leaflet-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.tactical-leaflet-popup .leaflet-popup-content-wrapper {
+  background: rgba(9, 14, 26, 0.96) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(14px) !important;
+}
+
+.tactical-leaflet-popup .leaflet-popup-tip {
+  background: rgba(9, 14, 26, 0.96) !important;
+}
+
+.leaflet-container {
+  font-family: inherit !important;
+  background: #070a13 !important;
+}
+
+.custom-leaflet-marker,
+.tactical-map-pin,
+.resource-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Tactical Dark Tile styling for OpenStreetMap tiles without commercial watermark */
+.tactical-dark-tiles {
+  filter: brightness(0.62) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7) !important;
+}
+
+

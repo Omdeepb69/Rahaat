@@ -24,6 +24,8 @@ export function LoginPage() {
 
   const handleStateChange = (stateCode: string) => {
     setSelectedState(stateCode);
+    setPassword('');
+    setError(null);
     const s = jurisdictions.find((item) => item.code === stateCode);
     if (s && s.districts.length > 0) {
       setSelectedDistrict(s.districts[0].code);
@@ -36,6 +38,8 @@ export function LoginPage() {
 
   const handleDistrictChange = (distCode: string) => {
     setSelectedDistrict(distCode);
+    setPassword('');
+    setError(null);
     if (distCode) {
       const d = availableDistricts.find((item) => item.code === distCode);
       if (d) {

@@ -314,11 +314,24 @@
         };
 
         mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+          let recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || "audio/webm" });
           stream.getTracks().forEach((t) => t.stop());
           if (sourceNode) sourceNode.disconnect();
           analyserNode = null;
-          await sendTurnAudio(audioBlob);
+
+          // Convert client audio to clean 16kHz Mono PCM WAV for Gnani Prisma
+          try {
+            const arrayBuf = await recordedBlob.arrayBuffer();
+            const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await decodeCtx.decodeAudioData(arrayBuf);
+            const wavArrayBuffer = encodeAudioBufferToWav(audioBuffer);
+            recordedBlob = new Blob([wavArrayBuffer], { type: "audio/wav" });
+            decodeCtx.close();
+          } catch (convErr) {
+            console.warn("Direct WAV conversion fallback to raw blob:", convErr);
+          }
+
+          await sendTurnAudio(recordedBlob);
         };
 
         mediaRecorder.start();
@@ -366,13 +379,53 @@
   // 4. Send Text Turn
   btnSendText.addEventListener("click", async () => {
     const text = textInput.value.trim();
-    if (!text || !callSid) return;
+    if (!text) return;
+
+    // If call hasn't been started yet, start it automatically before sending
+    if (!callSid) {
+      setStatus("INITIALIZING CALL...", "status-listening");
+      btnStart.disabled = true;
+      try {
+        if (!disasterId) {
+          disasterId = await resolveDisasterId();
+        }
+        const payload = {
+          caller_phone: "+919820011223",
+          language_code: languageSelect.value || "indic-auto",
+        };
+        if (disasterId) payload.disaster_id = disasterId;
+
+        const startRes = await fetch("/api/v1/ivr/calls/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!startRes.ok) throw new Error(`Could not initiate call: ${await startRes.text()}`);
+        const startData = await startRes.json();
+        callSid = startData.call_sid;
+
+        btnStart.style.display = "none";
+        btnMic.style.display = "flex";
+        btnEnd.style.display = "flex";
+        languageSelect.disabled = true;
+        startTimer();
+
+        addBubble("agent", "Raahat Helpline Agent", startData.prompt_text);
+      } catch (err) {
+        setStatus("CALL FAILED — RETRY", "status-standby");
+        btnStart.disabled = false;
+        alert("Failed to start call: " + err.message);
+        return;
+      }
+    }
+
     textInput.value = "";
+    addBubble("user", "You (Text)", text);
 
     const formData = new FormData();
     formData.append("text_override", text);
 
-    setStatus("PROCESSING...", "status-speaking");
+    setStatus("PROCESSING VIA GNANI & LLM...", "status-speaking");
     setOrbState("idle", "PROCESSING", "⏳");
     try {
       const res = await fetch(`/api/v1/ivr/calls/${callSid}/turn`, {
@@ -490,4 +543,48 @@
     languageSelect.disabled = false;
     micInstruction.textContent = "Emergency call ended.";
   });
+
+  // Client-side PCM WAV Encoder for Gnani Indic STT compatibility
+  function encodeAudioBufferToWav(buffer) {
+    const numChannels = 1;
+    const sampleRate = buffer.sampleRate || 16000;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    const channelData = buffer.getChannelData(0);
+    const dataLength = channelData.length * (bitDepth / 8);
+    const headerLength = 44;
+    const totalLength = headerLength + dataLength;
+
+    const arrayBuffer = new ArrayBuffer(totalLength);
+    const view = new DataView(arrayBuffer);
+
+    function writeString(view, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+
+    writeString(view, 0, "RIFF");
+    view.setUint32(4, 36 + dataLength, true);
+    writeString(view, 8, "WAVE");
+    writeString(view, 12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+    view.setUint16(32, numChannels * (bitDepth / 8), true);
+    view.setUint16(34, bitDepth, true);
+    writeString(view, 36, "data");
+    view.setUint32(40, dataLength, true);
+
+    let offset = 44;
+    for (let i = 0; i < channelData.length; i++) {
+      const s = Math.max(-1, Math.min(1, channelData[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      offset += 2;
+    }
+
+    return arrayBuffer;
+  }
 })();

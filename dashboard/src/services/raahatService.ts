@@ -7,6 +7,8 @@ import type {
   DispatchRequest,
   DispatchResponse,
   KPIStats,
+  JurisdictionItem,
+  AuthSession,
 } from '../types/raahat';
 
 const DEFAULT_DISPATCHER_ID = '00000000-0000-0000-0000-000000000001';
@@ -14,6 +16,7 @@ const DEFAULT_DISPATCHER_ID = '00000000-0000-0000-0000-000000000001';
 class RaahatApiService {
   private baseUrl = '/api/v1';
   private dispatcherId = DEFAULT_DISPATCHER_ID;
+  private token: string | null = null;
 
   public setDispatcherId(id: string) {
     this.dispatcherId = id;
@@ -23,10 +26,22 @@ class RaahatApiService {
     return this.dispatcherId;
   }
 
+  public setToken(token: string | null) {
+    this.token = token;
+  }
+
+  public getToken(): string | null {
+    return this.token;
+  }
+
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers || {});
     headers.set('Accept', 'application/json');
     headers.set('X-Dispatcher-Id', this.dispatcherId);
+
+    if (this.token) {
+      headers.set('Authorization', `Bearer ${this.token}`);
+    }
 
     if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
@@ -43,6 +58,40 @@ class RaahatApiService {
     }
 
     return res.json() as Promise<T>;
+  }
+
+  /**
+   * Fetch all Indian states and districts with GPS coordinates
+   */
+  async getJurisdictions(): Promise<JurisdictionItem[]> {
+    return this.request<JurisdictionItem[]>('/auth/jurisdictions');
+  }
+
+  /**
+   * Authenticate SDMA / DDMA operator
+   */
+  async login(payload: {
+    state_code: string;
+    district_code?: string | null;
+    password: string;
+    officer_name?: string;
+  }): Promise<AuthSession> {
+    const session = await this.request<AuthSession>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    this.setToken(session.access_token);
+    if (session.dispatcher_id) {
+      this.setDispatcherId(session.dispatcher_id);
+    }
+    return session;
+  }
+
+  /**
+   * Fetch current authenticated session claims
+   */
+  async getMe(): Promise<Record<string, unknown>> {
+    return this.request<Record<string, unknown>>('/auth/me');
   }
 
   /**
@@ -75,12 +124,45 @@ class RaahatApiService {
   }
 
   /**
+   * Fetch incidents enriched with location hypotheses for GIS map rendering
+   */
+  async getIncidentsWithLocations(params?: { priority?: string; status?: string }): Promise<Incident[]> {
+    const baseIncidents = await this.getIncidents(params);
+    if (baseIncidents.length === 0) return [];
+
+    // Hydrate location hypotheses for incidents in parallel
+    const details = await Promise.allSettled(
+      baseIncidents.map((inc) => this.getIncidentDetail(inc.id))
+    );
+
+    return baseIncidents.map((inc, idx) => {
+      const detailRes = details[idx];
+      if (detailRes.status === 'fulfilled' && detailRes.value.hypotheses) {
+        return {
+          ...inc,
+          hypotheses: detailRes.value.hypotheses,
+        };
+      }
+      return inc;
+    });
+  }
+
+  /**
    * Fetch available rescue resources
    */
-  async getResources(params?: { type?: string; availableOnly?: boolean }): Promise<Resource[]> {
+  async getResources(params?: {
+    type?: string;
+    availableOnly?: boolean;
+    lat?: number;
+    lon?: number;
+    radius_meters?: number;
+  }): Promise<Resource[]> {
     const query = new URLSearchParams();
     if (params?.type) query.set('type', params.type);
     if (params?.availableOnly) query.set('available_only', 'true');
+    if (params?.lat != null) query.set('lat', params.lat.toString());
+    if (params?.lon != null) query.set('lon', params.lon.toString());
+    if (params?.radius_meters != null) query.set('radius_meters', params.radius_meters.toString());
     const qs = query.toString() ? `?${query.toString()}` : '';
 
     const res = await this.request<Resource[] | { items: Resource[] }>(`/resources${qs}`);
@@ -168,4 +250,3 @@ class RaahatApiService {
 }
 
 export const raahatService = new RaahatApiService();
-

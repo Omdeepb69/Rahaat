@@ -7,8 +7,15 @@ import { DataTable, type Column } from '../components/DataTable';
 import { SecondaryButton } from '../components/SecondaryButton';
 import { raahatService } from '../services/raahatService';
 import type { Report } from '../types/raahat';
+import { useAuth } from '../context/AuthContext';
+import {
+  filterReportsByJurisdiction,
+  DEOC_COVERAGE_RADIUS_KM,
+  SEOC_COVERAGE_RADIUS_KM,
+} from '../utils/geoUtils';
 
 export function ReportsFeedPage() {
+  const { session } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [channelFilter, setChannelFilter] = useState<string>('all');
@@ -44,8 +51,22 @@ export function ReportsFeedPage() {
     };
   }, [loadReports]);
 
+  const scopedReports = useMemo(() => {
+    const radius = session?.district_code
+      ? DEOC_COVERAGE_RADIUS_KM
+      : SEOC_COVERAGE_RADIUS_KM;
+    return filterReportsByJurisdiction(
+      reports,
+      session?.state_code,
+      session?.district_name,
+      session?.center_lat,
+      session?.center_lng,
+      radius
+    );
+  }, [reports, session]);
+
   const filteredReports = useMemo(() => {
-    return reports.filter((rep) => {
+    return scopedReports.filter((rep) => {
       if (channelFilter !== 'all' && (rep.source_type || '').toLowerCase() !== channelFilter) {
         return false;
       }
@@ -59,7 +80,7 @@ export function ReportsFeedPage() {
       }
       return true;
     });
-  }, [reports, channelFilter, searchQuery]);
+  }, [scopedReports, channelFilter, searchQuery]);
 
   const columns: Column<Report>[] = [
     {
@@ -175,15 +196,15 @@ export function ReportsFeedPage() {
     },
   ];
 
-  const ivrCount = reports.filter((r) => (r.source_type || '').toLowerCase() === 'ivr').length;
-  const webCount = reports.filter((r) => (r.source_type || '').toLowerCase() === 'web').length;
-  const smsCount = reports.filter((r) => (r.source_type || '').toLowerCase() === 'sms').length;
+  const ivrCount = scopedReports.filter((r) => (r.source_type || '').toLowerCase() === 'ivr').length;
+  const webCount = scopedReports.filter((r) => (r.source_type || '').toLowerCase() === 'web').length;
+  const smsCount = scopedReports.filter((r) => (r.source_type || '').toLowerCase() === 'sms').length;
 
   return (
     <div style={{ padding: '1.25rem 1.5rem', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Multichannel Distress Ingestion Stream"
-        subtitle="Unified intake pipeline aggregating AI helpline calls, Web SOS, SMS, and radio messages"
+        subtitle={session?.district_name ? `Sector intake pipeline for ${session.district_name}` : "Unified intake pipeline aggregating AI helpline calls, Web SOS, SMS, and radio messages"}
         actions={
           <SecondaryButton onClick={loadReports}>
             <span>↻ Refresh Reports</span>
@@ -201,8 +222,8 @@ export function ReportsFeedPage() {
       >
         <MetricCard
           label="TOTAL INGESTED SIGNALS"
-          value={reports.length}
-          deltaLabel="Across all channels"
+          value={scopedReports.length}
+          deltaLabel={session?.district_name ? `Active in ${session.district_name}` : "Across all channels"}
           icon={<Radio size={20} style={{ color: '#38bdf8' }} />}
           onClick={() => setChannelFilter('all')}
         />

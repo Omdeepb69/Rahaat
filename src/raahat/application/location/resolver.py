@@ -149,6 +149,42 @@ class PostGISGazetteerResolver:
         # 4. Handle Case: Zero candidates
         # ------------------------------------------------------------------
         if not candidates:
+            # Active Fallback: Check dynamic district-level NLP inference
+            from raahat.domain.geospatial.jurisdictions import (
+                get_district_bounding_box,
+                get_district_info,
+                infer_district_from_text,
+            )
+
+            dist_code = infer_district_from_text(raw_text)
+            if dist_code:
+                dist_info = get_district_info(dist_code)
+                if dist_info:
+                    center = PointCoordinates(latitude=dist_info["lat"], longitude=dist_info["lng"])
+                    bbox = get_district_bounding_box(dist_code) or _compute_bounding_box([center], padding_deg=0.05)
+                    hyp = LocationHypothesis(
+                        incident_id=incident_id,
+                        coordinates=center,
+                        candidate_label=f"{raw_text} ({dist_info['name']})",
+                        probability=None,
+                        uncertainty_radius_m=UNRESOLVED_AREA_UNCERTAINTY_M,
+                        verification_status=VerificationStatus.UNVERIFIED,
+                    )
+                    return LocationResolution(
+                        hypotheses=[hyp],
+                        bounding_box=bbox,
+                        uncertainty_radius_m=UNRESOLVED_AREA_UNCERTAINTY_M,
+                        clarification_question=None,
+                        resolved_landmark=Landmark(
+                            id=uuid.uuid4(),
+                            name=f"{raw_text} ({dist_info['name']})",
+                            kind="district_centroid_fallback",
+                            location=center,
+                            salience=0.5,
+                            metadata={"district": dist_info["name"], "district_code": dist_code},
+                        ),
+                    )
+
             return self._handle_unresolved(observation)
 
         # ------------------------------------------------------------------
@@ -357,6 +393,17 @@ class PostGISGazetteerResolver:
 
         opt1 = _label(top1)
         opt2 = _label(top2)
+
+        # If candidates are co-located or duplicate labels, no true spatial ambiguity exists
+        if opt1 == opt2 or top1.landmark.location.distance_to(top2.landmark.location) < 100.0:
+            return LocationResolution(
+                hypotheses=hypotheses[:1],
+                bounding_box=bbox,
+                uncertainty_radius_m=self._default_uncertainty_m,
+                clarification_question=None,
+                resolved_landmark=top1.landmark,
+            )
+
         question = ClarificationQuestion(
             prompt_text=f"Kya aap {opt1} ke paas hain ya {opt2} ke paas?",
             question_type="disambiguation",

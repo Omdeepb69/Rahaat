@@ -22,7 +22,7 @@ from typing import Any
 # Allow running from project root without installing the package
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from raahat.domain.resources import ResourceStatus, ResourceType
@@ -103,15 +103,152 @@ _LANDMARKS = [
         0.85,
         {"city": "Chalakudy", "district": "Thrissur", "state": "Kerala"},
     ),
+    (
+        "kl_aluva_shiva_temple",
+        "Aluva Shiva Temple (Mahadeva Temple)",
+        "place_of_worship",
+        10.1165,
+        76.3533,
+        1.0,
+        {"city": "Aluva", "district": "Ernakulam", "state": "Kerala", "ward": "5", "near": "Aluva Bypass (NH 544)"},
+    ),
+    (
+        "kl_aluva_bypass",
+        "Aluva Bypass Junction (NH 544)",
+        "infrastructure",
+        10.1112,
+        76.3568,
+        0.95,
+        {"city": "Aluva", "district": "Ernakulam", "state": "Kerala", "ward": "5"},
+    ),
+    (
+        "kl_chalakudy_st_thomas_church",
+        "St. Thomas Church Chalakudy",
+        "place_of_worship",
+        10.3072,
+        76.3335,
+        1.0,
+        {
+            "city": "Chalakudy",
+            "district": "Thrissur",
+            "state": "Kerala",
+            "ward": "4",
+            "aliases": ["St Thomas Church", "St Thomas Church Ward 4", "Chalakudy Forane Church"]
+        },
+    ),
+    (
+        "kl_chalakudy_railway_station",
+        "Chalakudy Railway Station",
+        "transport",
+        10.3015,
+        76.3312,
+        0.95,
+        {"city": "Chalakudy", "district": "Thrissur", "state": "Kerala"},
+    ),
+    (
+        "kl_chalakudy_puthenvelikkara_road",
+        "Puthenvelikkara Road (behind Chalakudy Station)",
+        "infrastructure",
+        10.2980,
+        76.3265,
+        0.9,
+        {"city": "Chalakudy", "district": "Thrissur", "state": "Kerala", "near": "Chalakudy Railway Station"},
+    ),
+    # Goa landmarks
+    (
+        "ga_margao_railway_station",
+        "Margao Railway Station",
+        "transport",
+        15.2762,
+        73.9573,
+        0.95,
+        {"city": "Margao", "district": "South Goa", "state": "Goa"},
+    ),
+    (
+        "ga_south_goa_district_hospital",
+        "South Goa District Hospital",
+        "medical",
+        15.2787,
+        73.9612,
+        1.0,
+        {"city": "Margao", "district": "South Goa", "state": "Goa"},
+    ),
+    (
+        "ga_mobor_beach_colva",
+        "Mobor Beach (Colva Coastal Area)",
+        "natural",
+        15.1655,
+        73.9399,
+        0.8,
+        {"city": "Colva", "district": "South Goa", "state": "Goa"},
+    ),
+    (
+        "ga_panaji_secretariat",
+        "Goa State Secretariat Panaji",
+        "government",
+        15.4989,
+        73.8278,
+        1.0,
+        {"city": "Panaji", "district": "North Goa", "state": "Goa"},
+    ),
+    (
+        "ga_mapusa_bus_terminal",
+        "Mapusa Bus Terminal",
+        "transport",
+        15.5944,
+        73.8085,
+        0.85,
+        {"city": "Mapusa", "district": "North Goa", "state": "Goa"},
+    ),
+    (
+        "ga_north_goa_district_hospital",
+        "North Goa District Hospital Mapusa",
+        "medical",
+        15.5921,
+        73.8097,
+        0.9,
+        {"city": "Mapusa", "district": "North Goa", "state": "Goa"},
+    ),
+    (
+        "ga_zuari_river_bridge",
+        "Zuari River Bridge (NH 66)",
+        "infrastructure",
+        15.3706,
+        73.9980,
+        0.9,
+        {"city": "Cortalim", "district": "South Goa", "state": "Goa"},
+    ),
+    (
+        "ga_mandovi_river_bridge",
+        "Mandovi River Bridge Panaji",
+        "infrastructure",
+        15.5000,
+        73.8300,
+        0.9,
+        {"city": "Panaji", "district": "North Goa", "state": "Goa"},
+    ),
 ]
 
 # Rescue resources: (name, type, lat, lon, capacity)
 _RESOURCES = [
+    # Kerala resources
     ("NDRF Boat Kerala-01", ResourceType.BOAT, 9.4975, 76.3382, 15),
     ("NDRF Boat Kerala-02", ResourceType.BOAT, 9.9820, 76.3005, 12),
     ("Army Medical Team Kochi", ResourceType.MEDICAL_TEAM, 9.9710, 76.2850, 20),
     ("SDRF Rescue Unit Thrissur", ResourceType.BOAT, 10.5280, 76.2150, 10),
     ("Flood Relief Camp Munnar", ResourceType.SHELTER, 10.0900, 77.0600, 200),
+    # South Goa (Margao) resources
+    ("NDRF Rescue Boat South Goa-01", ResourceType.BOAT, 15.2762, 73.9573, 12),
+    ("SDRF Inflatable Boat Margao", ResourceType.BOAT, 15.3100, 74.0000, 8),
+    ("Army Medical Team Goa (INHS Asvini Det.)", ResourceType.MEDICAL_TEAM, 15.2787, 73.9612, 15),
+    ("Goa State Rescue Unit South-01", ResourceType.BOAT, 15.1655, 73.9399, 10),
+    ("Flood Relief Camp Margao (SDC)", ResourceType.SHELTER, 15.2800, 73.9600, 300),
+    # North Goa (Panaji) resources
+    ("NDRF Rescue Boat North Goa-01", ResourceType.BOAT, 15.4989, 73.8278, 12),
+    ("Coast Guard Inflatable Unit Panaji", ResourceType.BOAT, 15.5000, 73.8300, 8),
+    ("Army Medical Team North Goa", ResourceType.MEDICAL_TEAM, 15.5921, 73.8097, 20),
+    ("Goa State Rescue Unit North-01", ResourceType.BOAT, 15.5944, 73.8085, 10),
+    ("Flood Relief Camp Mapusa (SDC)", ResourceType.SHELTER, 15.5900, 73.8100, 250),
 ]
 
 SYSTEM_OPERATOR_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
@@ -173,19 +310,20 @@ def _seed_resources(
         session_factory=session_factory,
     )
 
-    # Check how many resources already exist for this disaster
+    # Insert only resources that do not already exist by name for this disaster.
     from raahat.infrastructure.database.models.resource import ResourceModel
 
-    existing_count = session.scalar(
-        select(func.count()).select_from(ResourceModel).where(
-            ResourceModel.disaster_id == disaster_id
-        )
+    existing_names: set[str] = set(
+        session.scalars(
+            select(ResourceModel.name).where(ResourceModel.disaster_id == disaster_id)
+        ).all()
     )
-    if existing_count and existing_count >= len(_RESOURCES):
-        log.info("  Resources already seeded (%d found)", existing_count)
-        return
 
+    added = 0
     for name, rtype, lat, lon, capacity in _RESOURCES:
+        if name in existing_names:
+            log.info("  Resource already exists: %s", name)
+            continue
         resource_service.register_resource(
             disaster_id=disaster_id,
             resource_type=rtype,
@@ -197,6 +335,61 @@ def _seed_resources(
             session=session,
         )
         log.info("  Seeded resource: %s", name)
+        added += 1
+
+    if added == 0:
+        log.info("  All resources already present — nothing to seed.")
+
+
+def _seed_demo_incidents(session: Session, disaster_id: uuid.UUID) -> None:
+    """Seed the Malayalam live call demo incident (Manju Nair, Chalakudy)."""
+    from raahat.infrastructure.database.models.incident import IncidentModel
+    from raahat.infrastructure.database.models.location import LocationHypothesisModel
+
+    existing_inc = session.scalars(
+        select(IncidentModel).where(
+            IncidentModel.disaster_id == disaster_id,
+            IncidentModel.severity_facts["caller_name"].astext == "Manju Nair",
+        )
+    ).first()
+
+    if existing_inc is not None:
+        log.info("  Incident for Manju Nair already exists: %s", existing_inc.id)
+        return
+
+    inc_id = uuid.uuid4()
+    incident = IncidentModel(
+        id=inc_id,
+        disaster_id=disaster_id,
+        status="verified",
+        operational_priority="critical_review",
+        severity_facts={
+            "caller_name": "Manju Nair",
+            "caller_phone": "+91 94471 23456",
+            "people_count": 3,
+            "medical_needs": ["diabetic_insulin_deprived_since_0800"],
+            "vulnerabilities": ["elderly_unambulatory", "child_7yo"],
+            "floor_level": "second_floor",
+            "water_level": "second_floor_window_sill_rising",
+            "landmark": "St. Thomas Church, Ward 4, Chalakudy",
+            "rescue_assigned": "SDRF Rescue Unit Thrissur",
+            "signal": "Yellow dupatta in window",
+            "language": "ml-IN",
+        },
+    )
+    session.add(incident)
+
+    hyp = LocationHypothesisModel(
+        id=uuid.uuid4(),
+        incident_id=inc_id,
+        location="SRID=4326;POINT(76.3335 10.3072)",
+        candidate_label="St. Thomas Church, Ward 4, Chalakudy",
+        probability=1.0,
+        uncertainty_radius_m=150.0,
+        verification_status="confirmed",
+    )
+    session.add(hyp)
+    log.info("  Seeded P0 live call incident for Manju Nair at Chalakudy (lat=10.3072, lon=76.3335)")
 
 
 def seed(db_url: str) -> dict[str, Any]:
@@ -212,6 +405,9 @@ def seed(db_url: str) -> dict[str, Any]:
 
         log.info("Seeding rescue resources …")
         _seed_resources(session_factory, disaster.id, session)
+
+        log.info("Seeding demo incidents …")
+        _seed_demo_incidents(session, disaster.id)
 
         session.commit()
         disaster_id = disaster.id

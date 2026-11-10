@@ -19,20 +19,23 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ToastNotification } from '../components/ToastNotification';
 import { raahatService } from '../services/raahatService';
-import type { Incident, Resource, KPIStats } from '../types/raahat';
+import type { Incident, Resource } from '../types/raahat';
 import type { ToastMessage } from '../types/dashboard';
+import { useAuth } from '../context/AuthContext';
+import {
+  calculateDistanceKm,
+  DEOC_COVERAGE_RADIUS_KM,
+  SEOC_COVERAGE_RADIUS_KM,
+  filterReportsByJurisdiction,
+} from '../utils/geoUtils';
 
 export function DashboardHome() {
   const navigate = useNavigate();
+  const { session } = useAuth();
 
-  const [metrics, setMetrics] = useState<KPIStats>({
-    p0Count: 0,
-    trappedCount: 0,
-    reportsCount: 0,
-    availableResourcesCount: 0,
-  });
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Filters & search
@@ -62,20 +65,27 @@ export function DashboardHome() {
 
   const loadData = useCallback(async () => {
     try {
-      const [m, incs, res] = await Promise.all([
-        raahatService.getSummaryMetrics(),
-        raahatService.getIncidents(),
-        raahatService.getResources(),
+      const radiusMeters = session?.district_code
+        ? DEOC_COVERAGE_RADIUS_KM * 1000
+        : SEOC_COVERAGE_RADIUS_KM * 1000;
+      const [incs, res, reps] = await Promise.all([
+        raahatService.getIncidentsWithLocations(),
+        raahatService.getResources(
+          session?.center_lat != null && session?.center_lng != null
+            ? { lat: session.center_lat, lon: session.center_lng, radius_meters: radiusMeters }
+            : undefined
+        ),
+        raahatService.getReports(100),
       ]);
-      setMetrics(m);
       setIncidents(incs);
       setResources(res);
+      setReports(reps);
     } catch (err) {
       console.error('Failed to load incident command data', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     loadData();
@@ -102,9 +112,97 @@ export function DashboardHome() {
     };
   }, [loadData]);
 
-  // Filtered incidents
-  const filteredIncidents = useMemo(() => {
+  // Filtered incidents strictly scoped by officer jurisdiction
+  const scopedIncidents = useMemo(() => {
+    const centerLat = session?.center_lat;
+    const centerLng = session?.center_lng;
+    const maxRadius = session?.district_code
+      ? DEOC_COVERAGE_RADIUS_KM
+      : SEOC_COVERAGE_RADIUS_KM;
+
     return incidents.filter((inc) => {
+      if (centerLat != null && centerLng != null) {
+        const hyp = inc.hypotheses?.[0];
+        if (!hyp?.coordinates) return false;
+        const dist = calculateDistanceKm(
+          centerLat,
+          centerLng,
+          hyp.coordinates.latitude,
+          hyp.coordinates.longitude
+        );
+        if (dist > maxRadius) return false;
+      }
+      return true;
+    });
+  }, [incidents, session]);
+
+  // Filtered resources strictly scoped by officer jurisdiction
+  const scopedResources = useMemo(() => {
+    const centerLat = session?.center_lat;
+    const centerLng = session?.center_lng;
+    const maxRadius = session?.district_code
+      ? DEOC_COVERAGE_RADIUS_KM
+      : SEOC_COVERAGE_RADIUS_KM;
+
+    return resources.filter((r) => {
+      if (centerLat != null && centerLng != null) {
+        if (!r.location?.latitude || !r.location?.longitude) return false;
+        const dist = calculateDistanceKm(
+          centerLat,
+          centerLng,
+          r.location.latitude,
+          r.location.longitude
+        );
+        if (dist > maxRadius) return false;
+      }
+      return true;
+    });
+  }, [resources, session]);
+
+  // Scoped reports strictly matching officer jurisdiction
+  const scopedReports = useMemo(() => {
+    const maxRadius = session?.district_code
+      ? DEOC_COVERAGE_RADIUS_KM
+      : SEOC_COVERAGE_RADIUS_KM;
+    return filterReportsByJurisdiction(
+      reports,
+      session?.state_code,
+      session?.district_name,
+      session?.center_lat,
+      session?.center_lng,
+      maxRadius
+    );
+  }, [reports, session]);
+
+  // Dynamic sector-isolated KPI Metrics
+  const metrics = useMemo(() => {
+    const p0Count = scopedIncidents.filter((i) => {
+      const prio = (i.operational_priority || '').toLowerCase();
+      return prio === 'critical_review' || prio === 'p0';
+    }).length;
+
+    let trappedCount = 0;
+    for (const inc of scopedIncidents) {
+      if (inc.severity_facts?.trapped_status) {
+        trappedCount += inc.severity_facts.people_count || 1;
+      }
+    }
+
+    const availableResourcesCount = scopedResources.filter(
+      (r) => (r.availability_status || '').toLowerCase() === 'available'
+    ).length;
+
+    return {
+      p0Count,
+      trappedCount,
+      reportsCount: scopedReports.length,
+      availableResourcesCount,
+    };
+  }, [scopedIncidents, scopedResources, scopedReports]);
+
+  // Filtered incidents for display table
+  const filteredIncidents = useMemo(() => {
+    return scopedIncidents.filter((inc) => {
       if (priorityFilter !== 'all') {
         const prio = (inc.operational_priority || '').toLowerCase();
         if (priorityFilter === 'p0' && prio !== 'critical_review' && prio !== 'p0') return false;
@@ -132,7 +230,7 @@ export function DashboardHome() {
 
       return true;
     });
-  }, [incidents, priorityFilter, trappedOnly, searchQuery]);
+  }, [scopedIncidents, priorityFilter, trappedOnly, searchQuery]);
 
   // Handle Quick Dispatch Execution
   const handleAuthorizeDispatch = async () => {
@@ -548,7 +646,7 @@ export function DashboardHome() {
               }}
             >
               <option value="">-- Choose Unit --</option>
-              {resources
+              {scopedResources
                 .filter((r) => (r.availability_status || '').toLowerCase() === 'available')
                 .map((r) => (
                   <option key={r.id} value={r.id}>

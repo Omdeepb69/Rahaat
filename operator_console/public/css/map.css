@@ -251,3 +251,8 @@
   animation: map-radar-ring 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
   pointer-events: none;
 }
+
+/* Keyless dark tactical map layer for OpenStreetMap */
+.tactical-dark-tiles {
+  filter: brightness(0.62) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7) !important;
+}

@@ -12,8 +12,15 @@ import { ToastNotification } from '../components/ToastNotification';
 import { raahatService } from '../services/raahatService';
 import type { Resource, Incident } from '../types/raahat';
 import type { ToastMessage } from '../types/dashboard';
+import { useAuth } from '../context/AuthContext';
+import {
+  calculateDistanceKm,
+  DEOC_COVERAGE_RADIUS_KM,
+  SEOC_COVERAGE_RADIUS_KM,
+} from '../utils/geoUtils';
 
 export function OperationsPage() {
+  const { session } = useAuth();
   const [resources, setResources] = useState<Resource[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -40,8 +47,15 @@ export function OperationsPage() {
 
   const loadData = useCallback(async () => {
     try {
+      const radiusMeters = session?.district_code
+        ? DEOC_COVERAGE_RADIUS_KM * 1000
+        : SEOC_COVERAGE_RADIUS_KM * 1000;
       const [resList, incList] = await Promise.all([
-        raahatService.getResources(),
+        raahatService.getResources(
+          session?.center_lat != null && session?.center_lng != null
+            ? { lat: session.center_lat, lon: session.center_lng, radius_meters: radiusMeters }
+            : undefined
+        ),
         raahatService.getIncidents({ priority: 'critical_review' }),
       ]);
       setResources(resList);
@@ -51,14 +65,32 @@ export function OperationsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const filteredResources = useMemo(() => {
+    const centerLat = session?.center_lat;
+    const centerLng = session?.center_lng;
+    const maxRadius = session?.district_code
+      ? DEOC_COVERAGE_RADIUS_KM
+      : SEOC_COVERAGE_RADIUS_KM;
+
     return resources.filter((r) => {
+      // Jurisdiction geospatial bounding filter
+      if (centerLat != null && centerLng != null) {
+        if (!r.location?.latitude || !r.location?.longitude) return false;
+        const dist = calculateDistanceKm(
+          centerLat,
+          centerLng,
+          r.location.latitude,
+          r.location.longitude
+        );
+        if (dist > maxRadius) return false;
+      }
+
       if (typeFilter !== 'all' && (r.resource_type || '').toLowerCase() !== typeFilter) {
         return false;
       }
@@ -72,7 +104,7 @@ export function OperationsPage() {
       }
       return true;
     });
-  }, [resources, typeFilter, searchQuery]);
+  }, [resources, typeFilter, searchQuery, session]);
 
   const handleDispatch = async () => {
     if (!targetResource || !selectedIncidentId) return;
@@ -177,8 +209,8 @@ export function OperationsPage() {
     },
   ];
 
-  const availableCount = resources.filter((r) => (r.availability_status || '').toLowerCase() === 'available').length;
-  const assignedCount = resources.filter((r) => (r.availability_status || '').toLowerCase() === 'assigned').length;
+  const availableCount = filteredResources.filter((r) => (r.availability_status || '').toLowerCase() === 'available').length;
+  const assignedCount = filteredResources.filter((r) => (r.availability_status || '').toLowerCase() === 'assigned').length;
 
   return (
     <div style={{ padding: '1.25rem 1.5rem', maxWidth: 1400, margin: '0 auto' }}>
@@ -202,8 +234,8 @@ export function OperationsPage() {
       >
         <MetricCard
           label="TOTAL FLEET ASSETS"
-          value={resources.length}
-          deltaLabel="Active in Disaster Zone"
+          value={filteredResources.length}
+          deltaLabel={session?.district_name ? `Active in ${session.district_name}` : 'Active in Sector'}
           icon={<Shield size={20} style={{ color: '#38bdf8' }} />}
         />
         <MetricCard

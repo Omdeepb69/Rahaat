@@ -6,7 +6,9 @@ import {
   Radio,
   X,
   ExternalLink,
+  Navigation,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -21,6 +23,8 @@ const NAV_ITEMS = [
 ];
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+  const { session } = useAuth();
+
   return (
     <>
       {isOpen && (
@@ -38,21 +42,22 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               width: 38,
               height: 38,
               borderRadius: 10,
-              background: 'linear-gradient(135deg, #ff3366 0%, #dc2626 100%)',
+              background: 'linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #991b1b 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              boxShadow: '0 0 16px rgba(255, 51, 102, 0.45)',
+              boxShadow: '0 0 18px rgba(220, 38, 38, 0.45)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
             <Shield size={20} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="dash-sidebar-logo-text" style={{ fontSize: '1.05rem', fontWeight: 900 }}>
+            <div className="dash-sidebar-logo-text" style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '-0.01em' }}>
               RAAHAT 2.0
             </div>
-            <div className="dash-sidebar-logo-sub" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>
+            <div className="dash-sidebar-logo-sub" style={{ fontSize: '0.72rem', letterSpacing: '0.04em', color: '#fca5a5' }}>
               Disaster Command
             </div>
           </div>
@@ -67,6 +72,41 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </button>
           )}
         </div>
+
+        {/* Active Jurisdiction Status Badge */}
+        {session && (
+          <div
+            style={{
+              margin: '12px 14px 4px',
+              padding: '8px 10px',
+              borderRadius: 8,
+              background: 'rgba(11, 18, 34, 0.75)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <Navigation size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: '0.66rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+                Operational DEOC
+              </div>
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: '#f8fafc',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {session.district_name ? session.district_name.split('(')[0].trim() : session.state_name}
+              </div>
+            </div>
+          </div>
+        )}
 
         <nav className="dash-sidebar-nav" aria-label="Main navigation">
           <div className="dash-nav-section-label">Operations Control</div>
@@ -117,16 +157,16 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             style={{
               padding: '10px 12px',
               borderRadius: 8,
-              background: 'rgba(255, 51, 102, 0.1)',
-              border: '1px solid rgba(255, 51, 102, 0.25)',
+              background: 'rgba(220, 38, 38, 0.1)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
               fontSize: '0.75rem',
             }}
           >
-            <div style={{ fontWeight: 800, color: '#ff8099', marginBottom: 2 }}>
+            <div style={{ fontWeight: 800, color: '#fca5a5', marginBottom: 2 }}>
               HUMAN IN THE LOOP
             </div>
             <div style={{ color: 'var(--dash-text-muted)', fontSize: '0.72rem' }}>
-              Dispatch requires dispatcher authorization.
+              Field dispatch requires mandatory dispatcher authorization.
             </div>
           </div>
         </div>

@@ -240,3 +240,174 @@ class TestIVRCallAgent:
         assert r2.is_completed is True
         assert r2.next_state == IVRCallState.COMPLETED
         assert r2.submission is not None
+
+    @pytest.mark.asyncio
+    async def test_unresolvable_location_triggers_reprompt(self) -> None:
+        """When an unseeded location has zero hits, agent reprompts for nearby landmarks."""
+        from unittest.mock import AsyncMock
+        from raahat.application.location.models import ClarificationQuestion, LocationResolution
+
+        disaster_id = uuid.uuid4()
+        session = IVRCallSession(
+            call_sid="CA-UNRESOLVED-01",
+            disaster_id=disaster_id,
+            caller_phone="+919876543210",
+            current_state=IVRCallState.AWAITING_LOCATION,
+        )
+
+        recognizer = MockSpeechRecognizer()
+        vad = MagicMock()
+        vad.detect_speech.return_value = True
+
+        mock_resolver = MagicMock()
+        mock_resolver.resolve = AsyncMock(
+            return_value=LocationResolution(
+                hypotheses=[],
+                uncertainty_radius_m=5000.0,
+                clarification_question=ClarificationQuestion(
+                    prompt_text="Aapka sthan confirm nahi ho paaya. Kripya apna ward number batayein.",
+                    question_type="general",
+                ),
+                resolved_landmark=None,
+            )
+        )
+
+        agent = IVRCallAgent(
+            speech_recognizer=recognizer,
+            vad_detector=vad,
+            location_resolver=mock_resolver,
+        )
+
+        # Turn: Caller gives unrecognized location "Ghar ke paas"
+        recognizer.queue_transcript("Ghar ke paas", confidence=0.92)
+        r = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+
+        # Agent stays in AWAITING_LOCATION and asks caller for nearby hospital/station/main road
+        assert r.next_state == IVRCallState.AWAITING_LOCATION
+        assert "map par nahi mila" in r.prompt_text.lower()
+        assert session.location_resolved is False
+        assert session.location_unresolvable_attempts == 1
+
+    @pytest.mark.asyncio
+    async def test_multiple_candidates_triggers_disambiguation_question(self) -> None:
+        """When location matches multiple landmarks, agent asks optimal disambiguation question."""
+        from unittest.mock import AsyncMock
+        from raahat.application.location.models import ClarificationQuestion, LocationResolution
+        from raahat.domain.geospatial.landmark import Landmark
+        from raahat.domain.shared.coordinates import PointCoordinates
+
+        disaster_id = uuid.uuid4()
+        session = IVRCallSession(
+            call_sid="CA-AMBIGUOUS-02",
+            disaster_id=disaster_id,
+            caller_phone="+919876543210",
+            current_state=IVRCallState.AWAITING_LOCATION,
+        )
+
+        recognizer = MockSpeechRecognizer()
+        vad = MagicMock()
+        vad.detect_speech.return_value = True
+
+        mock_resolver = MagicMock()
+        # Turn 1 resolution: ambiguous candidates; Turn 2: resolved
+        mock_resolver.resolve = AsyncMock(
+            side_effect=[
+                LocationResolution(
+                    hypotheses=[],
+                    uncertainty_radius_m=1200.0,
+                    clarification_question=ClarificationQuestion(
+                        prompt_text="Kya aap Shiva Temple (Ward 2) ke paas hain ya Shiva Temple (Ward 7) ke paas?",
+                        question_type="disambiguation",
+                        options=["Shiva Temple (Ward 2)", "Shiva Temple (Ward 7)"],
+                    ),
+                    resolved_landmark=None,
+                ),
+                LocationResolution(
+                    hypotheses=[],
+                    uncertainty_radius_m=150.0,
+                    clarification_question=None,
+                    resolved_landmark=Landmark(
+                        id=uuid.uuid4(),
+                        name="Shiva Temple (Ward 2)",
+                        kind="temple",
+                        location=PointCoordinates(latitude=10.1, longitude=76.3),
+                        salience=0.9,
+                    ),
+                ),
+            ]
+        )
+
+        agent = IVRCallAgent(
+            speech_recognizer=recognizer,
+            vad_detector=vad,
+            location_resolver=mock_resolver,
+        )
+
+        # Turn 1: Caller says "Shiva Temple"
+        recognizer.queue_transcript("Shiva Temple", confidence=0.95)
+        r1 = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+
+        assert r1.next_state == IVRCallState.AWAITING_LOCATION_CLARIFICATION
+        assert "ward 2" in r1.prompt_text.lower()
+        assert session.current_state == IVRCallState.AWAITING_LOCATION_CLARIFICATION
+
+        # Turn 2: Caller chooses option 1 ("Ward 2")
+        recognizer.queue_transcript("Ward 2", confidence=0.95)
+        r2 = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+
+        assert r2.next_state == IVRCallState.AWAITING_PEOPLE_COUNT
+        assert session.location_resolved is True
+        assert "shiva temple" in session.location_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_safety_probe_injected_before_completion_when_water_hazard(self) -> None:
+        """When water hazard is present without depth or vulnerability, agent probes for P0 details."""
+        disaster_id = uuid.uuid4()
+        session = IVRCallSession(
+            call_sid="CA-PROBE-03",
+            disaster_id=disaster_id,
+            caller_phone="+919876543210",
+            current_state=IVRCallState.AWAITING_LOCATION,
+        )
+
+        recognizer = MockSpeechRecognizer()
+        vad = MagicMock()
+        vad.detect_speech.return_value = True
+        mock_ingestion = MagicMock()
+
+        agent = IVRCallAgent(
+            speech_recognizer=recognizer,
+            vad_detector=vad,
+            ingestion_service=mock_ingestion,
+        )
+
+        # Turn 1: Caller states location + mentions water rising fast
+        recognizer.queue_transcript("Aluva Shiva Temple paani badh raha hai jaldi aao", confidence=0.95)
+        r1 = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+        assert session.water_hazard_detected is True
+        assert r1.next_state == IVRCallState.AWAITING_PEOPLE_COUNT
+
+        # Turn 2: Headcount via keypad (5 people)
+        r2 = await agent.handle_turn(session, dtmf_digits="5")
+        assert session.people_count == 5
+        assert r2.next_state == IVRCallState.AWAITING_NEEDS
+
+        # Turn 3: Needs answered ("naav chahiye")
+        recognizer.queue_transcript("Sirf naav chahiye", confidence=0.92)
+        r3 = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+
+        # Safety probe is injected because depth / vulnerability was not yet answered!
+        assert r3.next_state == IVRCallState.AWAITING_SAFETY_PROBE
+        assert r3.is_completed is False
+        assert "paani kitna gehra hai" in r3.prompt_text.lower()
+
+        # Turn 4: Caller answers safety probe
+        recognizer.queue_transcript("Gale tak paani hai aur bujurg dadi bimar hain", confidence=0.93)
+        r4 = await agent.handle_turn(session, audio=_make_dummy_audio("anything"))
+
+        assert r4.next_state == IVRCallState.COMPLETED
+        assert r4.is_completed is True
+        assert session.safety_probe_answered is True
+        assert "medical" in session.needs
+        assert "Safety Probe" in session.situation_description
+        mock_ingestion.ingest.assert_called_once()

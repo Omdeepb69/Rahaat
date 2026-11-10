@@ -22,10 +22,12 @@ from raahat.api.dependencies import (
     get_audio_triage_workflow,
     get_ingestion_service,
     get_llm_client,
+    get_location_resolver,
     get_speech_recognizer,
     get_tts_synthesizer,
 )
 from raahat.application.ingestion import ReportIngestionService
+from raahat.application.location import PostGISGazetteerResolver
 from raahat.application.workflow import AutomatedAudioTriageWorkflow
 from raahat.infrastructure.llm import LLMClient
 from raahat.infrastructure.speech import (
@@ -117,6 +119,7 @@ async def start_call(
     speech_recognizer: SpeechRecognizer = Depends(get_speech_recognizer),
     tts: TTSSynthesizer = Depends(get_tts_synthesizer),
     llm_client: LLMClient = Depends(get_llm_client),
+    location_resolver: PostGISGazetteerResolver = Depends(get_location_resolver),
 ) -> CallTurnResponse:
     """Initialize an emergency voice dialog session.
 
@@ -135,6 +138,7 @@ async def start_call(
         speech_recognizer=speech_recognizer,
         ingestion_service=None,
         llm_client=llm_client,
+        location_resolver=location_resolver,
     )
 
     turn_res = await agent.handle_turn(session)
@@ -172,6 +176,7 @@ async def process_turn(
     tts: TTSSynthesizer = Depends(get_tts_synthesizer),
     workflow: AutomatedAudioTriageWorkflow = Depends(get_audio_triage_workflow),
     llm_client: LLMClient = Depends(get_llm_client),
+    location_resolver: PostGISGazetteerResolver = Depends(get_location_resolver),
 ) -> CallTurnResponse:
     """Process caller response (voice audio or DTMF) through Gnani Prisma ASR and IVR dialog state machine.
 
@@ -214,6 +219,7 @@ async def process_turn(
         speech_recognizer=speech_recognizer,
         ingestion_service=None,
         llm_client=llm_client,
+        location_resolver=location_resolver,
     )
 
     turn_res = await agent.handle_turn(

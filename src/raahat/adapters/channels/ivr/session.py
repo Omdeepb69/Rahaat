@@ -18,9 +18,11 @@ class IVRCallState(str, Enum):
     INIT = "init"
     AWAITING_LOCATION = "awaiting_location"
     AWAITING_LOCATION_KEYPAD = "awaiting_location_keypad"
+    AWAITING_LOCATION_CLARIFICATION = "awaiting_location_clarification"
     AWAITING_PEOPLE_COUNT = "awaiting_people_count"
     AWAITING_PEOPLE_COUNT_READBACK = "awaiting_people_count_readback"
     AWAITING_NEEDS = "awaiting_needs"
+    AWAITING_SAFETY_PROBE = "awaiting_safety_probe"
     COMPLETED = "completed"
     TERMINATED = "terminated"
 
@@ -49,6 +51,14 @@ class IVRCallSession:
     needs: list[str] = field(default_factory=list)
     language_code: str = "hi"
 
+    # Active Location Verification & Safety Probing State
+    location_resolved: bool = False
+    location_unresolvable_attempts: int = 0
+    active_clarification_question: Optional[dict[str, Any]] = None
+    clarification_answers: list[dict[str, str]] = field(default_factory=list)
+    water_hazard_detected: bool = False
+    safety_probe_answered: bool = False
+
     # Audio & DTMF logs
     transcripts: list[Transcript] = field(default_factory=list)
     dtmf_history: list[str] = field(default_factory=list)
@@ -66,10 +76,14 @@ class IVRCallSession:
             "turns_taken": self.turn_count,
             "location_text": self.location_text,
             "location_code_dtmf": self.location_code_dtmf,
+            "location_resolved": self.location_resolved,
             "people_count": self.people_count,
             "people_count_confirmed": self.people_count_confirmed,
             "situation_description": self.situation_description,
             "needs": self.needs,
+            "water_hazard_detected": self.water_hazard_detected,
+            "safety_probe_answered": self.safety_probe_answered,
+            "clarification_answers": list(self.clarification_answers),
             "dtmf_inputs": list(self.dtmf_history),
             "transcripts": [
                 {"text": t.text, "confidence": t.confidence, "language": t.language}

@@ -149,3 +149,36 @@ export interface KPIStats {
   availableResourcesCount: number;
 }
 
+export interface DistrictInfo {
+  code: string;
+  name: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+}
+
+export interface JurisdictionItem {
+  code: string;
+  name: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+  districts: DistrictInfo[];
+}
+
+export interface AuthSession {
+  access_token: string;
+  token_type: string;
+  state_code: string;
+  state_name: string;
+  district_code?: string | null;
+  district_name?: string | null;
+  center_lat: number;
+  center_lng: number;
+  zoom: number;
+  officer_name: string;
+  role: string;
+  dispatcher_id: string;
+  expires_in: number;
+}
+

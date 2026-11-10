@@ -73,6 +73,17 @@ def get_location_verification_service(
     return LocationVerificationService(session_factory=session_factory)
 
 
+def get_location_resolver(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+):
+    """Provide PostGISGazetteerResolver instance backed by PostgreSQL."""
+    from raahat.application.location import PostGISGazetteerResolver
+    from raahat.infrastructure.database.repositories.landmark import PostgresLandmarkRepository
+
+    repo = PostgresLandmarkRepository(session_factory=session_factory)
+    return PostGISGazetteerResolver(landmark_repo=repo)
+
+
 def get_device_sync_service(
     session_factory: sessionmaker[Session] = Depends(get_session_factory),
 ) -> DeviceSyncService:
@@ -202,24 +213,26 @@ def get_callback_scheduler(
     return CallbackScheduler(repository=repo, provider=provider)
 
 
-def get_audio_triage_workflow(
-    session_factory: sessionmaker[Session] = Depends(get_session_factory),
-    broadcaster: EventBroadcaster = Depends(get_event_broadcaster),
-) -> AutomatedAudioTriageWorkflow:
-    """Provide AutomatedAudioTriageWorkflow instance backed by PostgreSQL and live SSE broadcaster."""
-    from raahat.application.workflow import AutomatedAudioTriageWorkflow
-
-    return AutomatedAudioTriageWorkflow(
-        session_factory=session_factory,
-        broadcaster=broadcaster,
-    )
-
-
 def get_speech_recognizer() -> "SpeechRecognizer":
     """Provide SpeechRecognizer instance (Gnani Prisma v3.0 by default)."""
     from raahat.infrastructure.speech import PrismaRecognizer
 
     return PrismaRecognizer()
+
+
+def get_audio_triage_workflow(
+    session_factory: sessionmaker[Session] = Depends(get_session_factory),
+    broadcaster: EventBroadcaster = Depends(get_event_broadcaster),
+    speech_recognizer: "SpeechRecognizer" = Depends(get_speech_recognizer),
+) -> AutomatedAudioTriageWorkflow:
+    """Provide AutomatedAudioTriageWorkflow instance backed by PostgreSQL, Gnani Prisma STT, and live SSE broadcaster."""
+    from raahat.application.workflow import AutomatedAudioTriageWorkflow
+
+    return AutomatedAudioTriageWorkflow(
+        session_factory=session_factory,
+        broadcaster=broadcaster,
+        speech_recognizer=speech_recognizer,
+    )
 
 
 def get_tts_synthesizer() -> "TTSSynthesizer":

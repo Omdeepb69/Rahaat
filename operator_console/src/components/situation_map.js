@@ -54,11 +54,11 @@ export function initSituationMap(api, state) {
 
       leafletMap = window.L.map("situation-map").setView([DEFAULT_LAT, DEFAULT_LON], 11);
       window.L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: "abcd",
-          maxZoom: 20,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          className: "tactical-dark-tiles",
         }
       ).addTo(leafletMap);
 

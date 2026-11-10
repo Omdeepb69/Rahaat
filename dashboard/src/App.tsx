@@ -6,13 +6,14 @@ import { OperationsPage } from './pages/OperationsPage';
 import { ReportsFeedPage } from './pages/ReportsFeedPage';
 import { IncidentDetailPage } from './pages/IncidentDetailPage';
 import { SituationMapPage } from './pages/SituationMapPage';
+import { LoginPage } from './pages/LoginPage';
 import './styles/dashboard.css';
 
 function ProtectedLayout() {
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -23,9 +24,23 @@ function ProtectedLayout() {
         <Route path="/operations" element={<OperationsPage />} />
         <Route path="/reports" element={<ReportsFeedPage />} />
         <Route path="/incidents/:id" element={<IncidentDetailPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/map" replace />} />
       </Routes>
     </AppShell>
+  );
+}
+
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/map" replace /> : <LoginPage />}
+      />
+      <Route path="/*" element={<ProtectedLayout />} />
+    </Routes>
   );
 }
 
@@ -33,7 +48,7 @@ export function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
-        <ProtectedLayout />
+        <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   );

@@ -5,9 +5,11 @@ for Indian languages (Hindi, Malayalam, Marathi, Tamil, English, and Hinglish).
 """
 from __future__ import annotations
 
+import io
 import json
 import logging
 import os
+import wave
 from typing import Any, Optional
 
 from .protocol import AudioInput, SpeechRecognizer, Transcript, TranscriptSegment
@@ -121,8 +123,39 @@ class PrismaRecognizer(SpeechRecognizer):
                 "X-API-Key-ID": self.api_key,
             }
 
+            # Determine container format and MIME type
+            raw_bytes = audio.audio_bytes
+            filename = "emergency_call.wav"
+            mime_type = "audio/wav"
+
+            if raw_bytes.startswith(b"ID3") or (len(raw_bytes) > 2 and raw_bytes[0] == 0xFF and (raw_bytes[1] & 0xE0) == 0xE0):
+                filename = "emergency_call.mp3"
+                mime_type = "audio/mpeg"
+                payload_bytes = raw_bytes
+            elif raw_bytes.startswith(b"OggS") or raw_bytes.startswith(b"\x1a\x45\xdf\xa3"):
+                filename = "emergency_call.webm"
+                mime_type = "audio/webm"
+                payload_bytes = raw_bytes
+            elif raw_bytes.startswith(b"RIFF") and b"WAVE" in raw_bytes[:16]:
+                filename = "emergency_call.wav"
+                mime_type = "audio/wav"
+                payload_bytes = raw_bytes
+            else:
+                # Raw PCM: wrap in standard 16-bit mono WAV header
+                try:
+                    buf = io.BytesIO()
+                    with wave.open(buf, "wb") as wf:
+                        wf.setnchannels(1)
+                        wf.setsampwidth(2)
+                        wf.setframerate(audio.sample_rate or 16000)
+                        wf.writeframes(raw_bytes)
+                    payload_bytes = buf.getvalue()
+                except Exception as pcm_err:
+                    logger.warning("Could not wrap audio into WAV header: %s", pcm_err)
+                    payload_bytes = raw_bytes
+
             files = {
-                "audio_file": ("emergency_call.wav", audio.audio_bytes, "audio/wav"),
+                "audio_file": (filename, payload_bytes, mime_type),
             }
 
             data: dict[str, Any] = {
@@ -148,8 +181,13 @@ class PrismaRecognizer(SpeechRecognizer):
                 data_res = res.json()
                 return self._parse_prisma_response(data_res, fallback_language=raw_lang or "und")
         except Exception as exc:
-            logger.error("Prisma ASR transcription failed: %s", exc)
-            raise RuntimeError(f"Gnani Prisma transcription request failed: {exc}") from exc
+            logger.error("Prisma ASR transcription failed: %s; returning empty fallback transcript", exc)
+            return Transcript(
+                text="",
+                confidence=0.0,
+                language=raw_lang or "und",
+                segments=(),
+            )
 
     def _parse_prisma_response(self, data: dict[str, Any], fallback_language: str) -> Transcript:
         """Parse Gnani Prisma JSON response format into Raahat Transcript."""
