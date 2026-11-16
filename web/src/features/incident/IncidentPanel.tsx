@@ -29,11 +29,15 @@ function StatusActions({ incident }: { incident: IncidentDetail }) {
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
   if (!can('incidents:update')) return null;
-  const allowed = incident.allowed_statuses.filter((s) => s !== 'verified' || can('incidents:verify'));
+  const committed = incident.active_assignments > 0;
+  const allowed = incident.allowed_statuses.filter(
+    (s) => (s !== 'verified' || can('incidents:verify')) && !(committed && (s === 'verified' || s === 'under_review' || s === 'closed')),
+  );
   const label = (s: IncidentStatus) => {
     if (s === 'under_review' && incident.status === 'closed') return 'Reopen for review';
     if (s === 'under_review' && incident.status !== 'unverified') return 'Return to review';
     if (s === 'verified' && incident.status === 'resolved') return 'Reopen';
+    if (s === 'verified' && (incident.status === 'assigned' || incident.status === 'in_progress')) return 'Back to verified';
     return ACTION_LABEL[s] ?? INCIDENT_STATUS[s].label;
   };
   const needsConfirm = (s: IncidentStatus) => s === 'closed' || s === 'resolved' || s === 'unverified';
@@ -49,7 +53,7 @@ function StatusActions({ incident }: { incident: IncidentDetail }) {
   return (
     <div className="row-wrap">
       {allowed.map((s) => (
-        <Button key={s} size="sm" variant={s === 'verified' ? 'primary' : 'default'} busy={change.isPending && change.variables?.status === s}
+        <Button key={s} size="sm" variant={s === 'verified' && !['assigned', 'in_progress'].includes(incident.status) ? 'primary' : 'default'} busy={change.isPending && change.variables?.status === s}
           onClick={() => (needsConfirm(s) ? setTarget(s) : run(s))}>
           {label(s)}
         </Button>
@@ -76,10 +80,12 @@ function StatusActions({ incident }: { incident: IncidentDetail }) {
 
 export function IncidentHeader({ incident, onClose, compact }: { incident: IncidentDetail; onClose?: () => void; compact?: boolean }) {
   return (
-    <div className="detail-section" style={{ gap: 'var(--s-2)' }}>
+    <div className={`detail-section${compact ? ' detail-header' : ''}`} style={{ gap: 'var(--s-2)' }}>
       <div className="spread">
         <div className="row-wrap">
-          <h2 className="ref" style={{ fontSize: compact ? 'var(--text-lg)' : 'var(--text-xl)' }}>{incident.reference}</h2>
+          {compact
+            ? <h2 className="ref" style={{ fontSize: 'var(--text-lg)' }}>{incident.reference}</h2>
+            : <h1 className="ref" style={{ fontSize: 'var(--text-2xl)' }}>{incident.reference}</h1>}
           <PriorityBadge priority={incident.priority} source={incident.priority_source} />
           <StatusBadge status={incident.status} />
         </div>

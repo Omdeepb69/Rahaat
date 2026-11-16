@@ -2,7 +2,7 @@ import { Inbox } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Dialog, EmptyState, ErrorState, Input, Loading, PageHeader, Pager, Panel, Select, TimeAgo, Unknown } from '../../components/ui';
+import { Badge, Button, Dialog, EmptyState, ErrorState, Input, SkeletonList, PageHeader, Pager, Panel, Select, TimeAgo, Unknown } from '../../components/ui';
 import { formatDateTime, formatFull, humanize } from '../../lib/format';
 import { CHANNEL, LANGUAGES } from '../../lib/labels';
 import { useOperation } from '../../lib/operation';
@@ -23,7 +23,7 @@ function ReportDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const report = useReport(id);
   return (
     <Dialog open wide title="Report" onClose={onClose} footer={<Button onClick={onClose}>Close</Button>}>
-      {report.isLoading && <Loading />}
+      {report.isLoading && <SkeletonList rows={6} />}
       {report.isError && <ErrorState error={report.error} />}
       {report.data && (
         <>
@@ -78,9 +78,9 @@ function List() {
           </Select>
         </div>
       } footer={reports.data && <Pager total={reports.data.total} limit={LIMIT} offset={offset} onChange={setOffset} />}>
-        {reports.isLoading && <Loading />}
+        {reports.isLoading && <SkeletonList rows={6} />}
         {reports.isError && <ErrorState error={reports.error} onRetry={() => void reports.refetch()} />}
-        {reports.data?.items.length === 0 && <EmptyState icon={<Inbox size={28} />} title="No reports">Reports appear here as they are entered or received.</EmptyState>}
+        {reports.data?.items.length === 0 && <EmptyState icon={<Inbox size={22} />} title="No reports">Reports appear here as they are entered or received.</EmptyState>}
         {!!reports.data?.items.length && (
           <div className="table-wrap">
             <table className="table">

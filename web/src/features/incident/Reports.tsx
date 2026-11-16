@@ -9,6 +9,7 @@ import { CHANNEL, LANGUAGES, RECEIVED_VIA } from '../../lib/labels';
 import { useReports } from '../../lib/queries';
 import { session } from '../../lib/session';
 import type { ReportSummary } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 function AudioPlayer({ reportId }: { reportId: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -84,7 +85,7 @@ export function ReportsSection({ incidentId }: { incidentId: string }) {
   const reports = useReports({ disaster_id: null, incident_id: incidentId, limit: 50 });
   return (
     <section className="detail-section" aria-labelledby="reports-h">
-      <h3 id="reports-h" className="section-title">Reports ({reports.data?.total ?? '…'})</h3>
+      <SectionHeading id="reports-h">Reports ({reports.data?.total ?? '…'})</SectionHeading>
       {reports.isError && <Callout tone="bad">Reports could not be loaded.</Callout>}
       <ul className="list">
         {reports.data?.items.map((r) => <li key={r.id}><ReportCard report={r} /></li>)}

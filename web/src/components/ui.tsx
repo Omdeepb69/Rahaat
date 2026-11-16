@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, CheckCircle2, CircleDashed, CircleHelp, Cpu, Info, Loader2, OctagonAlert, TriangleAlert, UserCheck, X,
+  AlertTriangle, CheckCircle2, Search, CircleDashed, CircleHelp, Cpu, Info, Loader2, OctagonAlert, TriangleAlert, UserCheck, X,
 } from 'lucide-react';
 import {
   createContext, useCallback, useContext, useEffect, useId, useRef, useState,
@@ -50,7 +50,7 @@ export function Field({ label, hint, error, children, required }: FieldProps) {
     <div className="field">
       <label htmlFor={id}>
         {label}
-        {required && <span aria-hidden className="faint"> *</span>}
+        {required && <span aria-hidden className="required-mark">*</span>}
       </label>
       {children({ id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined, 'aria-required': required || undefined })}
       {hint && <span id={`${id}-hint`} className="hint">{hint}</span>}
@@ -62,6 +62,16 @@ export function Field({ label, hint, error, children, required }: FieldProps) {
 export const Input = (props: ComponentProps<'input'>) => <input className="input" {...props} />;
 export const Textarea = (props: ComponentProps<'textarea'>) => <textarea className="textarea" {...props} />;
 export const Select = (props: ComponentProps<'select'>) => <select className="select" {...props} />;
+
+export function SearchInput({ shortcut, ...props }: ComponentProps<'input'> & { shortcut?: string }) {
+  return (
+    <div className="search">
+      <Search size={15} aria-hidden />
+      <input className="input" type="search" autoComplete="off" spellCheck={false} enterKeyHint="search" {...props} />
+      {shortcut && !props.value && <kbd className="kbd" aria-hidden>{shortcut}</kbd>}
+    </div>
+  );
+}
 
 export function Segmented<T extends string>({ value, options, onChange, label }: {
   value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string;
@@ -173,8 +183,8 @@ export function PageHeader({ title, description, actions }: { title: string; des
 export function EmptyState({ icon, title, children, action }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="state">
-      {icon}
-      <h3>{title}</h3>
+      {icon && <div className="state-icon" aria-hidden>{icon}</div>}
+      <h2 className="state-title">{title}</h2>
       {children && <p>{children}</p>}
       {action}
     </div>
@@ -184,8 +194,8 @@ export function EmptyState({ icon, title, children, action }: { icon?: ReactNode
 export function ErrorState({ error, onRetry, title = 'Could not load this' }: { error: unknown; onRetry?: () => void; title?: string }) {
   return (
     <div className="state" role="alert">
-      <AlertTriangle size={28} aria-hidden />
-      <h3>{title}</h3>
+      <div className="state-icon" aria-hidden><AlertTriangle size={22} /></div>
+      <h2 className="state-title">{title}</h2>
       <p>{errorMessage(error)}</p>
       {onRetry && <Button onClick={onRetry}>Try again</Button>}
     </div>
@@ -194,9 +204,23 @@ export function ErrorState({ error, onRetry, title = 'Could not load this' }: { 
 
 export function Loading({ label = 'Loading' }: { label?: string }) {
   return (
-    <div className="state" role="status" aria-live="polite">
+    <div className="state loading" role="status" aria-live="polite">
       <span className="spinner" aria-hidden />
-      <span>{label}…</span>
+      <span className="small">{label}…</span>
+    </div>
+  );
+}
+
+export function SkeletonList({ rows = 6, label = 'Loading' }: { rows?: number; label?: string }) {
+  return (
+    <div role="status" aria-label={label} className="loading">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="skeleton-row" aria-hidden>
+          <div className="skeleton" style={{ inlineSize: `${38 + ((i * 17) % 30)}%` }} />
+          <div className="skeleton" style={{ inlineSize: `${70 + ((i * 11) % 25)}%`, blockSize: '0.75rem' }} />
+          <div className="skeleton" style={{ inlineSize: '45%', blockSize: '0.75rem' }} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -218,48 +242,54 @@ export function Callout({ tone = 'info', children, title }: { tone?: 'info' | 'w
 export function Dialog({ title, description, open, onClose, children, footer, wide }: {
   title: string; description?: ReactNode; open: boolean; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
   useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement as HTMLElement | null;
     const node = ref.current;
-    const focusable = () =>
-      Array.from(node?.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? [])
-        .filter((el) => !el.hasAttribute('disabled'));
-    (focusable().find((el) => el.tagName !== 'BUTTON') ?? focusable()[0])?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-      if (event.key === 'Tab') {
-        const items = focusable();
-        if (!items.length) return;
-        const first = items[0]!;
-        const last = items[items.length - 1]!;
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-      }
+    if (!node || !open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    if (!node.open) node.showModal();
+    const field = node.querySelector<HTMLElement>('.dialog-body input:not([disabled]), .dialog-body textarea, .dialog-body select');
+    field?.focus();
+    const onCancel = (event: Event) => {
+      event.preventDefault();
+      closeRef.current();
     };
-    document.addEventListener('keydown', onKey);
+    node.addEventListener('cancel', onCancel);
     return () => {
-      document.removeEventListener('keydown', onKey);
-      previous?.focus();
+      node.removeEventListener('cancel', onCancel);
+      if (node.open) node.close();
+      previous?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
+
   if (!open) return null;
   return createPortal(
-    <div className="dialog-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className={`dialog${wide ? ' dialog-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="dialog-header">
-          <div className="stack-sm">
-            <h2 id={titleId}>{title}</h2>
-            {description && <p className="muted small">{description}</p>}
-          </div>
-          <Button variant="ghost" onClick={onClose} aria-label="Close" icon={<X size={16} />} />
+    <dialog
+      ref={ref}
+      className={`dialog${wide ? ' dialog-wide' : ''}`}
+      aria-labelledby={titleId}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          const box = event.currentTarget.getBoundingClientRect();
+          const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+          if (!inside) onClose();
+        }
+      }}
+    >
+      <div className="dialog-header">
+        <div className="stack-sm">
+          <h2 id={titleId}>{title}</h2>
+          {description && <p className="muted small">{description}</p>}
         </div>
-        <div className="dialog-body">{children}</div>
-        {footer && <div className="dialog-footer">{footer}</div>}
+        <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close" icon={<X size={16} />} />
       </div>
-    </div>,
+      <div className="dialog-body">{children}</div>
+      {footer && <div className="dialog-footer">{footer}</div>}
+    </dialog>,
     document.body,
   );
 }
@@ -280,7 +310,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="toasts" role="status" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.tone}`}>
+          <div key={t.id} className={`toast toast-${t.tone}`} role={t.tone === 'error' ? 'alert' : undefined}>
             {t.tone === 'success' ? <CheckCircle2 size={16} aria-hidden /> : t.tone === 'error' ? <AlertTriangle size={16} aria-hidden /> : <Info size={16} aria-hidden />}
             <span className="grow">{t.message}</span>
             <Button variant="ghost" size="sm" aria-label="Dismiss" icon={<X size={14} />} onClick={() => setToasts((all) => all.filter((x) => x.id !== t.id))} />

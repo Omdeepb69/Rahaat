@@ -135,16 +135,35 @@ never zero. Location candidates draw their uncertainty radius.
 **Never colour alone.** Severity is text + icon + shape. Map markers differ by
 shape and carry a letter.
 
-**Typography.** IBM Plex Sans for UI, IBM Plex Mono with tabular figures for
-identifiers, coordinates, counts and times; Noto Sans Malayalam and Devanagari
-for transcripts. Fonts are bundled, not fetched from a third party. Base size
-14px, minimum 12px.
+**Typography** (revised in 0.3.1). Public Sans, a variable face designed for
+clear public-service interfaces, for all UI text; JetBrains Mono for incident
+references, coordinates and identifiers; variable Noto Sans Malayalam and
+Devanagari for report text. All self-hosted (no third-party font requests;
+fonts are never inlined, so the CSP stays strict). Tabular figures wherever
+numbers align. Base size 15px, inputs 16px on touch devices.
 
-**Geometry.** 4px radius on controls, 6px on panels, hairline borders instead
-of shadows; elevation only for overlays. Dense tables rather than card grids.
+**Colour system** (revised in 0.3.1). Tokens are defined in OKLCH with
+neutrals tinted toward one petrol-teal hue, so equal lightness steps look
+equal. Severity text colours were chosen against their tints for 4.5:1; axe
+reports no contrast failures in light or dark. Dark mode is a separate palette
+(lower chroma, lighter raised surfaces), selectable per browser
+(system/light/dark) for night shifts.
 
-**Motion.** 120ms transitions on state change only; all motion removed under
-`prefers-reduced-motion`.
+**Geometry and depth.** Panels separate by surface tone and a soft tinted
+shadow rather than borders; borders remain where they carry structure
+(tables, inputs, dividers). Radii 4/7/12/16px by level.
+
+**Motion.** Gated by frequency: queue navigation and shortcuts are instant;
+hover and press feedback ≤150ms; dialogs, drawers and toasts 200–260ms with
+ease-out curves; the sign-in screen has the only entrance animation. Under
+`prefers-reduced-motion` movement is removed but colour and opacity feedback
+remain.
+
+**Layout.** The operations board has one job, working the next incident: a
+situation strip (live counts that double as filters), the priority queue with
+a severity rail, the map, and a sticky incident header holding the status
+actions. Keyboard: `j`/`k` or arrows move through the queue, `/` searches,
+`Esc` closes.
 
 Rejected: the existing dark glassmorphism (low contrast, decorative blur,
 gradients), card-grid KPI dashboards (the previous four KPI tiles summed

@@ -12,6 +12,7 @@ import { FactsSection } from '../incident/Facts';
 import { IncidentHeader } from '../incident/IncidentPanel';
 import { LocationSection } from '../incident/Location';
 import { ReportsSection } from '../incident/Reports';
+import { SectionLevel } from '../incident/SectionHeading';
 import { TimelineSection } from '../incident/Timeline';
 
 export function IncidentPage() {
@@ -27,6 +28,7 @@ export function IncidentPage() {
   }
   const incident = query.data!;
   return (
+    <SectionLevel.Provider value={2}>
     <div className="page page-wide">
       <Link to="/incidents" className="small row"><ArrowLeft size={14} aria-hidden /> All incidents</Link>
       <div className="panel"><IncidentHeader incident={incident} /></div>
@@ -46,5 +48,6 @@ export function IncidentPage() {
         </div>
       </div>
     </div>
+    </SectionLevel.Provider>
   );
 }

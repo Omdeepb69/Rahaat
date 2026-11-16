@@ -1,8 +1,9 @@
-import { Loading, Unknown } from '../../components/ui';
+import { SkeletonList, Unknown } from '../../components/ui';
 import { formatDateTime, humanize } from '../../lib/format';
 import { actionLabel, STAGE } from '../../lib/labels';
 import { useTimeline } from '../../lib/queries';
 import type { TimelineEntry } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 function detail(entry: TimelineEntry): string | null {
   const p = entry.payload;
@@ -35,8 +36,8 @@ export function TimelineSection({ incidentId }: { incidentId: string }) {
   const timeline = useTimeline(incidentId);
   return (
     <section className="detail-section" aria-labelledby="tl-h">
-      <h3 id="tl-h" className="section-title">Timeline</h3>
-      {timeline.isLoading && <Loading />}
+      <SectionHeading id="tl-h">Timeline</SectionHeading>
+      {timeline.isLoading && <SkeletonList rows={6} />}
       <ol className="timeline">
         {timeline.data?.items.map((e) => (
           <li key={e.seq}>

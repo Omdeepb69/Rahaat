@@ -2,7 +2,7 @@ import { Inbox, ListChecks } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Callout, EmptyState, ErrorState, Loading, PageHeader, Panel, PriorityBadge, TimeAgo } from '../../components/ui';
+import { Badge, Button, Callout, EmptyState, ErrorState, SkeletonList, PageHeader, Panel, PriorityBadge, TimeAgo } from '../../components/ui';
 import { formatDistance, formatDuration, humanize } from '../../lib/format';
 import { STAGE } from '../../lib/labels';
 import { useNow } from '../../lib/live';
@@ -17,9 +17,9 @@ function Queue() {
   const now = useNow(30_000);
   return (
     <Panel flush title="Awaiting a resource" id="q-h" actions={queue.dataUpdatedAt > 0 && <span className="xs muted">updated <TimeAgo value={queue.dataUpdatedAt} /></span>}>
-      {queue.isLoading && <Loading />}
+      {queue.isLoading && <SkeletonList rows={6} />}
       {queue.isError && <ErrorState error={queue.error} onRetry={() => void queue.refetch()} />}
-      {queue.data?.length === 0 && <EmptyState icon={<Inbox size={28} />} title="No verified incident is waiting">Incidents appear here once a person has verified them and until a resource is committed.</EmptyState>}
+      {queue.data?.length === 0 && <EmptyState icon={<Inbox size={22} />} title="No verified incident is waiting">Incidents appear here once a person has verified them and until a resource is committed.</EmptyState>}
       {!!queue.data?.length && (
         <div className="table-wrap">
           <table className="table">
@@ -85,7 +85,7 @@ function Active() {
   const assignments = useAssignments({ disaster_id: operation!.id, active_only: true });
   return (
     <Panel flush title="Active assignments" id="act-h">
-      {assignments.isLoading && <Loading />}
+      {assignments.isLoading && <SkeletonList rows={6} />}
       {assignments.isError && <ErrorState error={assignments.error} />}
       {assignments.data?.items.length === 0 && <EmptyState title="No resources are committed">Approved assignments appear here until they are completed or cancelled.</EmptyState>}
       {!!assignments.data?.items.length && (

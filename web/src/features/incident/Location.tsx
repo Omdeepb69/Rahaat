@@ -10,6 +10,7 @@ import { LOCATION_SOURCE } from '../../lib/labels';
 import { useOperation } from '../../lib/operation';
 import { mutations } from '../../lib/queries';
 import type { Coordinates, IncidentDetail, LocationCandidate } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 function CandidateRow({ incident, candidate }: { incident: IncidentDetail; candidate: LocationCandidate }) {
   const { can } = useAuth();
@@ -134,7 +135,7 @@ export function LocationSection({ incident }: { incident: IncidentDetail }) {
   return (
     <section className="detail-section" aria-labelledby="loc-h">
       <div className="spread">
-        <h3 id="loc-h" className="section-title">Location</h3>
+        <SectionHeading id="loc-h">Location</SectionHeading>
         {editable && <Button size="sm" icon={<MapPin size={13} />} onClick={() => setSetting(true)}>Set position</Button>}
       </div>
       <dl className="kv">

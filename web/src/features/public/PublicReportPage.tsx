@@ -15,8 +15,8 @@ interface Ticket { ticket: string; received_at: string; stage?: string; message?
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <main className="auth" lang="en">
-      <div className="panel auth-card" style={{ width: 'min(560px, 100%)' }}>
+    <main className="auth-single" lang="en">
+      <div className="panel">
         <div className="panel-header"><span className="brand"><Logo /> RAAHAT</span><span className="xs muted">Emergency report</span></div>
         <div className="panel-body">{children}</div>
       </div>

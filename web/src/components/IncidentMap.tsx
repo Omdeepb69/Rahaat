@@ -173,7 +173,7 @@ export default function IncidentMap({
 
   const missing = incidents.length - located.length;
   return (
-    <div style={{ position: 'relative', height: '100%' }}>
+    <div className="map-host" style={{ position: 'relative', height: '100%' }}>
       <div ref={element} className="map" role="application" aria-label={label} />
       <details className="map-overlay map-legend" open={legendOpen}>
         <summary>Legend</summary>

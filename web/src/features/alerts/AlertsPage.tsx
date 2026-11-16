@@ -1,7 +1,7 @@
 import { ExternalLink, Megaphone } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge, Callout, EmptyState, ErrorState, Loading, PageHeader, Pager, Panel, TimeAgo, Unknown } from '../../components/ui';
+import { Badge, Callout, EmptyState, ErrorState, SkeletonList, PageHeader, Pager, Panel, TimeAgo, Unknown } from '../../components/ui';
 import { formatDateTime, formatFull } from '../../lib/format';
 import { useNow } from '../../lib/live';
 import { useAlerts } from '../../lib/queries';
@@ -49,7 +49,7 @@ export function AlertsPage() {
   return (
     <div className="page">
       <PageHeader title="Official alerts" description="Warnings published by issuing authorities through the configured CAP feed. Shown for reference; they do not create incidents." />
-      {alerts.isLoading && <Loading />}
+      {alerts.isLoading && <SkeletonList rows={6} />}
       {alerts.isError && <ErrorState error={alerts.error} onRetry={() => void alerts.refetch()} />}
       {data && !data.configured && (
         <Callout title="No alert feed is configured">
@@ -64,7 +64,7 @@ export function AlertsPage() {
           </div>
         } footer={<Pager total={data.total} limit={LIMIT} offset={offset} onChange={setOffset} />}>
           {data.items.length === 0 ? (
-            <EmptyState icon={<Megaphone size={28} />} title={showExpired ? 'No alerts received yet' : 'No active alerts'}>
+            <EmptyState icon={<Megaphone size={22} />} title={showExpired ? 'No alerts received yet' : 'No active alerts'}>
               {showExpired ? 'The feed has not published any alerts since it was configured.' : 'Nothing currently in force from the configured feed. Include expired alerts to see earlier ones.'}
             </EmptyState>
           ) : (

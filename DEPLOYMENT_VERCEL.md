@@ -24,8 +24,16 @@ laptop, through the HTTPS address in `VITE_API_BASE_URL`.
    `.env` and restart the API (`docker compose up -d api`). Preview
    deployments have their own origins; add them only if you need them to work.
 
-The build fails if `VITE_API_BASE_URL` is unset, so a deployment cannot
-silently point at the wrong backend.
+The build fails if `VITE_API_BASE_URL` is unset, is not a URL, or uses
+plain `http` for anything other than localhost, so a deployment cannot
+silently point at the wrong or an unencrypted backend.
+
+`vercel.json` also sends a Content-Security-Policy (scripts and fonts from the
+site only, network requests to HTTPS origins, map tiles from HTTPS, no
+framing), HSTS, `nosniff`, `no-referrer` and a restrictive
+Permissions-Policy. The production build was served locally with these exact
+headers (with `connect-src` widened only to reach the local test API): no
+policy violations, all fonts and map tiles loaded.
 
 ## Any static host
 

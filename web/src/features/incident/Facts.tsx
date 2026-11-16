@@ -1,13 +1,14 @@
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button, Callout, Dialog, Field, Input, ProvenanceTag, Select, Textarea, Unknown, useToast } from '../../components/ui';
+import { Button, Callout, Dialog, Field, Input, ProvenanceTag, Select, Textarea, useToast } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { humanize } from '../../lib/format';
-import { CATEGORIES, FACT, PRIORITY, PRIORITY_ORDER } from '../../lib/labels';
+import { CATEGORIES, extractorLabel, FACT, PRIORITY, PRIORITY_ORDER } from '../../lib/labels';
 import { mutations } from '../../lib/queries';
 import type { Fact, IncidentDetail } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 export function factValue(fact: Fact): string | null {
   const value = fact.value;
@@ -24,34 +25,33 @@ function FactRow({ fact }: { fact: Fact }) {
   const shown = factValue(fact);
   const source = fact.sources[0];
   return (
-    <div className="fact-row">
-      <div className="stack-sm" style={{ gap: 2 }}>
-        <span className="small muted">{FACT[fact.name] ?? humanize(fact.name)}</span>
-        {shown === null ? (
-          <Unknown>Not reported</Unknown>
-        ) : (
-          <span className={fact.origin === 'extracted' ? 'machine-value' : undefined} style={{ fontWeight: 600 }}>{shown}</span>
-        )}
-        {open && fact.sources.length > 0 && (
-          <ul className="list small" style={{ marginTop: 4 }}>
-            {fact.sources.map((s, i) => (
-              <li key={i} className="stack-sm" style={{ padding: '4px 0', gap: 2 }}>
-                <span className="row-wrap"><ProvenanceTag extractor={s.extractor} model={s.model} /> <span className="muted">found {humanize(String(s.value))}</span></span>
-                {s.quote && <span className="quote script">“{s.quote}”</span>}
-                {s.note && <span className="faint xs">{s.note}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div className="row" style={{ justifyContent: 'flex-end' }}>
+    <div className="fact-row" data-known={shown !== null} data-origin={fact.origin}>
+      <span className="fact-label">
+        <span>{FACT[fact.name] ?? humanize(fact.name)}</span>
         {fact.origin === 'operator' && <span className="badge tag-human" title="Corrected by an operator">Operator</span>}
         {fact.origin === 'extracted' && source && (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-            <ProvenanceTag extractor={source.extractor} model={source.model} />
+          <button type="button" className="badge tag-machine" style={{ border: 0, cursor: 'pointer' }} onClick={() => setOpen((v) => !v)} aria-expanded={open}
+            title="Show the words this was extracted from">
+            {extractorLabel(source.extractor)}
           </button>
         )}
-      </div>
+      </span>
+      {shown === null ? (
+        <span className="unknown small">Not reported</span>
+      ) : (
+        <span className={`fact-value${fact.origin === 'extracted' ? ' machine-value' : ''}`}>{shown}</span>
+      )}
+      {open && fact.sources.length > 0 && (
+        <ul className="fact-sources small">
+          {fact.sources.map((s, i) => (
+            <li key={i} className="stack-sm" style={{ gap: 2 }}>
+              <span className="row-wrap"><ProvenanceTag extractor={s.extractor} model={s.model} /><span className="muted">found {humanize(String(s.value))}</span></span>
+              {s.quote && <span className="quote script">“{s.quote}”</span>}
+              {s.note && <span className="faint xs">{s.note}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -64,7 +64,7 @@ export function FactsSection({ incident }: { incident: IncidentDetail }) {
   return (
     <section className="detail-section" aria-labelledby="facts-h">
       <div className="spread">
-        <h3 id="facts-h" className="section-title">Situation</h3>
+        <SectionHeading id="facts-h">Situation</SectionHeading>
         {can('incidents:update') && incident.status !== 'duplicate' && incident.status !== 'closed' && (
           <Button size="sm" icon={<Pencil size={13} />} onClick={() => setEditing(true)}>Correct</Button>
         )}
@@ -72,10 +72,10 @@ export function FactsSection({ incident }: { incident: IncidentDetail }) {
       {incident.summary && <p>{incident.summary}</p>}
       {machine && (
         <p className="xs faint">
-          Underlined values were extracted automatically from report text and have not been confirmed by a person. Select the tag to see the words they came from.
+          Underlined values were extracted automatically and are not yet confirmed by a person. Select a tag to see the words they came from.
         </p>
       )}
-      <div>{shown.map((fact) => <FactRow key={fact.name} fact={fact} />)}</div>
+      <div className="fact-grid">{shown.map((fact) => <FactRow key={fact.name} fact={fact} />)}</div>
       {incident.priority_reasons.length > 0 && (
         <div className="stack-sm">
           <span className="small muted">Why this priority ({incident.priority_source === 'operator' ? 'set by an operator' : 'triage rules'})</span>

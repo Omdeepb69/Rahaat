@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { LazyMap } from '../../components/LazyMap';
-import { Badge, Button, Callout, Dialog, EmptyState, ErrorState, Field, Input, Loading, PageHeader, Panel, Select, Textarea, TimeAgo, Unknown, useToast } from '../../components/ui';
+import { Badge, Button, Callout, Dialog, EmptyState, ErrorState, Field, Input, SkeletonList, PageHeader, Panel, Select, Textarea, TimeAgo, Unknown, useToast } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { formatAge, formatCoordinates, humanize } from '../../lib/format';
@@ -172,10 +172,10 @@ function Register() {
             <label className="checkbox small"><input type="checkbox" checked={retired} onChange={(e) => setRetired(e.target.checked)} />Retired</label>
           </div>
         } footer={resources.data && <span className="small muted num">{Object.entries(counts).map(([s, n]) => `${n} ${RESOURCE_STATUS[s as Resource['status']].label.toLowerCase()}`).join(' · ') || '0 resources'}</span>}>
-          {resources.isLoading && <Loading />}
+          {resources.isLoading && <SkeletonList rows={6} />}
           {resources.isError && <ErrorState error={resources.error} onRetry={() => void resources.refetch()} />}
           {resources.data && items.length === 0 && (
-            <EmptyState icon={<Truck size={28} />} title="No resources registered" action={manage && <Button variant="primary" onClick={() => setEditing('new')}>Register the first resource</Button>}>
+            <EmptyState icon={<Truck size={22} />} title="No resources registered" action={manage && <Button variant="primary" onClick={() => setEditing('new')}>Register the first resource</Button>}>
               Recommendations need resources with capabilities and positions.
             </EmptyState>
           )}

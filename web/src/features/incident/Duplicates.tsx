@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth';
 import { formatDateTime, humanize } from '../../lib/format';
 import { mutations } from '../../lib/queries';
 import type { DuplicateCandidate, IncidentDetail } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 type Action = 'merge' | 'reject' | 'relate';
 
@@ -103,7 +104,7 @@ export function DuplicatesSection({ incident }: { incident: IncidentDetail }) {
   return (
     <section className="detail-section" aria-labelledby="dup-h">
       <div className="spread">
-        <h3 id="dup-h" className="section-title">Possible duplicates</h3>
+        <SectionHeading id="dup-h">Possible duplicates</SectionHeading>
         {pending > 0 && <Badge tone="tone-warn">{pending} to review</Badge>}
       </div>
       {incident.status === 'duplicate' && (

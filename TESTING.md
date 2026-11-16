@@ -70,6 +70,13 @@ Playwright driving Chrome against real services:
    horizontal overflow; screenshots reviewed.
 5. **Keyboard**: tab order on sign-in; dialogs trap focus and close on Escape;
    tabs use arrow keys.
+6. **Redesign verification (0.3.1)**: screenshots at 320, 768, 1280 and 1920 px
+   in light and dark; axe-core 4.14 on sign-in, board, incident page, intake,
+   incidents, dispatch, resources, alerts, system, activity, reports and an
+   open dialog: **no violations** (including colour contrast). Keyboard: `j`/`k`,
+   `/`, `Esc` on the board; dialog keeps focus inside and returns it to the
+   trigger. Reduced motion: movement removed, feedback kept. Production build
+   served with the `vercel.json` headers: no CSP violations. No console errors.
 
 ## Not verified
 

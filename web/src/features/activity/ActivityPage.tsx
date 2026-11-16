@@ -2,7 +2,7 @@ import { ShieldCheck, ShieldX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Callout, EmptyState, ErrorState, Loading, PageHeader, Pager, Panel, Select, Unknown } from '../../components/ui';
+import { Badge, Button, Callout, EmptyState, ErrorState, SkeletonList, PageHeader, Pager, Panel, Select, Unknown } from '../../components/ui';
 import { formatDateTime, formatFull, humanize } from '../../lib/format';
 import { actionLabel } from '../../lib/labels';
 import { useOperation } from '../../lib/operation';
@@ -53,7 +53,7 @@ export function ActivityPage() {
           </Select>
         </div>
       } footer={audit.data && <Pager total={audit.data.total} limit={LIMIT} offset={offset} onChange={setOffset} />}>
-        {audit.isLoading && <Loading />}
+        {audit.isLoading && <SkeletonList rows={6} />}
         {audit.isError && <ErrorState error={audit.error} onRetry={() => void audit.refetch()} />}
         {audit.data?.items.length === 0 && <EmptyState title="No activity yet" />}
         {!!audit.data?.items.length && (

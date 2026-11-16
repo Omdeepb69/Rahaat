@@ -1,13 +1,7 @@
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-import '@fontsource/ibm-plex-sans/700.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/600.css';
-import '@fontsource/noto-sans-malayalam/400.css';
-import '@fontsource/noto-sans-malayalam/600.css';
-import '@fontsource/noto-sans-devanagari/400.css';
-import '@fontsource/noto-sans-devanagari/600.css';
+import '@fontsource-variable/public-sans/wght.css';
+import '@fontsource-variable/jetbrains-mono/wght.css';
+import '@fontsource-variable/noto-sans-malayalam/wght.css';
+import '@fontsource-variable/noto-sans-devanagari/wght.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
@@ -20,6 +14,9 @@ import { App } from './App';
 import { ToastProvider } from './components/ui';
 import { ApiError } from './lib/api';
 import { AuthProvider } from './lib/auth';
+import { applyTheme } from './lib/theme';
+
+applyTheme();
 
 const client = new QueryClient({
   defaultOptions: {

@@ -1,7 +1,7 @@
 import { KeyRound, Plus } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
-import { Badge, Button, Callout, Dialog, ErrorState, Field, Input, Loading, PageHeader, Panel, Select, TimeAgo, useToast } from '../../components/ui';
+import { Badge, Button, Callout, Dialog, ErrorState, Field, Input, SkeletonList, PageHeader, Panel, Select, TimeAgo, useToast } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { ROLE } from '../../lib/labels';
@@ -72,7 +72,7 @@ export function UsersPage() {
     <div className="page">
       <PageHeader title="Users" description="Accounts and roles. Permissions are enforced by the server." actions={<Button variant="primary" icon={<Plus size={14} />} onClick={() => setCreating(true)}>Create user</Button>} />
       <Panel flush>
-        {users.isLoading && <Loading />}
+        {users.isLoading && <SkeletonList rows={6} />}
         {users.isError && <ErrorState error={users.error} />}
         {users.data && (
           <div className="table-wrap">

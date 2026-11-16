@@ -8,6 +8,7 @@ import { formatDateTime, formatDistance, formatDuration, humanize } from '../../
 import { STAGE } from '../../lib/labels';
 import { mutations, useAssignments, useRecommendation } from '../../lib/queries';
 import type { Assignment, Candidate, IncidentDetail } from '../../lib/types';
+import { SectionHeading } from './SectionHeading';
 
 function distanceText(c: Candidate): string {
   if (c.distance_m == null) return 'distance unknown';
@@ -18,7 +19,7 @@ function distanceText(c: Candidate): string {
 function CandidateRow({ candidate, top, canDecide, onChoose }: { candidate: Candidate; top: boolean; canDecide: boolean; onChoose: () => void }) {
   const [open, setOpen] = useState(top);
   return (
-    <li style={{ padding: '10px 0' }} className="stack-sm">
+    <li className="candidate-card" data-top={top}>
       <div className="spread">
         <button type="button" className="btn btn-ghost btn-sm" style={{ padding: 0, height: 'auto' }} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -34,7 +35,7 @@ function CandidateRow({ candidate, top, canDecide, onChoose }: { candidate: Cand
       <span className="small muted">{distanceText(candidate)}{candidate.covered.length > 0 && ` · provides ${candidate.covered.map(humanize).join(', ')}`}</span>
       {candidate.warnings.map((w) => <span key={w} className="small row" style={{ color: 'var(--warn)' }}><AlertTriangle size={12} aria-hidden /> {w}</span>)}
       {open && (
-        <table className="table small" style={{ marginTop: 4 }}>
+        <table className="table small" style={{ marginTop: 4, background: 'var(--surface)', borderRadius: 'var(--radius-xs)' }}>
           <caption className="sr-only">Score breakdown for {candidate.callsign}</caption>
           <thead><tr><th>Factor</th><th>Weight</th><th style={{ width: '30%' }}>Value</th><th>Points</th></tr></thead>
           <tbody>
@@ -176,7 +177,7 @@ export function DispatchSection({ incident }: { incident: IncidentDetail }) {
   return (
     <section className="detail-section" aria-labelledby="dispatch-h">
       <div className="spread">
-        <h3 id="dispatch-h" className="section-title">Dispatch</h3>
+        <SectionHeading id="dispatch-h">Dispatch</SectionHeading>
         {rec && <span className="small muted" title={rec.priority_score.terms.map((t) => `${t.detail}: ${t.points}`).join('\n')}>Priority score <span className="num">{rec.priority_score.total.toFixed(0)}</span></span>}
       </div>
       <AssignmentList incidentId={incident.id} />
@@ -195,7 +196,7 @@ export function DispatchSection({ incident }: { incident: IncidentDetail }) {
               {rec.excluded.length ? `${rec.excluded.length} resource(s) considered and excluded.` : 'No resources are registered for this operation.'}
             </Callout>
           ) : (
-            <ol className="list" aria-label="Recommended resources" style={{ paddingLeft: 0 }}>
+            <ol aria-label="Recommended resources" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {rec.candidates.slice(0, 5).map((c, i) => (
                 <CandidateRow key={c.resource_id} candidate={c} top={i === 0} canDecide={canDecide} onChoose={() => setChoice(c)} />
               ))}

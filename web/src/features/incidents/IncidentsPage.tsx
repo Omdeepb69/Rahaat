@@ -2,7 +2,7 @@ import { ArrowDownUp, Inbox } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-import { Badge, EmptyState, ErrorState, Input, Loading, PageHeader, Pager, Panel, PriorityBadge, Select, StatusBadge, TimeAgo, Unknown } from '../../components/ui';
+import { Badge, EmptyState, ErrorState, Input, SkeletonList, PageHeader, Pager, Panel, PriorityBadge, Select, StatusBadge, TimeAgo, Unknown } from '../../components/ui';
 import { formatDateTime, humanize } from '../../lib/format';
 import { CATEGORIES, INCIDENT_STATUS, LOCATION_SOURCE, PRIORITY, PRIORITY_ORDER } from '../../lib/labels';
 import { useOperation } from '../../lib/operation';
@@ -93,9 +93,9 @@ function List() {
           </span>
         </div>
       } footer={incidents.data && <Pager total={incidents.data.total} limit={LIMIT} offset={offset} onChange={(o) => update('offset', String(o))} />}>
-        {incidents.isLoading && <Loading />}
+        {incidents.isLoading && <SkeletonList rows={6} />}
         {incidents.isError && <ErrorState error={incidents.error} onRetry={() => void incidents.refetch()} />}
-        {incidents.data && incidents.data.items.length === 0 && <EmptyState icon={<Inbox size={28} />} title="No incidents match">Change the filters or search.</EmptyState>}
+        {incidents.data && incidents.data.items.length === 0 && <EmptyState icon={<Inbox size={22} />} title="No incidents match">Change the filters or search.</EmptyState>}
         {incidents.data && incidents.data.items.length > 0 && (
           <div className="table-wrap">
             <table className="table">

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.1 — 2026-11-17
+
+Frontend redesign.
+
+- Design tokens rebuilt in OKLCH with a separately tuned dark theme and a per-browser theme switch.
+- Self-hosted variable fonts: Public Sans, JetBrains Mono, Noto Sans Malayalam and Devanagari.
+- Operations board: situation strip with live counts as filters, queue with severity rail, keyboard navigation (`j`/`k`, `/`, `Esc`), sticky incident header.
+- Facts shown as tiles that distinguish unknown, extracted and operator-confirmed values.
+- Native `<dialog>` overlays, skeleton loading states, delayed spinners, inverse toasts.
+- New sign-in screen; consistent single-card layout for password change and public reporting.
+- Accessibility: correct heading structure on every screen, required-field markers, forced-colours support; axe clean.
+- Deployment: build refuses a missing or non-HTTPS API address; CSP and HSTS headers in `vercel.json`; fonts never inlined.
+- Fixed: Leaflet layers covering the incident drawer on small screens; the logo on dark backgrounds; "Verify" offered on incidents with a committed resource.
+
 ## 0.3.0 — 2026-11-16
 
 A redesign of the whole system. See ARCHITECTURE.md for the audit that
