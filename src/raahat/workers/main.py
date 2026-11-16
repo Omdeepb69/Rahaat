@@ -15,6 +15,7 @@ import logging
 import os
 import signal
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -24,6 +25,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
 from raahat.application.ai.registry import build_providers
+from raahat.application.alerts import service as alerts
 from raahat.application.intake import service as intake
 from raahat.application.intake.pipeline import ReportPipeline
 from raahat.application.system.status import record_integration_result
@@ -38,6 +40,7 @@ from raahat.logging_config import configure_logging
 logger = logging.getLogger("raahat.worker")
 
 WORKER_NAME = "report-worker"
+ALERT_POLL_SECONDS = 300
 _CLAIM = text(
     """
     UPDATE reports SET processing_status = 'claimed'
@@ -66,9 +69,11 @@ class Worker:
     ) -> None:
         self._settings = settings
         self._sessions = session_factory
+        self._providers = build_providers(settings)
         self._pipeline = pipeline or ReportPipeline(
-            settings=settings, providers=build_providers(settings), session_factory=session_factory
+            settings=settings, providers=self._providers, session_factory=session_factory
         )
+        self._next_alert_poll = 0.0
         self._stop = threading.Event()
         self._started_at = _now()
         self._processed = 0
@@ -170,8 +175,22 @@ class Worker:
             )
             session.commit()
 
+    def poll_alerts(self) -> None:
+        """Read the official alert feed at most every ALERT_POLL_SECONDS."""
+        if not self._providers.alerts.configured or time.monotonic() < self._next_alert_poll:
+            return
+        self._next_alert_poll = time.monotonic() + ALERT_POLL_SECONDS
+        try:
+            with self._sessions() as session:
+                result = alerts.poll(session, self._providers.alerts)
+            if result.get("stored"):
+                logger.info("Imported %d alert(s)", result["stored"])
+        except Exception:
+            logger.exception("Alert feed poll failed")
+
     def run_once(self) -> int:
         self.heartbeat()
+        self.poll_alerts()
         handled = 0
         for report_id in self.claim():
             if self.process(report_id):

@@ -18,6 +18,7 @@ from starlette.responses import Response
 from raahat import __version__
 from raahat.api.deps import get_session_factory, reset_engine
 from raahat.api.routes import (
+    alerts,
     audit,
     auth,
     disasters,
@@ -208,6 +209,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         resources.router,
         dispatch.router,
         events.router,
+        alerts.router,
         audit.router,
         system.router,
     ):

@@ -145,12 +145,13 @@ class EventHub:
                     # up by this wake-up.
                     self._wake_all()
                     while not self._stop.is_set():
-                        received = False
-                        for _ in conn.notifies(timeout=1.0, stop_after=50):
-                            received = True
-                        if received:
+                        # Wake subscribers on every notification; the timeout
+                        # only bounds how long a stop request waits.
+                        for _ in conn.notifies(timeout=1.0):
                             self._last_notification_at = datetime.now(timezone.utc)
                             self._wake_all()
+                            if self._stop.is_set():
+                                break
             except Exception as exc:  # connection lost or database unavailable
                 self._connected = False
                 self._last_error = f"{type(exc).__name__}: {exc}"

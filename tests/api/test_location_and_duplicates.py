@@ -115,3 +115,19 @@ def test_rejecting_a_duplicate_keeps_both(app, admin, submit):
     assert result["status"] == "unverified"
     assert result["duplicates"][0]["status"] == "rejected"
     assert result["duplicates"][0]["review_reason"] == "Different families"
+
+
+def test_old_incidents_are_matched_only_by_phone_or_position(app, admin, submit, db):
+    from sqlalchemy import text
+
+    old = submit("Trapped on the roof, water rising", caller_contact="+919800000077", latitude=10.05, longitude=76.32)
+    with db() as session:
+        session.execute(text("UPDATE incidents SET created_at = now() - interval '2 days'"))
+        session.commit()
+    unrelated = submit("Need drinking water", caller_contact="+919811111111", latitude=10.40, longitude=76.60)
+    assert unrelated["duplicate_candidates"] == 0
+    same_phone = submit("Still trapped", caller_contact="+91 98000 00077")
+    assert same_phone["duplicate_candidates"] >= 1
+    nearby = submit("Trapped on the roof, water rising", latitude=10.0501, longitude=76.3201)
+    detail = app.get(f"/api/v1/incidents/{nearby['incident_id']}", headers=admin).json()
+    assert any(d["other"]["id"] == old["incident_id"] for d in detail["duplicates"])

@@ -1,0 +1,161 @@
+/*
+ * RAAHAT design tokens.
+ *
+ * Colour carries meaning; chrome is neutral. Severity owns red/orange/amber,
+ * operational health owns green, machine-derived content is violet, selection
+ * and focus are petrol blue. See DECISIONS.md D13.
+ */
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f5f6f4;
+  --surface: #ffffff;
+  --surface-sunken: #eef0ed;
+  --surface-raised: #ffffff;
+  --border: #d9ddd8;
+  --border-strong: #b6bcb5;
+
+  /* Text */
+  --text: #161b1f;
+  --text-secondary: #4a535a;
+  --text-tertiary: #6b747b;
+  --text-inverse: #ffffff;
+
+  /* Ink: primary actions */
+  --ink: #1b2a33;
+  --ink-hover: #2c3f4b;
+
+  /* Accent: selection, focus, links */
+  --accent: #0b6e8a;
+  --accent-hover: #095a71;
+  --accent-soft: #e0f0f4;
+  --focus: #0b6e8a;
+
+  /* Severity (triage level) */
+  --sev-critical: #b42318;
+  --sev-critical-bg: #fdecea;
+  --sev-urgent: #c4520a;
+  --sev-urgent-bg: #fdf0e6;
+  --sev-unassessed: #8a5a00;
+  --sev-unassessed-bg: #fbf3dc;
+  --sev-standard: #3d5a80;
+  --sev-standard-bg: #e8eef6;
+  --sev-low: #59636b;
+  --sev-low-bg: #eef0f1;
+
+  /* Operational health */
+  --ok: #1f7a3f;
+  --ok-bg: #e5f4ea;
+  --warn: #8a5a00;
+  --warn-bg: #fbf3dc;
+  --bad: #b42318;
+  --bad-bg: #fdecea;
+  --idle: #59636b;
+  --idle-bg: #eef0f1;
+
+  /* Provenance */
+  --machine: #6941c6;
+  --machine-bg: #f1ecfb;
+  --human: #1f7a3f;
+
+  /* Typography */
+  --font-sans: 'IBM Plex Sans', 'Noto Sans Malayalam', 'Noto Sans Devanagari', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-script: 'Noto Sans Malayalam', 'Noto Sans Devanagari', 'IBM Plex Sans', system-ui, sans-serif;
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-md: 0.875rem;  /* 14px */
+  --text-lg: 1rem;      /* 16px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --leading: 1.45;
+
+  /* Space (4px grid) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+
+  /* Shape and depth */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --shadow-overlay: 0 8px 28px rgb(16 24 32 / 0.16), 0 1px 3px rgb(16 24 32 / 0.08);
+
+  /* Layout */
+  --header-h: 52px;
+  --nav-w: 216px;
+  --nav-w-collapsed: 56px;
+
+  --dur: 120ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #14181c;
+    --surface: #1b2126;
+    --surface-sunken: #111518;
+    --surface-raised: #222930;
+    --border: #2f383f;
+    --border-strong: #46515a;
+    --text: #e8ebe7;
+    --text-secondary: #b3bbb5;
+    --text-tertiary: #8b948f;
+    --ink: #e8ebe7;
+    --ink-hover: #ffffff;
+    --text-inverse: #14181c;
+    --accent: #4fb3cf;
+    --accent-hover: #74c5dc;
+    --accent-soft: #163742;
+    --focus: #74c5dc;
+    --sev-critical: #ff7b6e; --sev-critical-bg: #3a1714;
+    --sev-urgent: #ff9d5c; --sev-urgent-bg: #3a2414;
+    --sev-unassessed: #e6b94d; --sev-unassessed-bg: #33290f;
+    --sev-standard: #8fb0d9; --sev-standard-bg: #1c2836;
+    --sev-low: #a2acb3; --sev-low-bg: #242a2f;
+    --ok: #5fcf8a; --ok-bg: #14301e;
+    --warn: #e6b94d; --warn-bg: #33290f;
+    --bad: #ff7b6e; --bad-bg: #3a1714;
+    --idle: #a2acb3; --idle-bg: #242a2f;
+    --machine: #b59cf0; --machine-bg: #261d3d;
+    --human: #5fcf8a;
+    --shadow-overlay: 0 8px 28px rgb(0 0 0 / 0.5);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #14181c;
+  --surface: #1b2126;
+  --surface-sunken: #111518;
+  --surface-raised: #222930;
+  --border: #2f383f;
+  --border-strong: #46515a;
+  --text: #e8ebe7;
+  --text-secondary: #b3bbb5;
+  --text-tertiary: #8b948f;
+  --ink: #e8ebe7;
+  --ink-hover: #ffffff;
+  --text-inverse: #14181c;
+  --accent: #4fb3cf;
+  --accent-hover: #74c5dc;
+  --accent-soft: #163742;
+  --focus: #74c5dc;
+  --sev-critical: #ff7b6e; --sev-critical-bg: #3a1714;
+  --sev-urgent: #ff9d5c; --sev-urgent-bg: #3a2414;
+  --sev-unassessed: #e6b94d; --sev-unassessed-bg: #33290f;
+  --sev-standard: #8fb0d9; --sev-standard-bg: #1c2836;
+  --sev-low: #a2acb3; --sev-low-bg: #242a2f;
+  --ok: #5fcf8a; --ok-bg: #14301e;
+  --warn: #e6b94d; --warn-bg: #33290f;
+  --bad: #ff7b6e; --bad-bg: #3a1714;
+  --idle: #a2acb3; --idle-bg: #242a2f;
+  --machine: #b59cf0; --machine-bg: #261d3d;
+  --human: #5fcf8a;
+  --shadow-overlay: 0 8px 28px rgb(0 0 0 / 0.5);
+}

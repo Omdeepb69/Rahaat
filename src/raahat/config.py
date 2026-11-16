@@ -73,10 +73,9 @@ class Settings(BaseModel):
     max_failed_logins: int = Field(default=5, ge=1)
     lockout_seconds: int = Field(default=15 * 60, ge=30)
 
-    # Speech (Gnani Prisma / Timbre, served from api.vachana.ai)
+    # Speech-to-text (Gnani Prisma, served from api.vachana.ai)
     gnani_api_key: Optional[str] = None
     prisma_endpoint: str = "https://api.vachana.ai/stt/v3"
-    timbre_endpoint: str = "https://api.vachana.ai/api/v1/tts/inference"
 
     # Extraction / translation model
     llm_provider: Literal["none", "evon", "gemini"] = "none"
@@ -96,7 +95,6 @@ class Settings(BaseModel):
 
     # External situational data
     cap_alert_feed_url: Optional[str] = None
-    rainfall_forecast_enabled: bool = False
 
     # Duplicate detection. A threshold above 1.0 disables automatic linking:
     # every match is held for operator review.
@@ -176,7 +174,6 @@ def load_settings() -> Settings:
         "routing_provider": routing,
         "osrm_base_url": _optional("OSRM_BASE_URL"),
         "cap_alert_feed_url": _optional("CAP_ALERT_FEED_URL"),
-        "rainfall_forecast_enabled": _flag("RAINFALL_FORECAST_ENABLED"),
     }
 
     passthrough = {
@@ -191,7 +188,6 @@ def load_settings() -> Settings:
         "MAX_FAILED_LOGINS": ("max_failed_logins", int),
         "LOCKOUT_SECONDS": ("lockout_seconds", int),
         "PRISMA_ENDPOINT": ("prisma_endpoint", str),
-        "TIMBRE_ENDPOINT": ("timbre_endpoint", str),
         "EVON_MODEL": ("evon_model", str),
         "GEMINI_MODEL": ("gemini_model", str),
         "NOMINATIM_BASE_URL": ("nominatim_base_url", str),

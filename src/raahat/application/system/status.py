@@ -272,8 +272,8 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
         probe=lambda p: p.routing.probe(),
     ),
     IntegrationSpec(
-        "alerts", "Official alert feed (CAP)", "Imports published disaster alerts",
-        lambda s, p: bool(s.cap_alert_feed_url), "CAP_ALERT_FEED_URL",
+        "alerts", "Official alert feed (CAP)", "Imports published disaster alerts, polled every 5 minutes",
+        lambda s, p: p.alerts.configured, "CAP_ALERT_FEED_URL",
     ),
 )
 _SPECS = {spec.key: spec for spec in INTEGRATIONS}

@@ -1,77 +1,31 @@
-# ==============================================================================
-# Multi-stage Dockerfile for Raahat 2.0 (Resilient Disaster Intelligence Platform)
-# Constraints: Non-root execution, minimal attack surface, volume persistence.
-# ==============================================================================
-
-# ------------------------------------------------------------------------------
-# Stage 1: Build virtual environment with compiled dependencies
-# ------------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
-
+# RAAHAT backend image: API and worker share it. Frontend is deployed separately.
+FROM python:3.11-slim AS build
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /build
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    g++ \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+COPY pyproject.toml uv.lock ./
+# Install exactly the locked dependency versions, then the package itself.
+RUN pip install uv==0.10.8 \
+ && uv export --frozen --no-dev --no-emit-project --no-hashes -o requirements.txt \
+ && pip install -r requirements.txt
+COPY src ./src
+RUN pip install --no-deps .
 
-COPY pyproject.toml /build/
-# src/ must be present before pip install because setuptools resolves packages
-# from the directory declared in [tool.setuptools.packages.find] where = ["src"]
-COPY src/ /build/src/
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir .
-
-# ------------------------------------------------------------------------------
-# Stage 2: Production runtime image
-# ------------------------------------------------------------------------------
-FROM python:3.11-slim AS runner
-
+FROM python:3.11-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -g 10001 raahat && useradd -u 10001 -g raahat -m -s /usr/sbin/nologin raahat \
+ && mkdir -p /data/audio && chown raahat:raahat /data/audio
+COPY --from=build /opt/venv /opt/venv
 WORKDIR /app
-
-# Install runtime dependencies for PostGIS C extensions & health checks
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    libpq5 \
-    libgeos-c1v5 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Security: Dedicated non-root system user and group
-RUN groupadd -g 10001 raahat && \
-    useradd -u 10001 -g raahat -s /bin/bash -m raahat
-
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH="/app/src:/app"
-ENV PYTHONUNBUFFERED=1
-
-# Copy application code and assets
-COPY --chown=raahat:raahat alembic.ini pyproject.toml /app/
-COPY --chown=raahat:raahat src/ /app/src/
-COPY --chown=raahat:raahat field_app/ /app/field_app/
-COPY --chown=raahat:raahat operator_console/ /app/operator_console/
-COPY --chown=raahat:raahat citizen_portal/ /app/citizen_portal/
-COPY --chown=raahat:raahat dashboard/ /app/dashboard/
-COPY --chown=raahat:raahat evaluation/ /app/evaluation/
-COPY --chown=raahat:raahat deployment/ /app/deployment/
-
-RUN chmod +x /app/deployment/scripts/entrypoint.sh
-
-# Temporary directory permissions for non-root user (heartbeat files)
-RUN mkdir -p /tmp && chmod 1777 /tmp
-
+COPY --chown=raahat:raahat alembic.ini ./
+COPY --chown=raahat:raahat src ./src
+COPY --chown=raahat:raahat --chmod=0755 scripts/container-entrypoint.sh /usr/local/bin/raahat-entrypoint
+ENV PATH="/opt/venv/bin:$PATH" PYTHONPATH=/app/src PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
+    AUDIO_STORAGE_DIR=/data/audio HOST=0.0.0.0 PORT=8000
 USER raahat
-
 EXPOSE 8000
-
-HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/healthz || exit 1
-
-ENTRYPOINT ["/app/deployment/scripts/entrypoint.sh"]
+ENTRYPOINT ["raahat-entrypoint"]
 CMD ["api"]

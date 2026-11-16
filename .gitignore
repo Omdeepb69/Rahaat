@@ -52,3 +52,6 @@ animations/
 demo_audios/
 demo/audio/
 
+
+# Database backups (contain caller details)
+backups/

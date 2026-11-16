@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import Optional
 
 from raahat.config import Settings, get_settings
+from raahat.infrastructure.providers.cap import CapFeedClient
 from raahat.infrastructure.providers.geo import NominatimClient, OsrmClient
 from raahat.infrastructure.providers.gnani_prisma import GnaniPrismaClient
 from raahat.infrastructure.providers.llm import (
@@ -21,6 +22,7 @@ class Providers:
     text_model: Optional[JsonModelClient]
     geocoder: NominatimClient
     routing: OsrmClient
+    alerts: CapFeedClient
 
 
 def build_providers(settings: Settings) -> Providers:
@@ -52,6 +54,7 @@ def build_providers(settings: Settings) -> Providers:
             country_codes=settings.geocoder_country_codes,
         ),
         routing=OsrmClient(base_url=settings.osrm_base_url if settings.routing_provider == "osrm" else None),
+        alerts=CapFeedClient(feed_url=settings.cap_alert_feed_url, user_agent=settings.http_user_agent),
     )
 
 

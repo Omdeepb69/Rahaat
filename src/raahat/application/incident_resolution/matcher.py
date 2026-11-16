@@ -25,9 +25,14 @@ from raahat.domain.shared.enums import (
 
 from .models import IncidentCandidate, IncidentSnapshot, MatchSignal
 
-# Matching compares a new report against the most recent open incidents only,
-# which bounds memory and time per report.
-MAX_CANDIDATE_INCIDENTS = 300
+# A report is compared only with open incidents that share its phone number,
+# lie within CANDIDATE_RADIUS_M of its position, or were opened in the last
+# RECENT_WINDOW_HOURS (most recent RECENT_LIMIT). MAX_CANDIDATE_INCIDENTS caps
+# the total, which bounds time and memory per report.
+CANDIDATE_RADIUS_M = 2000.0
+RECENT_WINDOW_HOURS = 12
+RECENT_LIMIT = 50
+MAX_CANDIDATE_INCIDENTS = 150
 
 
 def normalize_phone(phone: Optional[str]) -> Optional[str]:
@@ -134,6 +139,25 @@ def extract_coordinates(report: Report) -> Optional[PointCoordinates]:
     return None
 
 
+def extract_reported_position(report: Report) -> Optional[PointCoordinates]:
+    """Any position recorded with the report, for comparing reports.
+
+    Includes a position the caller's device supplied and one an operator
+    entered at intake (``operator_pin``). Only the former is ever labelled as
+    the caller's position; this function is for proximity matching only.
+    """
+    coords = extract_coordinates(report)
+    if coords is not None:
+        return coords
+    pin = (report.raw_payload or {}).get("operator_pin")
+    if isinstance(pin, dict):
+        try:
+            return PointCoordinates(latitude=float(pin["latitude"]), longitude=float(pin["longitude"]))
+        except (KeyError, TypeError, ValueError):
+            return None
+    return None
+
+
 def extract_name(report: Report) -> Optional[str]:
     """Extract caller or household member name from raw payload."""
     payload = report.raw_payload or {}
@@ -186,11 +210,11 @@ class ConservativeIncidentMatcher:
         if self._snapshot_provider:
             snapshots = list(self._snapshot_provider(report.disaster_id))
         elif session is not None:
-            snapshots = self._load_snapshots_from_db(report.disaster_id, session)
+            snapshots = self._load_snapshots_from_db(report, session)
 
         candidates: list[IncidentCandidate] = []
         report_phone = extract_phone(report)
-        report_coords = extract_coordinates(report)
+        report_coords = extract_reported_position(report)
         report_name = extract_name(report)
         report_item_ids = {item.id for item in evidence_items}
 
@@ -246,7 +270,7 @@ class ConservativeIncidentMatcher:
             # Fallback to coordinates on linked reports
             if not snap_coords_list:
                 for r in snap.reports:
-                    rc = extract_coordinates(r)
+                    rc = extract_reported_position(r)
                     if rc:
                         snap_coords_list.append(rc)
 
@@ -403,19 +427,79 @@ class ConservativeIncidentMatcher:
         candidates.sort(key=lambda c: c.score, reverse=True)
         return candidates
 
+    def _candidate_incident_ids(self, report: Report, session: Session) -> list[uuid.UUID]:
+        """Open incidents that could plausibly describe the same situation.
+
+        A report is compared only with incidents that share its phone number,
+        have a position within CANDIDATE_RADIUS_M of the report's position, or
+        were opened recently. This bounds the work per report regardless of
+        how many incidents the operation has accumulated.
+        """
+        from sqlalchemy import text as sql
+
+        params: dict[str, Any] = {
+            "disaster_id": report.disaster_id,
+            "recent_hours": RECENT_WINDOW_HOURS,
+            "recent_limit": RECENT_LIMIT,
+            "cap": MAX_CANDIDATE_INCIDENTS,
+        }
+        clauses = [
+            """
+            (SELECT id FROM incidents
+             WHERE disaster_id = :disaster_id AND status NOT IN ('resolved','closed','duplicate')
+               AND created_at > now() - make_interval(hours => :recent_hours)
+             ORDER BY created_at DESC LIMIT :recent_limit)
+            """
+        ]
+        phone = extract_phone(report)
+        if phone:
+            params["phone"] = phone
+            clauses.append(
+                """
+                (SELECT ir.incident_id FROM incident_reports ir
+                 JOIN reports r ON r.id = ir.report_id
+                 WHERE r.disaster_id = :disaster_id
+                   AND right(regexp_replace(coalesce(r.caller_contact, r.source_identity, ''), '\\D', '', 'g'), 10) = :phone)
+                """
+            )
+        coords = extract_reported_position(report)
+        if coords:
+            params.update(lat=coords.latitude, lon=coords.longitude, radius=CANDIDATE_RADIUS_M)
+            clauses.append(
+                """
+                (SELECT incident_id FROM location_hypotheses
+                 WHERE verification_status <> 'rejected'
+                   AND ST_DWithin(location, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :radius))
+                """
+            )
+        rows = session.execute(
+            sql(
+                f"""
+                SELECT i.id FROM incidents i
+                WHERE i.id IN ({" UNION ".join(clauses)})
+                  AND i.disaster_id = :disaster_id
+                  AND i.status NOT IN ('resolved','closed','duplicate')
+                ORDER BY i.created_at DESC
+                LIMIT :cap
+                """
+            ),
+            params,
+        ).all()
+        return [row.id for row in rows]
+
     def _load_snapshots_from_db(
         self,
-        disaster_id: uuid.UUID,
+        report: Report,
         session: Session,
     ) -> list[IncidentSnapshot]:
-        """Load active incidents and their hypotheses, reports, and evidence from PostgreSQL."""
+        """Load candidate incidents with their locations, reports and evidence in four queries."""
+        from collections import defaultdict
+
         from sqlalchemy.orm import selectinload
 
         from raahat.domain.incidents.incident import Incident as DomainIncident
         from raahat.domain.reports.report import Report as DomainReport
-        from raahat.infrastructure.database.models.evidence import (
-            EvidenceItemModel,
-        )
+        from raahat.infrastructure.database.models.evidence import EvidenceItemModel
         from raahat.infrastructure.database.models.incident import (
             IncidentModel,
             IncidentReportModel,
@@ -425,74 +509,53 @@ class ConservativeIncidentMatcher:
         from raahat.infrastructure.database.repositories.evidence import model_to_evidence_item
         from raahat.infrastructure.database.repositories.location_hypothesis import parse_wkb_point
 
-        stmt = select(IncidentModel).where(
-            IncidentModel.disaster_id == disaster_id,
-            IncidentModel.status.not_in(
-                [
-                    IncidentStatus.RESOLVED.value,
-                    IncidentStatus.CLOSED.value,
-                    IncidentStatus.DUPLICATE.value,
-                ]
-            ),
-        ).order_by(IncidentModel.created_at.desc()).limit(MAX_CANDIDATE_INCIDENTS)
-        incident_models = session.scalars(stmt).all()
-        snapshots: list[IncidentSnapshot] = []
+        ids = self._candidate_incident_ids(report, session)
+        if not ids:
+            return []
+        incident_models = session.scalars(
+            select(IncidentModel).where(IncidentModel.id.in_(ids))
+        ).all()
 
-        for inc_m in incident_models:
-            domain_incident = DomainIncident(
-                id=inc_m.id,
-                disaster_id=inc_m.disaster_id,
-                status=IncidentStatus(inc_m.status),
-                operational_priority=PriorityLevel(inc_m.operational_priority),
-                severity_facts=dict(inc_m.severity_facts or {}),
-                last_confirmed_at=inc_m.last_confirmed_at,
-                created_at=inc_m.created_at,
-                updated_at=inc_m.updated_at,
-            )
-
-            # Hypotheses
-            hypotheses: list[LocationHypothesis] = []
-            hyp_stmt = select(LocationHypothesisModel).where(
-                LocationHypothesisModel.incident_id == inc_m.id,
-            )
-            for h_m in session.scalars(hyp_stmt).all():
-                coords = parse_wkb_point(h_m.location)
-                hypotheses.append(LocationHypothesis(
+        hypotheses: dict[uuid.UUID, list[LocationHypothesis]] = defaultdict(list)
+        for h_m in session.scalars(
+            select(LocationHypothesisModel).where(LocationHypothesisModel.incident_id.in_(ids))
+        ).all():
+            hypotheses[h_m.incident_id].append(
+                LocationHypothesis(
                     id=h_m.id,
                     incident_id=h_m.incident_id,
-                    coordinates=coords,
+                    coordinates=parse_wkb_point(h_m.location),
                     candidate_label=h_m.candidate_label,
                     source_evidence_id=h_m.source_evidence_id,
                     probability=h_m.probability,
                     uncertainty_radius_m=h_m.uncertainty_radius_m,
                     verification_status=VerificationStatus(h_m.verification_status),
                     created_at=h_m.created_at,
-                ))
-
-            # Reports
-            reports: list[DomainReport] = []
-            rep_stmt = (
-                select(ReportModel)
-                .join(IncidentReportModel, IncidentReportModel.report_id == ReportModel.id)
-                .where(IncidentReportModel.incident_id == inc_m.id)
+                )
             )
-            report_models = session.scalars(rep_stmt).all()
-            for r_m in report_models:
-                try:
-                    s_type = SourceType(r_m.source_type)
-                except ValueError:
-                    s_type = SourceType.WEB
-                try:
-                    p_stat = ProcessingStatus(r_m.processing_status)
-                except ValueError:
-                    p_stat = ProcessingStatus.PROCESSED
 
-                reports.append(DomainReport(
+        reports: dict[uuid.UUID, list[DomainReport]] = defaultdict(list)
+        incident_of_report: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
+        for incident_id, r_m in session.execute(
+            select(IncidentReportModel.incident_id, ReportModel)
+            .join(ReportModel, IncidentReportModel.report_id == ReportModel.id)
+            .where(IncidentReportModel.incident_id.in_(ids))
+        ).all():
+            try:
+                s_type = SourceType(r_m.source_type)
+            except ValueError:
+                s_type = SourceType.WEB
+            try:
+                p_stat = ProcessingStatus(r_m.processing_status)
+            except ValueError:
+                p_stat = ProcessingStatus.PROCESSED
+            reports[incident_id].append(
+                DomainReport(
                     id=r_m.id,
                     disaster_id=r_m.disaster_id,
                     source_type=s_type,
                     source_event_id=r_m.source_event_id,
-                    source_identity=r_m.source_identity,
+                    source_identity=r_m.source_identity or r_m.caller_contact,
                     device_id=r_m.device_id,
                     channel_reference=r_m.channel_reference,
                     raw_payload=dict(r_m.raw_payload),
@@ -501,25 +564,38 @@ class ConservativeIncidentMatcher:
                     language_code=r_m.language_code,
                     processing_status=p_stat,
                     idempotency_key=r_m.idempotency_key,
-                ))
-
-            # Evidence items
-            evidence_items: list[EvidenceItem] = []
-            if report_models:
-                rep_ids = [r.id for r in report_models]
-                ev_stmt = (
-                    select(EvidenceItemModel)
-                    .options(selectinload(EvidenceItemModel.spans))
-                    .where(EvidenceItemModel.report_id.in_(rep_ids))
                 )
-                for ev_m in session.scalars(ev_stmt).all():
-                    evidence_items.append(model_to_evidence_item(ev_m))
+            )
+            incident_of_report[r_m.id].append(incident_id)
 
-            snapshots.append(IncidentSnapshot(
-                incident=domain_incident,
-                hypotheses=hypotheses,
-                reports=reports,
-                evidence_items=evidence_items,
-            ))
+        evidence: dict[uuid.UUID, list[EvidenceItem]] = defaultdict(list)
+        if incident_of_report:
+            for ev_m in session.scalars(
+                select(EvidenceItemModel)
+                .options(selectinload(EvidenceItemModel.spans))
+                .where(EvidenceItemModel.report_id.in_(list(incident_of_report)))
+            ).all():
+                item = model_to_evidence_item(ev_m)
+                for incident_id in incident_of_report[ev_m.report_id]:
+                    evidence[incident_id].append(item)
 
+        snapshots: list[IncidentSnapshot] = []
+        for inc_m in incident_models:
+            snapshots.append(
+                IncidentSnapshot(
+                    incident=DomainIncident(
+                        id=inc_m.id,
+                        disaster_id=inc_m.disaster_id,
+                        status=IncidentStatus(inc_m.status),
+                        operational_priority=PriorityLevel(inc_m.operational_priority),
+                        severity_facts=dict(inc_m.severity_facts or {}),
+                        last_confirmed_at=inc_m.last_confirmed_at,
+                        created_at=inc_m.created_at,
+                        updated_at=inc_m.updated_at,
+                    ),
+                    hypotheses=hypotheses[inc_m.id],
+                    reports=reports[inc_m.id],
+                    evidence_items=evidence[inc_m.id],
+                )
+            )
         return snapshots
