@@ -149,3 +149,70 @@ of shadows; elevation only for overlays. Dense tables rather than card grids.
 Rejected: the existing dark glassmorphism (low contrast, decorative blur,
 gradients), card-grid KPI dashboards (the previous four KPI tiles summed
 unverified data into headline numbers).
+
+## D14 — Conversational phone agent, text-to-speech and device sync removed
+
+The browser "voice call" agent, Timbre/Piper text-to-speech, local Whisper and
+the offline field-app sync endpoint were removed. The call agent depended on
+mock recognisers and invented fallback replies; the sync endpoint accepted
+unauthenticated writes. Voice reports remain: a recording is stored, transcribed
+by Gnani Prisma when configured, and playable by authorised users. Outbound
+calls and SMS are not sent by RAAHAT.
+
+## D15 — Rule-based extraction always runs; models add, never replace
+
+Rule extraction (keywords and patterns in English, Hindi, Malayalam, Konkani)
+needs no provider, so the system works with none configured. It asserts
+presence only: a negated phrase leaves a fact unknown, because a mis-parsed
+negation must not lower priority. Model extraction, when configured, adds
+evidence only when its supporting quote is found verbatim in the report. No
+confidence numbers are shown for either, because neither is calibrated.
+
+## D16 — Location candidates, one best position by an explicit rule
+
+Every position is a hypothesis with a source. The incident's displayed position
+is: the latest operator-confirmed one; otherwise the best candidate by source
+(device > operator > geocoder > landmark), then score; otherwise none. Landmark
+candidates carry an *assumed* radius (150–400 m by relation word) and say so.
+
+## D17 — Duplicate matching bounded in SQL
+
+The original matcher loaded every open incident with its reports and evidence
+for each new report (about 900 queries at 300 incidents). Candidates are now
+limited in SQL to incidents sharing the phone number, within 2 km, or among the
+50 most recent in 12 hours, and loaded in four queries. Intake p50 fell from
+1.25 s to 0.28 s at 200 incidents. Automatic linking is disabled by default
+(`DEDUP_AUTO_LINK_THRESHOLD=1.01`): every match goes to an operator.
+
+## D18 — Server entry point with bounded shutdown
+
+`python -m raahat.serve` is the only way the API is started (container and
+development). It fixes one process, loopback binding by default, and a 5 s
+graceful-shutdown limit. Without the limit, uvicorn waited indefinitely for
+open event streams and the API never stopped on SIGTERM (measured: ~98 s until
+killed; now 0.1 s).
+
+## D19 — Official alerts from NDMA SACHET
+
+SACHET publishes CAP 1.2 warnings from IMD and SDMAs per state as a public
+RSS index (verified for Kerala and Goa). It is the only authoritative,
+machine-readable, keyless source found (DATA_PROVIDERS.md). Alerts are
+displayed for reference with full provenance and never change incidents. IMD's
+own API needs IP whitelisting and CWC offers no public API; both are reached
+indirectly through SACHET.
+
+## D20 — Public intake off by default, inside the same web app
+
+A citizen form at `/report` posts to rate-limited `/api/v1/public` endpoints
+that exist only when `PUBLIC_INTAKE_ENABLED=true`. It can attach the
+reporter's device position with consent; the ticket page shows only a coarse
+stage, never report content or responder details.
+
+## D21 — Accessibility choices
+
+Severity is conveyed by text, icon and marker shape, never colour alone.
+Required fields set `aria-required`; errors are linked with
+`aria-describedby` and announced once. Dialogs trap focus and restore it.
+New incidents are announced through a polite live region. Submit buttons stay
+enabled and validate on press rather than being silently disabled. All motion
+stops under `prefers-reduced-motion`.

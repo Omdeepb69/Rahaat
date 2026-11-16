@@ -1,183 +1,78 @@
-# Raahat 2.0 (राहत)
+# RAAHAT
 
-**Uncertainty-Aware, Offline-Resilient Disaster Intelligence & Emergency Triage Engine**
+Emergency intake, incident intelligence and rescue-resource coordination for
+disaster control rooms (floods, landslides, cyclones). Built for Kerala and Goa
+operations; Malayalam, English, Hindi and Konkani reports.
 
-Built for coordinated flood and emergency crisis response across India, powered by Gnani.ai's Indic speech & reasoning models.
+RAAHAT is **decision support**. It records reports, organises them into
+incidents, shows where they are and what is known, and recommends which
+resource to send. A person approves every dispatch. RAAHAT does not contact
+emergency services or field teams, and it is not a certified replacement for an
+emergency-services system.
 
-[![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)](#testing--verification)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
-[![Database](https://img.shields.io/badge/database-PostgreSQL%2016%20%2B%20PostGIS-blue)](https://postgis.net/)
-[![Gnani Speech](https://img.shields.io/badge/Gnani.ai-Prisma%20v3.0%20%7C%20Timbre-orange)](https://gnani.ai/)
-[![Gnani Reasoning](https://img.shields.io/badge/Gnani.ai-Evon%20v3.3%2030B-purple)](https://huggingface.co/gnani)
+## What it does
 
----
+| Area | What happens |
+|---|---|
+| Intake | Operators type reports in the caller's words and language. Channel gateways (SMS, radio) and an optional public web form submit through the API. Voice notes are transcribed by Gnani Prisma when configured. The original text is never altered. |
+| Understanding | Language identified from script and vocabulary; rule-based extraction of people, trapped, medical need, water level and depth, hazards, needs and place mentions, each with the words it came from. With a model configured (Gnani Evon or Gemini), translation to English and model extraction; model output is kept only when its supporting quote is found in the report. |
+| Incidents | Every report becomes or joins an incident, starting **unverified**. Lifecycle: unverified → under review → verified → assigned → response active → resolved → closed (or duplicate). Transitions are validated. Operators correct facts; corrections are stored beside the extracted values with name and time. |
+| Priority | Deterministic triage rules (critical / urgent / standard / low; "not assessed" ranks above standard). An explicit priority score orders verified incidents awaiting a resource. |
+| Duplicates | Candidates found from phone, distance, people named, shared facts and contradictions. Never merged automatically. Operators merge, reject or relate; merges are reversible. |
+| Location | Candidates from the caller's device, operator entry, landmark gazetteer (OpenStreetMap import) and geocoder (Nominatim, on request). Each is labelled with its source and uncertainty. Nothing becomes the position until confirmed, and no coordinates are invented. |
+| Dispatch | Resources with capabilities, capacity and timestamped positions. Recommendations rank feasible resources on capability, distance (road distance with OSRM, otherwise labelled straight-line), capacity and position age, with every factor shown. Approval records what was recommended and why a different choice was made. |
+| Live operation | Every change is an audited, hash-chained event, streamed to browsers (SSE) and replayed after reconnect. Official CAP alerts (NDMA SACHET) are imported for reference. |
+| Honesty | System status reflects real checks. The interface says when the server is unreachable and how old the data on screen is. |
 
-## Overview
-
-During major flood disasters (such as the 2018 Kerala floods or urban inundations), emergency helplines and 1077 control rooms are overwhelmed with thousands of simultaneous distress calls. Conventional systems fail because:
-1. **Dialect and acoustic noise**: Callers speak regional languages (Malayalam, Marathi, Hindi) mixed with English (Hinglish) under severe emotional stress and heavy rain/water noise.
-2. **Ambiguous vernacular locations**: Victims report colloquial landmarks ("near St. Thomas church, ward 4", "near Chalakudy bridge") rather than GPS coordinates.
-3. **Black-box AI risks**: Autonomous generative models can hallucinate victim counts or fabricate coordinates, creating fatal rescue failures.
-4. **Network collapse**: Cellular infrastructure fails during severe floods, cutting off cloud-only platforms.
-
-**Raahat 2.0** solves these challenges with an unbreachable architectural boundary:
-- **Sensory Perception**: Fast, multilingual Indic speech transcription via **Gnani Prisma v3.0** (`indic-auto`), natural regional voice synthesis via **Gnani Timbre** (`Shivani` neural voice), and zero-shot disaster fact extraction via **Gnani Evon v3.3** (`gnani/gnani-evon-v3.3-30B-A3B`).
-- **Deterministic Decision Policy**: Spatial landmark grounding with PostGIS trigram matching (`similarity >= 0.25`) and uncertainty radius circles ($\pm150\text{m}$), conservative multi-source incident deduplication, rule-based P0–P3 triage explainability, and strictly **1-click human commander authorization**.
-
----
-
-## Architectural Principle: Perception vs. Policy
+## Repository
 
 ```
-[ Citizen Voice SOS / IVR Call 1077 / SMS / Radio / Field App ]
-                           │
-                           ▼
-             SENSORY PERCEPTION (Probabilistic)
-     ┌─────────────────────────────────────────────────┐
-     │  Gnani Prisma v3.0 STT (10 Indian Languages)    │
-     │  Gnani Timbre v3.0 TTS (Neural Voice Guidance)  │
-     │  Gnani Evon v3.3 (30B Indic Disaster Schema LLM)│
-     │  Energy-based VAD (Silence / Boundary Detect)   │
-     │  Whisper Recognizer (Local Offline Fallback)    │
-     └─────────────────────────────────────────────────┘
-                           │
-                 Transcribed Text & Extracted Entities
-                           │
-                           ▼
-          DETERMINISTIC SAFETY POLICY (Zero Hallucination)
-     ┌─────────────────────────────────────────────────┐
-     │  PostGIS Spatial Grounding (Trigram + Bounding) │
-     │  NLP Centroid District Fallback (Zero Dropouts) │
-     │  Conservative Entity Deduplication (Incident)   │
-     │  Safety-First Triage Rules (P0 to P3)           │
-     │  "Unknown never lowers priority" invariant      │
-     └─────────────────────────────────────────────────┘
-                           │
-                           ▼
-               HUMAN COMMANDER INTERFACE
-     ┌─────────────────────────────────────────────────┐
-     │  Operator Console & Tactical Triage Dashboard   │
-     │  1-Click Dispatch Authorization & Unit Assign   │
-     │  Tamper-Evident SHA-256 Chained Audit Trail     │
-     └─────────────────────────────────────────────────┘
+src/raahat/          Python package (FastAPI API, worker, domain, providers)
+  api/               routes, auth dependencies, app factory
+  application/       intake, incidents, location, dispatch, alerts, system status, identity
+  domain/            triage facts, evidence, lifecycle, enums
+  policies/          deterministic triage rules
+  infrastructure/    database models and migrations, provider adapters, audit chain
+  workers/           background worker
+web/                 operator web app (Vite, React, TypeScript)
+tests/               backend tests (pytest, real PostGIS)
+evaluation/          synthetic benchmark harness (generated data, see TESTING.md)
+scripts/             dev-up, dev-down, health-check, backup, restore, tunnel-up
+compose.yaml         database, API, worker for one host
 ```
 
-> **Safety Invariant**: Generative models never make autonomous triage or dispatch decisions. Stochastic models are strictly confined to understanding speech waveforms into structured text schema. All life-critical operational actions require authenticated human approval.
-
----
-
-## Key Capabilities
-
-- **Multilingual Emergency Helpline (`/sos/call.html`)**: Real-time interactive in-browser voice helpline powered by **Gnani Prisma v3.0 STT** and **Gnani Timbre TTS**. Follows an explainable dialog state machine with dynamic fact extraction powered by **Gnani Evon v3.3**.
-- **Tactical Command Dashboard (`/dashboard/`)**: Modern React + TypeScript situational awareness HUD featuring live incident heatmaps, P0–P3 priority queues, rescue fleet deployment, and real-time SSE updates.
-- **Citizen SOS Web Portal (`/sos/`)**: Mobile-first bilingual (Hindi/English) single-tap voice note recorder (`MediaRecorder`) and 1-click GPS location sharing.
-- **Live Rescue Ticket Tracker (`/sos/track.html`)**: Real-time 4-stage status stepper (`received` → `processing` → `triaged` → `dispatched`) polling every 3 seconds.
-- **PostGIS Spatial Landmark Gazetteer**: Resolves vernacular landmarks to geographic candidate points with explicit uncertainty circles rather than fabricated precision.
-- **Explainable Triage Engine**: Assigns P0 (Critical/Life-Threatening) through P3 (Informational/Low) based on deterministic safety rules. Preserves unknown fields so missing data never lowers rescue priority.
-- **Tamper-Evident Audit Trail**: Every status transition, incident merge, and dispatch authorization writes an immutable, SHA-256 hash-chained `AuditEvent`.
-- **Offline-First Field Client (`field_app/`)**: Local SQLite-backed sync client for rescue volunteers operating in zero-connectivity zones.
-
----
-
-## Repository Structure
-
-```
-.
-├── src/raahat/               # Core Python package
-│   ├── domain/               # Pure domain models (reports, triage, incidents, geospatial)
-│   ├── application/          # Application orchestrators (ingestion, resolution, workflow)
-│   ├── infrastructure/       # PostgreSQL/PostGIS, outbox, audit, speech (Prisma, Timbre, Evon)
-│   ├── adapters/             # Channel adapters (IVR call agent, SMS, web, volunteer sync)
-│   ├── api/                  # FastAPI routes, middleware, dependencies
-│   └── workers/              # Transactional outbox runner, background audio processor
-├── dashboard/                # Modern React + Vite Tactical Commander HUD (/dashboard/)
-├── citizen_portal/           # Mobile web SOS and interactive voice helpline (/sos/)
-├── operator_console/         # Lightweight emergency dispatcher console (/console/)
-├── field_app/                # Offline field worker SQLite client
-├── scripts/                  # Data seeders and scenario runners
-├── deployment/               # Nginx reverse proxy configuration
-└── tests/                    # 457 unit, integration, concurrency, and chaos tests
-```
-
----
-
-## Quick Start
-
-### 1. Docker Compose (Recommended)
+## Quick start (local)
 
 ```bash
-# Clone the repository
-git clone https://github.com/Omdeepb69/Rahaat.git
-cd Rahaat
+cp .env.example .env            # fill in POSTGRES_PASSWORD, RAAHAT_SECRET_KEY, CORS_ALLOWED_ORIGINS
+./scripts/dev-up.sh             # builds, starts, migrates, waits for health
+docker compose exec api raahat-entrypoint cli create-admin --username <you> --full-name "<Your Name>"
 
-# Configure environment
-cp .env.example .env
-
-# Start all services (PostgreSQL, PostGIS, FastAPI, Nginx Proxy, Worker)
-docker compose up -d
-
-# Verify health
-curl -s http://localhost:8080/healthz
-
-# Seed demonstration scenario (Thrissur / Chalakudy floods, landmarks, rescue units)
-docker exec raahat-api python -m scripts.seed_demo_data
+cd web && cp .env.example .env.local   # VITE_API_BASE_URL=http://127.0.0.1:8000
+npm ci && npm run dev                  # http://127.0.0.1:5173 (add it to CORS_ALLOWED_ORIGINS)
 ```
 
-### 2. Local Python Development Setup
+There are no default accounts and no sample data. Open an operation, register
+resources and enter reports.
 
-```bash
-# Set up virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+## Documentation
 
-# Ensure local PostgreSQL + PostGIS is running and apply migrations
-alembic upgrade head
+| Document | Contents |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Audit of the original code and the architecture now in place |
+| [DECISIONS.md](DECISIONS.md) | Design and engineering decisions with reasons |
+| [DATA_PROVIDERS.md](DATA_PROVIDERS.md) | External data sources assessed for Kerala and Goa |
+| [DEPLOYMENT_LOCAL.md](DEPLOYMENT_LOCAL.md) | Running the backend on the laptop |
+| [DEPLOYMENT_VERCEL.md](DEPLOYMENT_VERCEL.md) | Deploying the web app |
+| [NETWORK_CONNECTIVITY.md](NETWORK_CONNECTIVITY.md) | HTTPS tunnel, CORS, exposure |
+| [OPERATIONS.md](OPERATIONS.md) | Day-to-day running, monitoring, failure handling |
+| [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) | Backups, restore, recovery drills |
+| [RESOURCE_BUDGET.md](RESOURCE_BUDGET.md) | Measured memory, CPU, latency and limits |
+| [TESTING.md](TESTING.md) | Test suites, how to run them, what is and is not verified |
+| [TASKS.md](TASKS.md) | Status of every work item, including open ones |
+| [CHANGELOG.md](CHANGELOG.md) | Changes by version |
 
-# Seed initial scenario data
-PYTHONPATH=src python3 -m scripts.seed_demo_data
+## Licence
 
-# Start development server
-PYTHONPATH=src uvicorn raahat.api.app:app --host 0.0.0.0 --port 8000 --reload
-```
-
----
-
-## Application Interfaces
-
-| Interface | URL (Docker) | Description |
-|---|---|---|
-| **Tactical Dashboard** | `http://localhost:8080/dashboard/` | Command HUD, P0 triage queue & resource map |
-| **Interactive Helpline** | `http://localhost:8080/sos/call.html` | Live browser mic 1077 emergency voice call |
-| **Citizen SOS Form** | `http://localhost:8080/sos/` | 1-tap voice note & GPS submission |
-| **Ticket Tracker** | `http://localhost:8080/sos/track.html` | Citizen rescue request status |
-| **Operator Console** | `http://localhost:8080/console/` | Dispatcher inbox & live situation map |
-| **API Documentation** | `http://localhost:8080/docs` | Interactive OpenAPI Swagger UI |
-
-### Demonstration Credentials
-- **Role**: Duty Officer - Thrissur DEOC
-- **Username**: `KeralaThrissur2026#`
-- **Password**: `KeralaThrissur2026#`
-
----
-
-## Testing & Verification
-
-The codebase maintains strict typing (`mypy`), linting (`ruff`), and comprehensive automated test coverage:
-
-```bash
-# Run unit and integration tests (457 tests)
-PYTHONPATH=src pytest -q
-
-# Run type checker
-mypy src/raahat
-
-# Run linter
-ruff check .
-```
-
----
-
-## License
-
-This project is licensed under the Apache 2.0 License.
+Apache 2.0. Landmark data imported from OpenStreetMap is © OpenStreetMap
+contributors under the ODbL; NDMA SACHET alerts are published as public domain.

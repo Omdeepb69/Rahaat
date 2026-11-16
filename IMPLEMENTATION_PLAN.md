@@ -3,6 +3,12 @@
 Order is chosen so that each stage leaves a running, testable system. Status of
 individual items is tracked in `TASKS.md`.
 
+**Status (2026-11-16):** stages 1–8 implemented. Deviations from this plan:
+the event log is the audit table itself rather than a separate `event_log`
+table (one write, one ordering); IMD and CWC were not integrated (no public
+API, see DATA_PROVIDERS.md) and NDMA SACHET alerts were integrated instead;
+Observability containers were removed rather than moved behind a profile.
+
 ## Stage 1 — Foundations (backend)
 
 1. `raahat.config`: typed settings; fail fast on missing secret in production.

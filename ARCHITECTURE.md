@@ -1,9 +1,8 @@
 # RAAHAT — Architecture
 
 This document has two parts: the audit of the repository as it was found on
-2026-11-16 (Part A), and the architecture the codebase is being moved to (Part B).
-Part B is updated as the implementation lands; anything not yet built is tracked
-in `TASKS.md`, not described here as if it existed.
+2026-11-16 (Part A), and the architecture as built (Part B).
+Part B describes the system as built on 2026-11-16. Open items are in `TASKS.md`.
 
 ---
 
@@ -101,93 +100,119 @@ list shape. There is no `conftest.py`; each test file hardcodes a database URL.
 
 ---
 
-## Part B — Target architecture
+## Part B — Architecture as built
 
 ### B.1 Shape
 
-A modular monolith. One Python package, one database, two process types.
+A modular monolith: one Python package, one PostgreSQL/PostGIS database, two
+process types, and a static web app.
 
 ```
-Browser (static SPA on Vercel)
-   │  HTTPS, Authorization: Bearer <access token>
-   ▼
-Public HTTPS endpoint (Tailscale Funnel)  ── terminates TLS, forwards to 127.0.0.1:8000
-   ▼
-raahat-api      FastAPI / uvicorn, bound to loopback
-   │                REST under /api/v1, SSE at /api/v1/events/stream
-   │                LISTEN on the `raahat_events` channel
-   ▼
-PostgreSQL 16 + PostGIS 3.4   (not published to any host port)
-   ▲
-raahat-worker   outbox processing, audio transcription, external-data polling,
-                heartbeat row every tick
+Browser ─ static SPA (web/, Vercel) ─┐
+                                     │ HTTPS, Authorization: Bearer
+                                     ▼
+                Tailscale Funnel (TLS) → 127.0.0.1:8000
+                                     │
+        raahat api  (python -m raahat.serve, 1 process)
+          REST /api/v1 · SSE /api/v1/events/stream · /health/*
+          event listener thread: LISTEN raahat_events
+                                     │
+        PostgreSQL 16 + PostGIS 3.4  (no published port)
+          audit_events = hash-chained event log (BIGSERIAL seq, NOTIFY trigger)
+          reports table = work queue (FOR UPDATE SKIP LOCKED)
+                                     ▲
+        raahat worker (python -m raahat.workers.main, 1 process)
+          transcription · channel-report analysis · enrichment · CAP alert polling
+          heartbeat row each tick
 ```
 
-No Redis, no message broker, no reverse proxy container. PostgreSQL provides
-the queue (outbox with `FOR UPDATE SKIP LOCKED`), the event log, and the
-wake-up signal (`LISTEN/NOTIFY`).
+No Redis, broker or reverse proxy. PostgreSQL is the queue, the event log and
+the notifier.
 
-### B.2 Backend modules
+### B.2 Modules
 
 | Module | Responsibility |
 |---|---|
-| `raahat.config` | Typed settings read once from the environment; refuses to start in production with a missing or default secret |
-| `raahat.security` | Password hashing, token issue/verify, role → permission map, rate limiter |
-| `raahat.api` | App factory, middleware, dependencies (`current_user`, `require(permission)`), routers, request/response schemas |
-| `raahat.application.intake` | Operator and channel intake; orchestrates text processing → evidence → incident resolution → triage in one transaction |
-| `raahat.application.ai` | Provider-independent ports: speech-to-text, language identification, translation, extraction; processing-run records |
-| `raahat.application.incidents` | Incident lifecycle state machine, corrections with field-level history |
-| `raahat.application.incident_resolution` | Duplicate candidate scoring and reviewed merge/unmerge (retained) |
-| `raahat.application.location` | Landmark resolution, geocoder port, candidate ranking, confirmation (retained, fabrication removed) |
-| `raahat.application.resources` | Resource registry, availability, position with source and timestamp |
-| `raahat.application.dispatch` | Priority ordering, recommendation engine, human decision recording, assignment lifecycle |
-| `raahat.application.events` | Persisted event log, SSE stream with replay |
-| `raahat.application.system` | Health probes and integration status |
-| `raahat.infrastructure` | Database models and migrations, provider adapters (Gnani, Gemini, Nominatim, OSRM, alert feeds), audit chain, outbox |
-| `raahat.policies` | Deterministic triage rules (retained) |
-| `raahat.workers` | Bounded background loops |
+| `raahat.config` | Typed settings; refuses production start with a weak secret or wildcard CORS |
+| `raahat.security` | scrypt passwords, JWT access tokens, role→permission map, sliding-window rate limiter |
+| `raahat.api` | App factory (request id, size limits, access log, error shape, CORS), `current_user`/`require()`, routers: auth, users, disasters, reports, public, incidents, resources, dispatch, events, alerts, audit, system |
+| `raahat.application.identity` | Accounts, lockout, password changes, last-admin protection |
+| `raahat.application.intake` | Operator and channel report creation; the analysis pipeline (transcribe → analyse → enrich) recording a processing run per stage |
+| `raahat.application.ai` | Language identification, rule extraction, model translation/extraction with quote grounding, provider construction |
+| `raahat.application.incident_resolution` | Duplicate candidate scoring (SQL-prefiltered), resolution decisions, reviewed merge/reject/relate/unmerge |
+| `raahat.application.incidents` | Incident read models (single-query lists), fact provenance sheet, lifecycle changes, corrections |
+| `raahat.application.location` | Landmark gazetteer search, location hypotheses with provenance, confirmation, best-position rule |
+| `raahat.application.triage` | Facts from evidence, operator overrides, deterministic policy, triage record |
+| `raahat.application.resources` | Resource register, availability, timestamped positions |
+| `raahat.application.dispatch` | Priority score, recommendation engine, multi-incident plan, decisions, assignment progress |
+| `raahat.application.events` | Event hub (LISTEN), SSE subscription with replay |
+| `raahat.application.alerts` | CAP feed import and listing |
+| `raahat.application.system` | Health probes, integration status |
+| `raahat.domain` | Lifecycle state machine, triage facts, evidence model and contradiction detection, enums |
+| `raahat.policies` | Deterministic triage rules (retained from the original code) |
+| `raahat.infrastructure` | SQLAlchemy models, Alembic migrations, audit chain and verifier, provider adapters (Gnani Prisma, OpenAI-compatible/Evon, Gemini, Nominatim, OSRM, Overpass, CAP) |
+| `raahat.workers` | Worker loop with heartbeat, crash recovery, bounded batches |
+| `raahat.cli` | `create-admin`, `reset-password`, `import-landmarks`, `check-config` |
 
-### B.3 Request and transaction model
+### B.3 Transactions and events
 
-One SQLAlchemy session per request. A command handler changes state, appends
-audit records and appends event-log rows through that same session, and commits
-once. An `AFTER INSERT` trigger on the event log issues `pg_notify`, so
-subscribers are woken only after the transaction is durable.
+One session per request. A command changes state and appends audit records in
+the same transaction (`append_audit`), then the route commits once. Audit
+appends take a transaction-scoped advisory lock, so sequence order equals
+commit order; an `AFTER INSERT` trigger issues `NOTIFY raahat_events`.
 
-### B.4 Realtime
+The SSE endpoint sends `ready` (with the current sequence and a `resync` flag),
+then every committed change after the client's `Last-Event-ID` (up to 500;
+beyond that the client is told to resync), then live changes, with a heartbeat
+every 15 s. Subscribers wake on notification and re-check every 5 s regardless,
+so a lost notification costs latency, not data.
 
-`event_log` has a `BIGSERIAL` sequence. The SSE endpoint sends each row with
-`id: <seq>`. A reconnecting client sends `Last-Event-ID`; the server replays
-every row after that sequence (bounded) before tailing. If the gap exceeds the
-replay bound the server sends a `resync` event and the client refetches its
-queries. Each API process holds one `LISTEN` connection and fans out to its
-subscribers through bounded queues; a slow subscriber is disconnected and
-recovers through replay rather than dropping events silently.
+### B.4 Data model (main tables)
 
-### B.5 Security model
+| Table | Notes |
+|---|---|
+| `users` | role check constraint, `token_version` for revocation, lockout fields |
+| `disasters` | an "operation"; status, map focus |
+| `reports` | immutable `original_text`, `original_language` + source, `translated_text` + provider, caller fields, processing status/error |
+| `processing_runs` | provider, model, stage, outcome, duration per report |
+| `evidence_items` / `evidence_spans` | each extracted fact with extractor, model and source quote |
+| `incidents` | `reference` (INC-000001), lifecycle status (check constraint), category, priority, `severity_facts` (extracted), `fact_overrides` (operator), `triage` record, denormalised best position with source/status/uncertainty, merge pointer |
+| `location_hypotheses` | every position candidate with `source` (caller_gps/operator/geocoder/landmark), detail, score, radius, confirmation |
+| `incident_links` | duplicate candidates with signals and review record |
+| `entity_merge_events` | reversible merges |
+| `resources` | callsign (unique per operation), capabilities, status, position + source + timestamp (constraint: no position without time) |
+| `assignments` | at most one approved assignment per resource (partial unique index); stage |
+| `dispatch_decisions` | approved/rejected, chosen vs recommended, full recommendation snapshot, reason |
+| `audit_events` | hash chain per entity, global `seq`, incident and operation keys |
+| `landmarks` | name trigram index, source/external id (OSM) |
+| `external_observations` | CAP alerts with provenance |
+| `worker_heartbeats`, `integration_checks` | liveness and last real provider outcome |
 
-- Users are rows with a scrypt password hash and one role. There are no default
-  accounts; the first administrator is created from the CLI on the host.
-- Roles: `admin`, `operator`, `dispatcher`, `resource_coordinator`, `observer`.
-  Permissions are checked in the backend per route.
-- Access tokens are short-lived signed JWTs sent in the `Authorization` header.
-  The frontend is cross-origin, so cookies are not used.
-- CORS allows exactly the configured frontend origins.
-- Public surface is limited to health, login and the citizen intake endpoints,
-  each rate-limited and size-limited.
+Migrations: `8c1d0a000001` (identity, event log, bookkeeping) and
+`8c1d0a000002` (domain model). Both upgrade existing data in place and
+downgrade cleanly; tested on a copy of the original demo database.
+
+### B.5 Security
+
+See NETWORK_CONNECTIVITY.md. Summary: bearer tokens re-validated against the
+user row on every request; per-route permissions; caller details redacted for
+roles without `pii:read`; exact-origin CORS; rate limits; size limits; no
+default accounts; secrets only in the host `.env`.
 
 ### B.6 Frontend
 
-A single SPA in `web/` (Vite, React, TypeScript) replacing both `dashboard/` and
-`operator_console/`. It talks only to the backend API through one typed client
-whose base URL comes from `VITE_API_BASE_URL`. Server state is held in TanStack
-Query; the SSE stream invalidates queries. See `DECISIONS.md` for the design
-system.
+`web/`: Vite, React 19, TypeScript (strict), React Router, TanStack Query,
+Leaflet (lazy-loaded), lucide icons, self-hosted IBM Plex and Noto fonts.
 
-### B.7 Data provenance
-
-Every location candidate, extracted fact and external observation carries its
-source (`caller`, `operator`, `gps`, `geocoder`, `landmark`, `ai`, `rules`,
-`external`), the time it was recorded, and a confidence or verification status
-where one exists. Original report text is immutable; corrections are new
-records that reference the actor.
+- `lib/api.ts` is the only HTTP client: base URL from `VITE_API_BASE_URL`,
+  timeouts, GET-only retries, typed errors, connection reporting.
+- `lib/realtime.ts`: fetch-based SSE (header auth), `Last-Event-ID` replay,
+  resync, watchdog; `lib/live.tsx` turns changes into coalesced query
+  invalidations.
+- `lib/connection.ts`: readiness probe and request outcomes drive the
+  offline banner and data-age labels.
+- Features: operations board, intake, incidents, incident page, reports,
+  dispatch, resources, official alerts, activity log, system status, users,
+  operations setup, public report and ticket pages.
+- Design system: `styles/tokens.css` (light and dark), `components/ui.tsx`
+  (buttons, fields, badges, panels, dialogs, toasts, tabs, states).
