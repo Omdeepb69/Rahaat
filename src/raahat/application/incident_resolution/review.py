@@ -3,22 +3,17 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from raahat.domain.geospatial.location_hypothesis import LocationHypothesis
-from raahat.domain.incidents.incident import Incident, IncidentLink
 from raahat.domain.shared.enums import (
     IncidentLinkType,
     IncidentStatus,
-    PriorityLevel,
     RelationshipType,
-    VerificationStatus,
 )
 from raahat.infrastructure.database.base import utc_now
 from raahat.infrastructure.database.models.incident import (
@@ -26,13 +21,11 @@ from raahat.infrastructure.database.models.incident import (
     IncidentModel,
     IncidentReportModel,
 )
-from raahat.infrastructure.database.models.location import LocationHypothesisModel
 from raahat.infrastructure.database.models.merge import EntityMergeEventModel
 from raahat.infrastructure.database.repositories.audit import (
     AuditRepository,
     PostgresAuditRepository,
 )
-from raahat.infrastructure.database.repositories.location_hypothesis import parse_wkb_point
 
 logger = logging.getLogger(__name__)
 
@@ -44,19 +37,6 @@ class LinkReviewAction(str, Enum):
     REJECT_MERGE = "reject_merge"
     RELATE_CLUSTER = "relate_cluster"
     UNMERGE = "unmerge"
-
-
-class IncidentVerificationResult(BaseModel):
-    """Result of human dispatcher verifying an incident."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    incident_id: uuid.UUID
-    status: IncidentStatus
-    operational_priority: PriorityLevel
-    last_confirmed_at: datetime
-    verified_by: uuid.UUID
-    audit_event_id: uuid.UUID
 
 
 class MergeActionResult(BaseModel):
@@ -73,17 +53,6 @@ class MergeActionResult(BaseModel):
     reassigned_report_count: int = 0
 
 
-class IncidentDetail(BaseModel):
-    """Consolidated view of an incident, its linked reports, hypotheses, and pending links."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    incident: Incident
-    linked_report_ids: list[uuid.UUID] = Field(default_factory=list)
-    hypotheses: list[LocationHypothesis] = Field(default_factory=list)
-    links: list[IncidentLink] = Field(default_factory=list)
-
-
 class IncidentReviewService:
     """Service orchestrating human dispatcher verification, merge decisions, and reversible linking."""
 
@@ -94,78 +63,6 @@ class IncidentReviewService:
     ) -> None:
         self.session_factory = session_factory
         self.audit_repo = audit_repo or PostgresAuditRepository(session_factory)
-
-    def verify_incident(
-        self,
-        incident_id: uuid.UUID,
-        dispatcher_id: uuid.UUID,
-        status: IncidentStatus = IncidentStatus.VERIFIED,
-        notes: Optional[str] = None,
-        operational_priority: Optional[PriorityLevel] = None,
-        session: Optional[Session] = None,
-    ) -> IncidentVerificationResult:
-        """Confirm or update incident operational status with tamper-evident audit logging."""
-        if session is not None:
-            return self._verify_incident_impl(
-                incident_id, dispatcher_id, status, notes, operational_priority, session
-            )
-        with self.session_factory() as new_session:
-            res = self._verify_incident_impl(
-                incident_id, dispatcher_id, status, notes, operational_priority, new_session
-            )
-            new_session.commit()
-            return res
-
-    def _verify_incident_impl(
-        self,
-        incident_id: uuid.UUID,
-        dispatcher_id: uuid.UUID,
-        status: IncidentStatus,
-        notes: Optional[str],
-        operational_priority: Optional[PriorityLevel],
-        session: Session,
-    ) -> IncidentVerificationResult:
-        incident_m = session.get(IncidentModel, incident_id)
-        if not incident_m:
-            raise KeyError(f"Incident {incident_id} not found")
-
-        now = utc_now()
-        incident_m.status = status.value
-        incident_m.last_confirmed_at = now
-
-        if operational_priority is not None:
-            incident_m.operational_priority = operational_priority.value
-
-        if notes:
-            facts = dict(incident_m.severity_facts or {})
-            facts["verification_notes"] = notes
-            incident_m.severity_facts = facts
-
-        session.flush()
-
-        audit_event = self.audit_repo.record_event(
-            action="incident.verified",
-            actor_id=dispatcher_id,
-            entity_type="incident",
-            entity_id=incident_id,
-            payload={
-                "status": status.value,
-                "operational_priority": incident_m.operational_priority,
-                "notes": notes,
-                "last_confirmed_at": now.isoformat(),
-            },
-        )
-
-        logger.info("Incident %s verified by dispatcher %s as %s", incident_id, dispatcher_id, status.value)
-
-        return IncidentVerificationResult(
-            incident_id=incident_id,
-            status=status,
-            operational_priority=PriorityLevel(incident_m.operational_priority),
-            last_confirmed_at=now,
-            verified_by=dispatcher_id,
-            audit_event_id=audit_event.id,
-        )
 
     def review_link(
         self,
@@ -228,6 +125,17 @@ class IncidentReviewService:
         target_inc = session.get(IncidentModel, target_incident_id)
         if not target_inc:
             raise KeyError(f"Target incident {target_incident_id} not found")
+        if source_inc.disaster_id != target_inc.disaster_id:
+            raise ValueError("Incidents belong to different operations and cannot be merged")
+        if source_inc.status == IncidentStatus.DUPLICATE.value:
+            raise ValueError("The source incident has already been merged into another incident")
+        if target_inc.status in (IncidentStatus.DUPLICATE.value, IncidentStatus.CLOSED.value):
+            raise ValueError("The target incident is closed or is itself a duplicate")
+        if source_inc.status in (IncidentStatus.ASSIGNED.value, IncidentStatus.IN_PROGRESS.value):
+            raise ValueError(
+                "The source incident has resources committed. Merge into it instead, "
+                "or complete its assignments first."
+            )
 
         # 1. Record entity merge event
         merge_event_id = uuid.uuid4()
@@ -267,12 +175,14 @@ class IncidentReviewService:
                 session.add(new_link)
                 reassigned_count += 1
 
-        # 3. Mark source incident closed / merged
-        source_inc.status = IncidentStatus.CLOSED.value
+        # 3. Mark the source as a duplicate of the target, remembering where it was.
         facts = dict(source_inc.severity_facts or {})
         facts["merged_into"] = str(target_incident_id)
         facts["merge_event_id"] = str(merge_event.id)
+        facts["status_before_merge"] = source_inc.status
         source_inc.severity_facts = facts
+        source_inc.status = IncidentStatus.DUPLICATE.value
+        source_inc.merged_into_id = target_incident_id
 
         # 4. Update or create incident link
         link_stmt = select(IncidentLinkModel).where(
@@ -282,6 +192,9 @@ class IncidentReviewService:
         inc_link = session.scalars(link_stmt).first()
         if inc_link:
             inc_link.status = "approved"
+            inc_link.reviewed_by = dispatcher_id
+            inc_link.reviewed_at = utc_now()
+            inc_link.review_reason = reason
         else:
             inc_link = IncidentLinkModel(
                 id=uuid.uuid4(),
@@ -296,6 +209,7 @@ class IncidentReviewService:
         session.flush()
 
         audit_event = self.audit_repo.record_event(
+            session=session,
             action="incident.merge_approved",
             actor_id=dispatcher_id,
             entity_type="incident",
@@ -342,6 +256,9 @@ class IncidentReviewService:
         inc_link = session.scalars(link_stmt).first()
         if inc_link:
             inc_link.status = "rejected"
+            inc_link.reviewed_by = dispatcher_id
+            inc_link.reviewed_at = utc_now()
+            inc_link.review_reason = reason
         else:
             inc_link = IncidentLinkModel(
                 id=uuid.uuid4(),
@@ -356,6 +273,7 @@ class IncidentReviewService:
         session.flush()
 
         audit_event = self.audit_repo.record_event(
+            session=session,
             action="incident.merge_rejected",
             actor_id=dispatcher_id,
             entity_type="incident",
@@ -393,6 +311,9 @@ class IncidentReviewService:
         if inc_link:
             inc_link.link_type = IncidentLinkType.RELATED_CLUSTER.value
             inc_link.status = "approved"
+            inc_link.reviewed_by = dispatcher_id
+            inc_link.reviewed_at = utc_now()
+            inc_link.review_reason = reason
         else:
             inc_link = IncidentLinkModel(
                 id=uuid.uuid4(),
@@ -407,6 +328,7 @@ class IncidentReviewService:
         session.flush()
 
         audit_event = self.audit_repo.record_event(
+            session=session,
             action="incident.cluster_linked",
             actor_id=dispatcher_id,
             entity_type="incident",
@@ -460,11 +382,22 @@ class IncidentReviewService:
         # Re-open source incident
         source_inc = session.get(IncidentModel, source_incident_id)
         if source_inc:
-            source_inc.status = IncidentStatus.UNVERIFIED.value
             facts = dict(source_inc.severity_facts or {})
+            restored = facts.pop("status_before_merge", IncidentStatus.UNVERIFIED.value)
             facts.pop("merged_into", None)
             facts.pop("merge_event_id", None)
             source_inc.severity_facts = facts
+            source_inc.status = (
+                restored
+                if restored
+                in (
+                    IncidentStatus.UNVERIFIED.value,
+                    IncidentStatus.UNDER_REVIEW.value,
+                    IncidentStatus.VERIFIED.value,
+                )
+                else IncidentStatus.UNVERIFIED.value
+            )
+            source_inc.merged_into_id = None
 
         # Remove reports attached to target during this merge
         del_stmt = select(IncidentReportModel).where(
@@ -484,10 +417,14 @@ class IncidentReviewService:
         inc_link = session.scalars(link_stmt).first()
         if inc_link:
             inc_link.status = "pending_review"
+            inc_link.reviewed_by = dispatcher_id
+            inc_link.reviewed_at = utc_now()
+            inc_link.review_reason = reason
 
         session.flush()
 
         audit_event = self.audit_repo.record_event(
+            session=session,
             action="incident.unmerged",
             actor_id=dispatcher_id,
             entity_type="incident",
@@ -517,91 +454,3 @@ class IncidentReviewService:
             audit_event_id=audit_event.id,
             reassigned_report_count=removed_count,
         )
-
-    def get_incident_detail(
-        self,
-        incident_id: uuid.UUID,
-        session: Optional[Session] = None,
-    ) -> IncidentDetail:
-        """Fetch full incident aggregate including linked report IDs, hypotheses, and links."""
-        if session is not None:
-            return self._get_incident_detail_impl(incident_id, session)
-        with self.session_factory() as new_session:
-            return self._get_incident_detail_impl(incident_id, new_session)
-
-    def _get_incident_detail_impl(
-        self,
-        incident_id: uuid.UUID,
-        session: Session,
-    ) -> IncidentDetail:
-        inc_m = session.get(IncidentModel, incident_id)
-        if not inc_m:
-            raise KeyError(f"Incident {incident_id} not found")
-
-        domain_inc = Incident(
-            id=inc_m.id,
-            disaster_id=inc_m.disaster_id,
-            status=IncidentStatus(inc_m.status),
-            operational_priority=PriorityLevel(inc_m.operational_priority),
-            severity_facts=dict(inc_m.severity_facts or {}),
-            last_confirmed_at=inc_m.last_confirmed_at,
-            created_at=inc_m.created_at,
-            updated_at=inc_m.updated_at,
-        )
-
-        # Linked reports
-        rep_stmt = select(IncidentReportModel.report_id).where(
-            IncidentReportModel.incident_id == incident_id
-        )
-        report_ids = list(session.scalars(rep_stmt).all())
-
-        # Hypotheses
-        hypotheses: list[LocationHypothesis] = []
-        hyp_stmt = select(LocationHypothesisModel).where(
-            LocationHypothesisModel.incident_id == incident_id
-        )
-        for h_m in session.scalars(hyp_stmt).all():
-            coords = parse_wkb_point(h_m.location)
-            hypotheses.append(LocationHypothesis(
-                id=h_m.id,
-                incident_id=h_m.incident_id,
-                coordinates=coords,
-                candidate_label=h_m.candidate_label,
-                source_evidence_id=h_m.source_evidence_id,
-                probability=h_m.probability,
-                uncertainty_radius_m=h_m.uncertainty_radius_m,
-                verification_status=VerificationStatus(h_m.verification_status),
-                created_at=h_m.created_at,
-            ))
-
-        # Links
-        links: list[IncidentLink] = []
-        link_stmt = select(IncidentLinkModel).where(
-            (IncidentLinkModel.incident_a_id == incident_id) | (IncidentLinkModel.incident_b_id == incident_id)
-        )
-        for l_m in session.scalars(link_stmt).all():
-            links.append(IncidentLink(
-                id=l_m.id,
-                incident_a_id=l_m.incident_a_id,
-                incident_b_id=l_m.incident_b_id,
-                link_type=IncidentLinkType(l_m.link_type),
-                confidence=l_m.confidence,
-                status=l_m.status,
-                created_at=l_m.created_at,
-            ))
-
-        return IncidentDetail(
-            incident=domain_inc,
-            linked_report_ids=report_ids,
-            hypotheses=hypotheses,
-            links=links,
-        )
-
-    def list_incident_links(
-        self,
-        incident_id: uuid.UUID,
-        session: Optional[Session] = None,
-    ) -> list[IncidentLink]:
-        """List all links involving this incident."""
-        detail = self.get_incident_detail(incident_id, session=session)
-        return detail.links

@@ -13,7 +13,7 @@ from raahat.domain.evidence import EvidenceGraphService
 from raahat.domain.evidence.evidence import EvidenceItem, EvidenceSpan
 from raahat.domain.reports.report import Report
 from raahat.domain.shared.enums import ProcessingStatus, SourceType, VerificationStatus
-from raahat.infrastructure.database.models import DisasterModel, OutboxEventModel, ReportModel
+from raahat.infrastructure.database.models import DisasterModel, ReportModel
 from raahat.infrastructure.database.models.evidence import EvidenceItemModel, EvidenceSpanModel
 from raahat.infrastructure.database.repositories import PostgresEvidenceRepository
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
@@ -35,7 +35,6 @@ def db_session(session_factory: sessionmaker[Session]) -> Generator[Session, Non
     with session_factory() as session:
         session.query(EvidenceSpanModel).delete()
         session.query(EvidenceItemModel).delete()
-        session.query(OutboxEventModel).delete()
         session.query(ReportModel).delete()
         session.query(DisasterModel).delete()
         session.commit()

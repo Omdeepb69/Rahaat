@@ -18,7 +18,6 @@ from raahat.infrastructure.database.models import (
     EvidenceSpanModel,
     IncidentModel,
     LocationHypothesisModel,
-    OutboxEventModel,
     ReportModel,
 )
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
@@ -186,25 +185,6 @@ def test_evidence_and_spans(db_session: Session) -> None:
     assert saved_evidence is not None
     assert len(saved_evidence.spans) == 1
     assert saved_evidence.spans[0].source_text == "3 adults trapped on roof"
-
-
-def test_outbox_event_creation(db_session: Session) -> None:
-    event_id = uuid.uuid4()
-    outbox = OutboxEventModel(
-        aggregate_type="report",
-        aggregate_id=event_id,
-        event_type="raahat.report.submitted",
-        payload={"source": "ivr", "caller": "+919876543210"},
-        status="pending",
-    )
-    db_session.add(outbox)
-    db_session.commit()
-
-    saved = db_session.get(OutboxEventModel, outbox.id)
-    assert saved is not None
-    assert saved.status == "pending"
-    assert saved.retry_count == 0
-    assert saved.payload["source"] == "ivr"
 
 
 def test_audit_event_logging(db_session: Session) -> None:

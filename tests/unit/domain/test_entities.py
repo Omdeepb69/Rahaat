@@ -14,20 +14,15 @@ from raahat.domain.evidence.evidence import EvidenceItem, EvidenceSpan
 from raahat.domain.geospatial.location_hypothesis import LocationHypothesis
 from raahat.domain.households.household import Household, Person
 from raahat.domain.incidents.incident import Incident, IncidentLink, IncidentReportLink
-from raahat.domain.operations.operation import Assignment, OperationEvent, Resource
 from raahat.domain.reports.report import Report, ReportSubmission
 from raahat.domain.shared.coordinates import PointCoordinates
 from raahat.domain.shared.enums import (
-    AssignmentStatus,
     IdentityStatus,
     IncidentLinkType,
     IncidentStatus,
-    OperationEventType,
     PriorityLevel,
     ProcessingStatus,
     RelationshipType,
-    ResourceStatus,
-    ResourceType,
     SourceType,
     VerificationStatus,
 )
@@ -395,110 +390,3 @@ class TestPriorityAssessment:
         pa = PriorityAssessment(priority=PriorityLevel.URGENT)
         with pytest.raises((TypeError, ValidationError)):
             pa.priority = PriorityLevel.LOW  # type: ignore[misc]
-
-
-# ---------------------------------------------------------------------------
-# Resource / Assignment / OperationEvent
-# ---------------------------------------------------------------------------
-
-
-class TestResource:
-    def test_defaults(self) -> None:
-        r = Resource(
-            disaster_id=uuid.uuid4(),
-            resource_type=ResourceType.BOAT,
-            name="Rescue Boat 1",
-        )
-        assert r.availability_status is ResourceStatus.AVAILABLE
-        assert r.location is None
-        assert r.capacity is None
-
-    def test_capacity_must_be_positive(self) -> None:
-        with pytest.raises(ValidationError):
-            Resource(
-                disaster_id=uuid.uuid4(),
-                resource_type=ResourceType.SHELTER,
-                name="Camp",
-                capacity=0,
-            )
-
-    def test_with_location(self) -> None:
-        loc = PointCoordinates(latitude=12.0, longitude=77.0)
-        r = Resource(
-            disaster_id=uuid.uuid4(),
-            resource_type=ResourceType.MEDICAL_TEAM,
-            name="Team Alpha",
-            location=loc,
-        )
-        assert r.location == loc
-
-    def test_frozen(self) -> None:
-        r = Resource(
-            disaster_id=uuid.uuid4(),
-            resource_type=ResourceType.VEHICLE,
-            name="Truck 1",
-        )
-        with pytest.raises((TypeError, ValidationError)):
-            r.name = "changed"  # type: ignore[misc]
-
-
-class TestAssignment:
-    def test_defaults(self) -> None:
-        a = Assignment(
-            incident_id=uuid.uuid4(),
-            resource_id=uuid.uuid4(),
-            assigned_by=uuid.uuid4(),
-        )
-        assert a.status is AssignmentStatus.PROPOSED
-        assert a.approved_at is None
-
-    def test_id_auto_generated(self) -> None:
-        did = uuid.uuid4()
-        rid = uuid.uuid4()
-        aid = uuid.uuid4()
-        a1 = Assignment(incident_id=did, resource_id=rid, assigned_by=aid)
-        a2 = Assignment(incident_id=did, resource_id=rid, assigned_by=aid)
-        assert a1.id != a2.id
-
-    def test_frozen(self) -> None:
-        a = Assignment(
-            incident_id=uuid.uuid4(),
-            resource_id=uuid.uuid4(),
-            assigned_by=uuid.uuid4(),
-        )
-        with pytest.raises((TypeError, ValidationError)):
-            a.status = AssignmentStatus.APPROVED  # type: ignore[misc]
-
-
-class TestOperationEvent:
-    def test_defaults(self) -> None:
-        ev = OperationEvent(
-            incident_id=uuid.uuid4(),
-            event_type=OperationEventType.PROPOSED,
-        )
-        assert ev.assignment_id is None
-        assert ev.actor_id is None
-        assert ev.notes is None
-        assert ev.payload == {}
-
-    def test_all_fields(self) -> None:
-        inc_id = uuid.uuid4()
-        asgn_id = uuid.uuid4()
-        actor_id = uuid.uuid4()
-        ev = OperationEvent(
-            incident_id=inc_id,
-            assignment_id=asgn_id,
-            event_type=OperationEventType.RESCUED,
-            actor_id=actor_id,
-            notes="all accounted for",
-            payload={"count": 5},
-        )
-        assert ev.incident_id == inc_id
-        assert ev.assignment_id == asgn_id
-        assert ev.actor_id == actor_id
-        assert ev.payload == {"count": 5}
-
-    def test_frozen(self) -> None:
-        ev = OperationEvent(incident_id=uuid.uuid4(), event_type=OperationEventType.CLOSED)
-        with pytest.raises((TypeError, ValidationError)):
-            ev.notes = "changed"  # type: ignore[misc]

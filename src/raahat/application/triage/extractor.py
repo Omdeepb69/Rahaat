@@ -154,6 +154,10 @@ class EvidenceGraphFactExtractor:
                 if any(kw in val_text for kw in LIFE_THREATENING_MEDICAL_KEYWORDS):
                     is_life_threatening_medical = True
 
+            elif attr == "life_threatening_medical" and val is True:
+                is_life_threatening_medical = True
+                medical_observations.append(True)
+
             # 8. Vulnerable persons
             elif attr in ("vulnerable_persons", "vulnerable_occupants"):
                 vulnerable_present = True

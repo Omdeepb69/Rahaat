@@ -19,9 +19,7 @@ from .models import (
 from .protocol import IncidentMatcher, IncidentResolver
 from .resolver import ConservativeIncidentResolver
 from .review import (
-    IncidentDetail,
     IncidentReviewService,
-    IncidentVerificationResult,
     LinkReviewAction,
     MergeActionResult,
 )
@@ -31,13 +29,11 @@ __all__ = [
     "ConservativeIncidentMatcher",
     "ConservativeIncidentResolver",
     "IncidentCandidate",
-    "IncidentDetail",
     "IncidentMatcher",
     "IncidentResolutionService",
     "IncidentResolver",
     "IncidentReviewService",
     "IncidentSnapshot",
-    "IncidentVerificationResult",
     "LinkReviewAction",
     "MatchSignal",
     "MergeActionResult",

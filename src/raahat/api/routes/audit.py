@@ -1,203 +1,108 @@
-"""Audit inspection and tamper verification API routes."""
+"""Audit trail: activity log and hash-chain verification."""
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, sessionmaker
 
-from raahat.api.dependencies import get_audit_service, require_dispatcher_id
-from raahat.infrastructure.audit import (
-    AuditService,
-    ChainVerificationResult,
-)
+from raahat.api.deps import CurrentUser, get_db, get_session_factory, require
+from raahat.api.schemas import Page, Pagination
+from raahat.infrastructure.audit import AuditVerifier, PostgresAuditRepository
 from raahat.infrastructure.database.models.audit import AuditEventModel
+from raahat.infrastructure.database.models.user import UserModel
+from raahat.security.permissions import Permission
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 
 
-# ---------------------------------------------------------------------------
-# Response schemas
-# ---------------------------------------------------------------------------
-
-
-class AuditEventResponse(BaseModel):
-    """Read-only audit event representation."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
+class AuditEntry(BaseModel):
+    seq: int
     id: uuid.UUID
     action: str
+    entity_type: str
+    entity_id: uuid.UUID
+    incident_id: Optional[uuid.UUID]
+    disaster_id: Optional[uuid.UUID]
     actor_id: Optional[uuid.UUID]
-    entity_type: str
-    entity_id: uuid.UUID
-    prev_hash: Optional[str]
-    hash: str
+    actor_name: Optional[str]
+    occurred_at: datetime
     payload: dict[str, Any]
-    created_at: datetime
+    hash: str
+    prev_hash: Optional[str]
 
 
-class AuditEventListResponse(BaseModel):
-    """Paginated list of audit events."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    items: list[AuditEventResponse]
-    total: int
-    limit: int
-    offset: int
+class ChainCheck(BaseModel):
+    verified: bool
+    entities_checked: int
+    events_checked: int
+    broken: list[dict[str, Any]]
+    checked_at: datetime
 
 
-class ChainVerificationResponse(BaseModel):
-    """Response detailing the cryptographic verification of an entity's audit chain."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    entity_type: str
-    entity_id: uuid.UUID
-    is_valid: bool
-    total_events: int
-    genesis_hash: Optional[str] = None
-    latest_hash: Optional[str] = None
-    error_message: Optional[str] = None
-    corrupted_event_id: Optional[uuid.UUID] = None
-    expected_hash: Optional[str] = None
-    actual_hash: Optional[str] = None
-
-
-class GlobalVerificationResponse(BaseModel):
-    """Response detailing global verification across all audit chains in the system."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    all_valid: bool
-    total_entities: int
-    total_events: int
-    corrupted_chains: list[ChainVerificationResponse] = Field(default_factory=list)
-
-
-def _to_event_response(model: AuditEventModel) -> AuditEventResponse:
-    return AuditEventResponse(
-        id=model.id,
-        action=model.action,
-        actor_id=model.actor_id,
-        entity_type=model.entity_type,
-        entity_id=model.entity_id,
-        prev_hash=model.prev_hash,
-        hash=model.hash,
-        payload=dict(model.payload) if model.payload else {},
-        created_at=model.created_at,
+@router.get("/events", response_model=Page[AuditEntry], summary="Activity log")
+def list_events(
+    disaster_id: Optional[uuid.UUID] = Query(None),
+    entity_type: Optional[str] = Query(None, max_length=64),
+    action_prefix: Optional[str] = Query(None, max_length=64, description="e.g. 'dispatch.'"),
+    actor_id: Optional[uuid.UUID] = Query(None),
+    page: Pagination = Depends(),
+    _: CurrentUser = Depends(require(Permission.AUDIT_READ)),
+    session: Session = Depends(get_db),
+) -> Page[AuditEntry]:
+    conditions = []
+    if disaster_id is not None:
+        conditions.append(AuditEventModel.disaster_id == disaster_id)
+    if entity_type:
+        conditions.append(AuditEventModel.entity_type == entity_type)
+    if action_prefix:
+        conditions.append(AuditEventModel.action.startswith(action_prefix))
+    if actor_id is not None:
+        conditions.append(AuditEventModel.actor_id == actor_id)
+    total = session.execute(select(func.count(AuditEventModel.id)).where(*conditions)).scalar_one()
+    rows = session.execute(
+        select(AuditEventModel, UserModel.full_name)
+        .outerjoin(UserModel, UserModel.id == AuditEventModel.actor_id)
+        .where(*conditions)
+        .order_by(AuditEventModel.seq.desc())
+        .limit(page.limit)
+        .offset(page.offset)
+    ).all()
+    return Page(
+        items=[
+            AuditEntry(
+                seq=e.seq, id=e.id, action=e.action, entity_type=e.entity_type, entity_id=e.entity_id,
+                incident_id=e.incident_id, disaster_id=e.disaster_id, actor_id=e.actor_id,
+                actor_name=name, occurred_at=e.created_at, payload=e.payload or {},
+                hash=e.hash, prev_hash=e.prev_hash,
+            )
+            for e, name in rows
+        ],
+        total=total, limit=page.limit, offset=page.offset,
     )
 
 
-def _to_chain_response(res: ChainVerificationResult) -> ChainVerificationResponse:
-    return ChainVerificationResponse(
-        entity_type=res.entity_type,
-        entity_id=res.entity_id,
-        is_valid=res.is_valid,
-        total_events=res.total_events,
-        genesis_hash=res.genesis_hash,
-        latest_hash=res.latest_hash,
-        error_message=res.error_message,
-        corrupted_event_id=res.corrupted_event_id,
-        expected_hash=res.expected_hash,
-        actual_hash=res.actual_hash,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
-
-@router.get(
-    "/events",
-    response_model=AuditEventListResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Query audit events with filtering and pagination",
-)
-def list_audit_events(
-    entity_type: Optional[str] = Query(None, description="Filter by target entity type"),
-    entity_id: Optional[uuid.UUID] = Query(None, description="Filter by target entity ID"),
-    action: Optional[str] = Query(None, description="Filter by action name"),
-    actor_id: Optional[uuid.UUID] = Query(None, description="Filter by actor ID"),
-    limit: int = Query(50, ge=1, le=200, description="Max results per page"),
-    offset: int = Query(0, ge=0, description="Offset for pagination"),
-    dispatcher_id: uuid.UUID = Depends(require_dispatcher_id),
-    service: AuditService = Depends(get_audit_service),
-) -> AuditEventListResponse:
-    """Read-only inspection of audit events."""
-    items, total = service.query_events(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        action=action,
-        actor_id=actor_id,
-        limit=limit,
-        offset=offset,
-    )
-    return AuditEventListResponse(
-        items=[_to_event_response(e) for e in items],
-        total=total,
-        limit=limit,
-        offset=offset,
-    )
-
-
-@router.get(
-    "/events/{event_id}",
-    response_model=AuditEventResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Get single audit event by ID",
-)
-def get_audit_event(
-    event_id: uuid.UUID,
-    dispatcher_id: uuid.UUID = Depends(require_dispatcher_id),
-    service: AuditService = Depends(get_audit_service),
-) -> AuditEventResponse:
-    """Retrieve details of a single tamper-evident audit record."""
-    event = service.get_event(event_id)
-    if event is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Audit event {event_id} not found",
-        )
-    return _to_event_response(event)
-
-
-@router.get(
-    "/verify",
-    response_model=Union[ChainVerificationResponse, GlobalVerificationResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Verify cryptographic hash chain integrity",
-)
-def verify_audit_chain(
-    entity_type: Optional[str] = Query(None, description="Target entity type to verify"),
-    entity_id: Optional[uuid.UUID] = Query(None, description="Target entity ID to verify"),
-    dispatcher_id: uuid.UUID = Depends(require_dispatcher_id),
-    service: AuditService = Depends(get_audit_service),
-) -> Union[ChainVerificationResponse, GlobalVerificationResponse]:
-    """Verify cryptographic SHA-256 hash chaining and tamper-evidence.
-
-    - If both entity_type and entity_id are specified: verifies that entity's audit chain.
-    - If neither is specified: performs a global verification of all entity chains.
-    - If only one is specified: returns 400 Bad Request.
-    """
-    if (entity_type is not None and entity_id is None) or (entity_type is None and entity_id is not None):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Both entity_type and entity_id must be provided to verify an entity chain, or omit both for global verification.",
-        )
-
-    if entity_type is not None and entity_id is not None:
-        result = service.verify_entity_chain(entity_type=entity_type, entity_id=entity_id)
-        return _to_chain_response(result)
-
-    global_result = service.verify_all_chains()
-    return GlobalVerificationResponse(
-        all_valid=global_result.all_valid,
-        total_entities=global_result.total_entities,
-        total_events=global_result.total_events,
-        corrupted_chains=[_to_chain_response(c) for c in global_result.corrupted_chains],
+@router.get("/verify", response_model=ChainCheck, summary="Recompute and check every audit hash chain")
+def verify(
+    _: CurrentUser = Depends(require(Permission.AUDIT_READ)),
+    factory: sessionmaker[Session] = Depends(get_session_factory),
+) -> ChainCheck:
+    """Recomputes each entity's chain from stored content. A mismatch means a record was altered or removed."""
+    result = AuditVerifier().verify_all_chains(PostgresAuditRepository(factory))
+    broken = [
+        {
+            "entity_type": chain.entity_type,
+            "entity_id": str(chain.entity_id),
+            "failure": chain.error_message,
+            "event_id": str(chain.corrupted_event_id) if chain.corrupted_event_id else None,
+        }
+        for chain in result.corrupted_chains
+    ]
+    return ChainCheck(
+        verified=result.all_valid, entities_checked=result.total_entities,
+        events_checked=result.total_events, broken=broken, checked_at=datetime.now().astimezone(),
     )

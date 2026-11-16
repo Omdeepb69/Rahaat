@@ -1,13 +1,9 @@
-"""Channel adapters package."""
-from .ivr import IVRCallAgent, IVRCallSession, IVRCallState
+"""Channel adapters: convert a channel's payload into a report submission."""
 from .radio_console import RadioConsoleAdapter, RadioConsolePayload
 from .sms import SMSAdapter, SMSPayload
 from .web import WebSOSAdapter, WebSOSPayload
 
 __all__ = [
-    "IVRCallAgent",
-    "IVRCallSession",
-    "IVRCallState",
     "RadioConsoleAdapter",
     "RadioConsolePayload",
     "SMSAdapter",

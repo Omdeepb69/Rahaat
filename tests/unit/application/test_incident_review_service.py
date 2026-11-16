@@ -12,10 +12,6 @@ from raahat.application.incident_resolution.review import (
     IncidentReviewService,
     LinkReviewAction,
 )
-from raahat.domain.shared.enums import (
-    IncidentStatus,
-    PriorityLevel,
-)
 from raahat.infrastructure.database.models import DisasterModel, ReportModel
 from raahat.infrastructure.database.models.audit import AuditEventModel
 from raahat.infrastructure.database.models.incident import (
@@ -103,46 +99,7 @@ def _seed_disaster_and_incidents(
 
 
 class TestIncidentReviewService:
-    def test_verify_incident_updates_status_and_records_audit(
-        self,
-        review_service_with_db: tuple[IncidentReviewService, InMemoryAuditRepository, sessionmaker[Session]],
-    ) -> None:
-        service, audit_repo, session_factory = review_service_with_db
-        with session_factory() as session:
-            _, inc1, _, _ = _seed_disaster_and_incidents(session)
-            inc1_id = inc1.id
-
-        dispatcher_id = uuid.uuid4()
-        result = service.verify_incident(
-            incident_id=inc1_id,
-            dispatcher_id=dispatcher_id,
-            status=IncidentStatus.VERIFIED,
-            notes="Confirmed via phone call with village elder",
-            operational_priority=PriorityLevel.URGENT,
-        )
-
-        assert result.incident_id == inc1_id
-        assert result.status == IncidentStatus.VERIFIED
-        assert result.operational_priority == PriorityLevel.URGENT
-        assert result.verified_by == dispatcher_id
-
-        # Verify DB updated
-        with session_factory() as session:
-            updated = session.get(IncidentModel, inc1_id)
-            assert updated is not None
-            assert updated.status == "verified"
-            assert updated.operational_priority == "urgent"
-            assert updated.last_confirmed_at is not None
-            assert updated.severity_facts.get("verification_notes") == "Confirmed via phone call with village elder"
-
-        # Verify audit event
-        assert len(audit_repo.events) == 1
-        audit = audit_repo.events[0]
-        assert audit.action == "incident.verified"
-        assert audit.actor_id == dispatcher_id
-        assert audit.entity_id == inc1_id
-
-    def test_approve_merge_closes_source_attaches_reports_and_records_audit(
+    def test_approve_merge_marks_source_duplicate_attaches_reports_and_records_audit(
         self,
         review_service_with_db: tuple[IncidentReviewService, InMemoryAuditRepository, sessionmaker[Session]],
     ) -> None:
@@ -179,7 +136,8 @@ class TestIncidentReviewService:
             # 2. Source incident closed
             source = session.get(IncidentModel, inc1_id)
             assert source is not None
-            assert source.status == "closed"
+            assert source.status == "duplicate"
+            assert source.merged_into_id is not None
             assert source.severity_facts.get("merged_into") == str(inc2_id)
 
             # 3. Target incident has corroborating link for report

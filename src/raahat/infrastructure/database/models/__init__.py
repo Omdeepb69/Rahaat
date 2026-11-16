@@ -1,18 +1,22 @@
 """SQLAlchemy database models for Raahat."""
 from ..base import Base
 from .audit import AuditEventModel
-from .callback import CallbackJobModel
 from .disaster import DisasterModel
 from .evidence import EvidenceItemModel, EvidenceSpanModel
 from .household import HouseholdModel, PersonModel
 from .incident import IncidentLinkModel, IncidentModel, IncidentReportModel
 from .location import LandmarkModel, LocationHypothesisModel
 from .merge import EntityMergeEventModel
-from .operation import AssignmentModel, OperationEventModel
-from .outbox import OutboxEventModel
+from .operation import AssignmentModel, DispatchDecisionModel, OperationEventModel
 from .report import ReportModel
 from .resource import ResourceModel
-from .sync import SyncCursorModel
+from .system import (
+    ExternalObservationModel,
+    IntegrationCheckModel,
+    ProcessingRunModel,
+    WorkerHeartbeatModel,
+)
+from .user import UserModel
 
 __all__ = [
     "Base",
@@ -30,10 +34,12 @@ __all__ = [
     "ResourceModel",
     "AssignmentModel",
     "OperationEventModel",
-    "OutboxEventModel",
+    "DispatchDecisionModel",
     "AuditEventModel",
-    "CallbackJobModel",
-    "SyncCursorModel",
     "EntityMergeEventModel",
+    "UserModel",
+    "WorkerHeartbeatModel",
+    "ProcessingRunModel",
+    "IntegrationCheckModel",
+    "ExternalObservationModel",
 ]
-

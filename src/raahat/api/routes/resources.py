@@ -1,211 +1,279 @@
-"""Resource registry and availability management API routes."""
+"""Rescue resource register."""
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from raahat.api.dependencies import (
-    get_resource_service,
-    get_session_factory,
-    require_dispatcher_id,
-)
-from raahat.application.resources import ResourceService
-from raahat.domain.operations.operation import Resource
-from raahat.domain.shared.coordinates import PointCoordinates
-from raahat.domain.shared.enums import ResourceStatus, ResourceType
+from raahat.api.deps import CurrentUser, get_db, require
+from raahat.api.schemas import Coordinates, Page, Pagination, coordinates_or_none, split_csv
+from raahat.application.resources import service as resources
+from raahat.application.resources.service import ResourceError
+from raahat.infrastructure.database.models.resource import RESOURCE_TYPES
+from raahat.security.permissions import Permission
 
 router = APIRouter(prefix="/resources", tags=["resources"])
 
 
-class RegisterResourceRequest(BaseModel):
-    """Payload to register a physical or human rescue resource."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    disaster_id: uuid.UUID
-    resource_type: ResourceType
-    name: str = Field(..., min_length=1, max_length=255, description="Asset or team name")
-    capacity: Optional[int] = Field(default=None, ge=1, description="Rescue or shelter capacity")
-    availability_status: ResourceStatus = ResourceStatus.AVAILABLE
-    latitude: Optional[float] = Field(default=None, ge=-90.0, le=90.0)
-    longitude: Optional[float] = Field(default=None, ge=-180.0, le=180.0)
+class ResourcePosition(BaseModel):
+    coordinates: Coordinates
+    source: Optional[str]
+    reported_at: datetime
+    accuracy_m: Optional[float]
 
 
-class UpdateResourceStatusRequest(BaseModel):
-    """Payload to update the availability status and coordinates of a resource."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    availability_status: ResourceStatus
-    latitude: Optional[float] = Field(default=None, ge=-90.0, le=90.0)
-    longitude: Optional[float] = Field(default=None, ge=-180.0, le=180.0)
-    reason: Optional[str] = Field(default=None, description="Operational justification")
+class CurrentAssignment(BaseModel):
+    assignment_id: uuid.UUID
+    incident_id: uuid.UUID
+    incident_reference: str
+    stage: str
 
 
 class ResourceResponse(BaseModel):
-    """Resource response representation."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
     id: uuid.UUID
     disaster_id: uuid.UUID
-    resource_type: ResourceType
+    callsign: str
+    resource_type: str
     name: str
     capacity: Optional[int]
-    availability_status: ResourceStatus
-    location: Optional[PointCoordinates]
-    distance_meters: Optional[float] = None
+    crew_size: Optional[int]
+    declared_capabilities: list[str]
+    capabilities: list[str]
+    status: str
+    status_note: Optional[str]
+    base_name: Optional[str]
+    contact: Optional[str]
+    contact_redacted: bool
+    notes: Optional[str]
+    position: Optional[ResourcePosition]
+    current_assignment: Optional[CurrentAssignment]
+    is_retired: bool
     created_at: datetime
+    updated_at: datetime
 
 
-def _to_response(resource: Resource, distance_meters: Optional[float] = None) -> ResourceResponse:
-    return ResourceResponse(
-        id=resource.id,
-        disaster_id=resource.disaster_id,
-        resource_type=resource.resource_type,
-        name=resource.name,
-        capacity=resource.capacity,
-        availability_status=resource.availability_status,
-        location=resource.location,
-        distance_meters=distance_meters,
-        created_at=resource.created_at,
-    )
+class ResourceOptions(BaseModel):
+    types: list[str]
+    capabilities: list[str]
+    default_capabilities: dict[str, list[str]]
+    manual_statuses: list[str]
 
 
-@router.post(
-    "",
-    response_model=ResourceResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a disaster rescue resource",
-)
-def register_resource(
-    payload: RegisterResourceRequest,
-    dispatcher_id: uuid.UUID = Depends(require_dispatcher_id),
-    service: ResourceService = Depends(get_resource_service),
-) -> ResourceResponse:
-    """Register a new rescue asset with authenticated dispatcher authorization."""
-    location: Optional[PointCoordinates] = None
-    if payload.latitude is not None and payload.longitude is not None:
-        location = PointCoordinates(latitude=payload.latitude, longitude=payload.longitude)
+class CreateResourceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-    resource = service.register_resource(
-        disaster_id=payload.disaster_id,
-        resource_type=payload.resource_type,
-        name=payload.name,
-        capacity=payload.capacity,
-        availability_status=payload.availability_status,
-        location=location,
-        registered_by=dispatcher_id,
-    )
-    return _to_response(resource)
+    disaster_id: uuid.UUID
+    callsign: str = Field(min_length=2, max_length=64)
+    resource_type: str
+    name: str = Field(min_length=1, max_length=255)
+    capacity: Optional[int] = Field(default=None, ge=0, le=10_000)
+    crew_size: Optional[int] = Field(default=None, ge=0, le=1_000)
+    capabilities: list[str] = Field(default_factory=list)
+    base_name: Optional[str] = Field(default=None, max_length=255)
+    contact: Optional[str] = Field(default=None, max_length=160)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
-@router.get(
-    "",
-    response_model=list[ResourceResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Query resources with optional spatial proximity filtering",
-)
-def list_resources(
-    disaster_id: Optional[uuid.UUID] = Query(None, description="Target disaster ID"),
-    resource_type: Optional[ResourceType] = Query(None, description="Filter by asset type"),
-    resource_status: Optional[ResourceStatus] = Query(None, alias="status", description="Filter by availability status"),
-    lat: Optional[float] = Query(None, ge=-90.0, le=90.0, description="Query latitude for proximity search"),
-    lon: Optional[float] = Query(None, ge=-180.0, le=180.0, description="Query longitude for proximity search"),
-    radius_meters: Optional[float] = Query(None, gt=0, description="Search radius in meters"),
-    limit: int = Query(50, ge=1, le=200, description="Max results"),
-    session_factory=Depends(get_session_factory),
-    service: ResourceService = Depends(get_resource_service),
-) -> list[ResourceResponse]:
-    """Query resources. If lat, lon, and radius_meters are provided, performs PostGIS spatial search."""
-    target_disaster_id = disaster_id
-    if target_disaster_id is None:
-        with session_factory() as session:
-            from raahat.infrastructure.database.models.disaster import DisasterModel
+class UpdateResourceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-            latest = session.scalars(
-                select(DisasterModel).order_by(DisasterModel.created_at.desc()).limit(1)
-            ).first()
-            if latest:
-                target_disaster_id = latest.id
+    name: Optional[str] = Field(default=None, max_length=255)
+    resource_type: Optional[str] = None
+    capacity: Optional[int] = Field(default=None, ge=0, le=10_000)
+    crew_size: Optional[int] = Field(default=None, ge=0, le=1_000)
+    capabilities: Optional[list[str]] = None
+    base_name: Optional[str] = Field(default=None, max_length=255)
+    contact: Optional[str] = Field(default=None, max_length=160)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
-    if target_disaster_id is None:
-        return []
 
-    if lat is not None and lon is not None and radius_meters is not None:
-        coords = PointCoordinates(latitude=lat, longitude=lon)
-        nearby = service.find_nearby_resources(
-            disaster_id=target_disaster_id,
-            coordinates=coords,
-            radius_meters=radius_meters,
-            resource_type=resource_type,
-            status=resource_status,
-            limit=limit,
+class StatusRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+class PositionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    source: str = Field(default="operator", pattern="^(operator|device_gps|integration)$")
+    accuracy_m: Optional[float] = Field(default=None, ge=0, le=100_000)
+    reported_at: Optional[datetime] = None
+
+
+class RetireRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=3, max_length=500)
+
+
+def _response(row: dict[str, Any], *, show_contact: bool) -> ResourceResponse:
+    position = None
+    coordinates = coordinates_or_none(row["latitude"], row["longitude"])
+    if coordinates is not None and row["position_updated_at"] is not None:
+        position = ResourcePosition(
+            coordinates=coordinates, source=row["position_source"],
+            reported_at=row["position_updated_at"], accuracy_m=row["position_accuracy_m"],
         )
-        return [_to_response(item.resource, distance_meters=item.distance_meters) for item in nearby]
-
-    resources = service.list_resources(
-        disaster_id=target_disaster_id,
-        resource_type=resource_type,
-        status=resource_status,
+    assignment = None
+    if row["assignment_id"] is not None:
+        assignment = CurrentAssignment(
+            assignment_id=row["assignment_id"], incident_id=row["assigned_incident_id"],
+            incident_reference=row["assigned_incident_reference"], stage=row["assignment_stage"],
+        )
+    declared = list(row["capabilities"] or [])
+    return ResourceResponse(
+        id=row["id"], disaster_id=row["disaster_id"], callsign=row["callsign"],
+        resource_type=row["resource_type"], name=row["name"], capacity=row["capacity"],
+        crew_size=row["crew_size"], declared_capabilities=declared,
+        capabilities=resources.effective_capabilities(row["resource_type"], declared),
+        status=row["availability_status"], status_note=row["status_note"],
+        base_name=row["base_name"], contact=row["contact"] if show_contact else None,
+        contact_redacted=bool(row["contact"]) and not show_contact, notes=row["notes"],
+        position=position, current_assignment=assignment, is_retired=row["is_retired"],
+        created_at=row["created_at"], updated_at=row["updated_at"],
     )
-    return [_to_response(r) for r in resources]
 
 
-@router.get(
-    "/{resource_id}",
-    response_model=ResourceResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Get resource by ID",
-)
+def _can_see_contact(actor: CurrentUser) -> bool:
+    return actor.can(Permission.RESOURCES_MANAGE) or actor.can(Permission.DISPATCH_DECIDE)
+
+
+def _one(session: Session, resource_id: uuid.UUID, actor: CurrentUser) -> ResourceResponse:
+    row = resources.get_resource_row(session, resource_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Resource not found")
+    return _response(row, show_contact=_can_see_contact(actor))
+
+
+def _run(session: Session, action) -> Any:
+    try:
+        result = action()
+    except LookupError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from None
+    except ResourceError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from None
+    session.commit()
+    return result
+
+
+@router.get("/options", response_model=ResourceOptions, summary="Resource types and capabilities")
+def options(_: CurrentUser = Depends(require(Permission.RESOURCES_READ))) -> ResourceOptions:
+    return ResourceOptions(
+        types=list(RESOURCE_TYPES),
+        capabilities=sorted(resources.KNOWN_CAPABILITIES),
+        default_capabilities={k: list(v) for k, v in resources.DEFAULT_CAPABILITIES.items()},
+        manual_statuses=sorted(resources.MANUAL_STATUSES),
+    )
+
+
+@router.get("", response_model=Page[ResourceResponse], summary="List resources")
+def list_resources(
+    disaster_id: Optional[uuid.UUID] = Query(None),
+    status_filter: Optional[str] = Query(None, alias="status", description="Comma-separated statuses"),
+    resource_type: Optional[str] = Query(None, alias="type", description="Comma-separated types"),
+    q: Optional[str] = Query(None, max_length=120),
+    include_retired: bool = Query(False),
+    page: Pagination = Depends(),
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_READ)),
+    session: Session = Depends(get_db),
+) -> Page[ResourceResponse]:
+    rows, total = resources.list_resources(
+        session, disaster_id=disaster_id, statuses=split_csv(status_filter),
+        types=split_csv(resource_type), search=q, include_retired=include_retired,
+        limit=page.limit, offset=page.offset,
+    )
+    show = _can_see_contact(actor)
+    return Page(
+        items=[_response(r, show_contact=show) for r in rows], total=total,
+        limit=page.limit, offset=page.offset,
+    )
+
+
+@router.get("/{resource_id}", response_model=ResourceResponse, summary="Get a resource")
 def get_resource(
     resource_id: uuid.UUID,
-    service: ResourceService = Depends(get_resource_service),
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_READ)),
+    session: Session = Depends(get_db),
 ) -> ResourceResponse:
-    """Retrieve details of a specific rescue resource."""
-    resource = service.get_resource(resource_id)
-    if resource is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resource {resource_id} not found",
-        )
-    return _to_response(resource)
+    return _one(session, resource_id, actor)
 
 
-@router.patch(
-    "/{resource_id}/status",
-    response_model=ResourceResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Update resource availability status and location",
-)
-def update_resource_status(
+@router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED,
+             summary="Register a resource")
+def create_resource(
+    body: CreateResourceRequest,
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
+    session: Session = Depends(get_db),
+) -> ResourceResponse:
+    created = _run(session, lambda: resources.create_resource(session, actor_id=actor.id, **body.model_dump()))
+    return _one(session, created.id, actor)
+
+
+@router.patch("/{resource_id}", response_model=ResourceResponse, summary="Edit a resource")
+def update_resource(
     resource_id: uuid.UUID,
-    payload: UpdateResourceStatusRequest,
-    dispatcher_id: uuid.UUID = Depends(require_dispatcher_id),
-    service: ResourceService = Depends(get_resource_service),
+    body: UpdateResourceRequest,
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
+    session: Session = Depends(get_db),
 ) -> ResourceResponse:
-    """Update resource availability status and GPS pin with dispatcher authorization and audit logging."""
-    location: Optional[PointCoordinates] = None
-    if payload.latitude is not None and payload.longitude is not None:
-        location = PointCoordinates(latitude=payload.latitude, longitude=payload.longitude)
+    _run(
+        session,
+        lambda: resources.update_resource(
+            session, resource_id=resource_id, actor_id=actor.id,
+            fields=body.model_dump(exclude_unset=True),
+        ),
+    )
+    return _one(session, resource_id, actor)
 
-    try:
-        updated = service.update_resource_status(
-            resource_id=resource_id,
-            status=payload.availability_status,
-            location=location,
-            updated_by=dispatcher_id,
-            reason=payload.reason,
-        )
-        return _to_response(updated)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
 
+@router.post("/{resource_id}/status", response_model=ResourceResponse, summary="Change availability")
+def set_status(
+    resource_id: uuid.UUID,
+    body: StatusRequest,
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
+    session: Session = Depends(get_db),
+) -> ResourceResponse:
+    _run(
+        session,
+        lambda: resources.set_status(
+            session, resource_id=resource_id, actor_id=actor.id, status=body.status, note=body.note
+        ),
+    )
+    return _one(session, resource_id, actor)
+
+
+@router.put("/{resource_id}/position", response_model=ResourceResponse, summary="Report a position")
+def update_position(
+    resource_id: uuid.UUID,
+    body: PositionRequest,
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
+    session: Session = Depends(get_db),
+) -> ResourceResponse:
+    _run(
+        session,
+        lambda: resources.update_position(
+            session, resource_id=resource_id, actor_id=actor.id, latitude=body.latitude,
+            longitude=body.longitude, source=body.source, accuracy_m=body.accuracy_m,
+            reported_at=body.reported_at,
+        ),
+    )
+    return _one(session, resource_id, actor)
+
+
+@router.post("/{resource_id}/retire", response_model=ResourceResponse, summary="Retire a resource")
+def retire(
+    resource_id: uuid.UUID,
+    body: RetireRequest,
+    actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
+    session: Session = Depends(get_db),
+) -> ResourceResponse:
+    _run(session, lambda: resources.retire(session, resource_id=resource_id, actor_id=actor.id, reason=body.reason))
+    return _one(session, resource_id, actor)

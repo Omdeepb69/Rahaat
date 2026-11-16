@@ -24,7 +24,7 @@ from raahat.domain.shared.enums import (
     ProcessingStatus,
     SourceType,
 )
-from raahat.infrastructure.database.models import DisasterModel, OutboxEventModel, ReportModel
+from raahat.infrastructure.database.models import DisasterModel, ReportModel
 from raahat.infrastructure.database.models.evidence import EvidenceItemModel, EvidenceSpanModel
 from raahat.infrastructure.database.models.incident import (
     IncidentLinkModel,
@@ -56,7 +56,6 @@ def db_session(session_factory: sessionmaker[Session]) -> Generator[Session, Non
         session.query(IncidentModel).delete()
         session.query(EvidenceSpanModel).delete()
         session.query(EvidenceItemModel).delete()
-        session.query(OutboxEventModel).delete()
         session.query(ReportModel).delete()
         session.query(DisasterModel).delete()
         session.commit()
@@ -421,5 +420,5 @@ class TestIncidentResolutionIntegration:
         )
         hyp = db_session.scalars(stmt).first()
         assert hyp is not None
-        assert hyp.candidate_label == "report_initial_pin"
+        assert hyp.source == "caller_gps"
         assert hyp.verification_status == "unverified"

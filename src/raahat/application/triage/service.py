@@ -32,6 +32,40 @@ from raahat.policies.triage import DeterministicSafetyPriorityPolicy, PriorityPo
 logger = logging.getLogger(__name__)
 
 
+OVERRIDABLE_FACTS = frozenset(
+    {
+        "people_count",
+        "trapped_status",
+        "medical_emergency",
+        "is_life_threatening_medical",
+        "vulnerable_present",
+        "water_level_trend",
+        "water_depth_cm",
+        "water_entering_occupied_floor",
+        "current_floor",
+        "hazards",
+        "relief_needs",
+    }
+)
+
+
+def apply_fact_overrides(facts: SeverityFacts, overrides: dict) -> SeverityFacts:
+    """Return facts with operator corrections applied on top of extracted values.
+
+    ``overrides`` maps a fact name to ``{"value": ...}``. An override of None
+    means the operator set the fact back to unknown.
+    """
+    if not overrides:
+        return facts
+    data = facts.model_dump()
+    data.pop("unknown_fields", None)  # recomputed from the merged values
+    for name, entry in overrides.items():
+        if name in OVERRIDABLE_FACTS and isinstance(entry, dict) and "value" in entry:
+            value = entry["value"]
+            data[name] = tuple(value) if isinstance(value, list) else value
+    return SeverityFacts(**data)
+
+
 def _model_to_incident(model: IncidentModel) -> Incident:
     """Helper converting ORM IncidentModel to frozen domain Incident aggregate."""
     return Incident(
@@ -136,32 +170,53 @@ class IncidentTriageService:
             total_reports=len(report_ids),
         )
 
-        # 5. Assess operational priority
+        # 5. Operator corrections take precedence over anything extracted.
+        facts = apply_fact_overrides(facts, incident_m.fact_overrides or {})
+
+        # 6. Assess operational priority
         assessment = self._priority_policy.assess(facts)
 
-        # 6. Update incident model state
+        # 7. Update incident model state. A priority set by an operator stands;
+        # the policy's own assessment is still recorded beside it.
         old_priority = incident_m.operational_priority
-        incident_m.operational_priority = assessment.priority.value
+        manual = (incident_m.fact_overrides or {}).get("operational_priority")
+        manual_value = manual.get("value") if isinstance(manual, dict) else None
+        effective_priority = manual_value or assessment.priority.value
+        incident_m.operational_priority = effective_priority
         incident_m.severity_facts = facts.model_dump(mode="json")
+        incident_m.triage = {
+            "source": "operator" if manual_value else "policy",
+            "policy_priority": assessment.priority.value,
+            "policy": type(self._priority_policy).__name__,
+            "reasons": list(assessment.reasons),
+            "unknown_fields": list(assessment.unknown_fields),
+            "requires_human_review": assessment.requires_human_review,
+            "assessed_at": utc_now().isoformat(),
+        }
         incident_m.updated_at = utc_now()
         session.flush()
 
-        # 7. Record tamper-evident audit event
-        self._audit_repo.record_event(
-            action="incident.triaged",
-            actor_id=actor_id,
-            entity_type="incident",
-            entity_id=incident_id,
-            payload={
-                "previous_priority": old_priority,
-                "new_priority": assessment.priority.value,
-                "reasons": list(assessment.reasons),
-                "unknown_fields": list(assessment.unknown_fields),
-                "requires_human_review": assessment.requires_human_review,
-                "has_contradictions": facts.has_contradictions,
-                "reports_count": len(report_ids),
-            },
-        )
+        # 8. Audit in the same transaction, only when the outcome changed.
+        if old_priority != effective_priority:
+            self._audit_repo.record_event(
+                action="incident.triaged",
+                actor_id=actor_id,
+                entity_type="incident",
+                entity_id=incident_id,
+                payload={
+                    "previous_priority": old_priority,
+                    "new_priority": effective_priority,
+                    "policy_priority": assessment.priority.value,
+                    "source": "operator" if manual_value else "policy",
+                    "reasons": list(assessment.reasons),
+                    "unknown_fields": list(assessment.unknown_fields),
+                    "requires_human_review": assessment.requires_human_review,
+                    "has_contradictions": facts.has_contradictions,
+                    "reports_count": len(report_ids),
+                },
+                session=session,
+                disaster_id=incident_m.disaster_id,
+            )
 
         return _model_to_incident(incident_m), assessment
 

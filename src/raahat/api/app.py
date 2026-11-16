@@ -1,93 +1,223 @@
-"""FastAPI application factory for Raahat 2.0."""
+"""FastAPI application factory."""
 from __future__ import annotations
 
-from pathlib import Path
+import logging
+import time
+import uuid
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
-from raahat.api.routes.audit import router as audit_router
-from raahat.api.routes.auth import router as auth_router
-from raahat.api.routes.demo import router as demo_router
-from raahat.api.routes.devices import router as devices_router
-from raahat.api.routes.disasters import router as disasters_router
-from raahat.api.routes.events import router as events_router
-from raahat.api.routes.incidents import router as incidents_router
-from raahat.api.routes.ivr import router as ivr_router
-from raahat.api.routes.locations import router as locations_router
-from raahat.api.routes.metrics import router as metrics_router
-from raahat.api.routes.operations import router as operations_router
-from raahat.api.routes.reports import router as reports_router
-from raahat.api.routes.resources import router as resources_router
-from raahat.api.routes.workflow import router as workflow_router
+from raahat import __version__
+from raahat.api.deps import get_session_factory, reset_engine
+from raahat.api.routes import (
+    audit,
+    auth,
+    disasters,
+    dispatch,
+    events,
+    incidents,
+    public,
+    reports,
+    resources,
+    system,
+    users,
+)
+from raahat.application.events import EventHub
+from raahat.config import Settings, get_settings
+from raahat.logging_config import configure_logging
+
+logger = logging.getLogger("raahat.api")
+access_logger = logging.getLogger("raahat.access")
+
+API_PREFIX = "/api/v1"
+AUDIO_UPLOAD_PATH = f"{API_PREFIX}/public/reports/voice"
 
 
-def create_app() -> FastAPI:
-    """Create and configure the Raahat FastAPI application."""
+class RequestContextMiddleware(BaseHTTPMiddleware):
+    """Assigns a request id, enforces the body size limit, and writes one access log line."""
+
+    def __init__(self, app, settings: Settings) -> None:
+        super().__init__(app)
+        self._settings = settings
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        request_id = uuid.uuid4().hex[:16]
+        request.state.request_id = request_id
+        limit = (
+            self._settings.max_audio_upload_bytes + 64 * 1024
+            if request.url.path == AUDIO_UPLOAD_PATH
+            else self._settings.max_request_bytes
+        )
+        declared = request.headers.get("content-length")
+        if declared is not None:
+            try:
+                too_large = int(declared) > limit
+            except ValueError:
+                too_large = True
+            if too_large:
+                return JSONResponse(
+                    {"detail": "Request body is too large", "request_id": request_id},
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                )
+        elif request.method in ("POST", "PUT", "PATCH"):
+            return JSONResponse(
+                {"detail": "Content-Length is required", "request_id": request_id},
+                status_code=status.HTTP_411_LENGTH_REQUIRED,
+            )
+
+        started = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception("Unhandled error", extra={"request_id": request_id, "path": request.url.path})
+            response = JSONResponse(
+                {"detail": "Internal server error", "request_id": request_id},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        response.headers["X-Request-ID"] = request_id
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Cache-Control", "no-store")
+        if request.url.path not in ("/health/live", "/health/ready"):
+            access_logger.info(
+                "request",
+                extra={
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status": response.status_code,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 1),
+                    "user_id": getattr(request.state, "user_id", None),
+                },
+            )
+        return response
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
+    configure_logging(settings)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        if settings.secret_key_is_ephemeral:
+            logger.warning(
+                "RAAHAT_SECRET_KEY is not set; using a temporary signing key. "
+                "Sessions will not survive a restart."
+            )
+        app.state.event_hub.start()
+        try:
+            yield
+        finally:
+            app.state.event_hub.stop()
+            reset_engine()
+
     app = FastAPI(
-        title="Raahat 2.0 Disaster Intelligence API",
-        description="Multichannel disaster intelligence, uncertainty-aware triage, and rescue coordination platform.",
-        version="0.2.0",
+        title="RAAHAT API",
+        description=(
+            "Emergency intake, incident intelligence and rescue-resource coordination. "
+            "Decision support: every dispatch requires approval by an authorised person."
+        ),
+        version=__version__,
+        lifespan=lifespan,
+        docs_url=None if settings.is_production else "/docs",
+        redoc_url=None,
+        openapi_url=None if settings.is_production else "/openapi.json",
     )
+    app.state.event_hub = EventHub(settings.database_url)
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    app.add_middleware(RequestContextMiddleware, settings=settings)
+    if settings.cors_allowed_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(settings.cors_allowed_origins),
+            # Bearer tokens are sent in a header; no cookies are involved.
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+            allow_headers=["Authorization", "Content-Type", "Last-Event-ID"],
+            expose_headers=["X-Request-ID", "Retry-After"],
+            max_age=600,
+        )
 
-    @app.get("/healthz", tags=["health"])
-    @app.get("/health/live", tags=["health"])
-    @app.get("/health/ready", tags=["health"])
-    def health_check() -> dict[str, str]:
-        return {"status": "ok", "service": "raahat-api"}
+    @app.exception_handler(HTTPException)
+    async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
+        return JSONResponse(
+            {"detail": exc.detail, "request_id": getattr(request.state, "request_id", None)},
+            status_code=exc.status_code,
+            headers=exc.headers,
+        )
 
-    # Register API routers
-    app.include_router(auth_router, prefix="/api/v1")
-    app.include_router(reports_router, prefix="/api/v1")
-    app.include_router(incidents_router, prefix="/api/v1")
-    app.include_router(disasters_router, prefix="/api/v1")
-    app.include_router(locations_router, prefix="/api/v1")
-    app.include_router(devices_router, prefix="/api/v1")
-    app.include_router(resources_router, prefix="/api/v1")
-    app.include_router(operations_router, prefix="/api/v1")
-    app.include_router(audit_router, prefix="/api/v1")
-    app.include_router(events_router, prefix="/api/v1")
-    app.include_router(workflow_router, prefix="/api/v1")
-    app.include_router(ivr_router, prefix="/api/v1")
-    app.include_router(demo_router, prefix="/api/v1")
-    app.include_router(metrics_router, prefix="/api/v1")
-    app.include_router(metrics_router)  # exposes /metrics at root for standard Prometheus scraping
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        fields = [
+            {
+                "field": ".".join(str(part) for part in error["loc"] if part != "body"),
+                "message": error["msg"],
+            }
+            for error in exc.errors()
+        ]
+        return JSONResponse(
+            {
+                "detail": "Some fields are invalid",
+                "fields": fields,
+                "request_id": getattr(request.state, "request_id", None),
+            },
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
 
-    # Mount Operator Console web application
-    console_dir = Path(__file__).resolve().parent.parent.parent.parent / "operator_console"
-    if console_dir.exists() and (console_dir / "public").exists():
-        if (console_dir / "src").exists():
-            app.mount("/console/src", StaticFiles(directory=str(console_dir / "src")), name="console-src")
-        app.mount("/console", StaticFiles(directory=str(console_dir / "public"), html=True), name="console")
+    @app.get("/health/live", tags=["health"], summary="Process is running")
+    def live() -> dict[str, str]:
+        return {"status": "ok"}
 
-    # Mount Citizen SOS portal
-    citizen_dir = Path(__file__).resolve().parent.parent.parent.parent / "citizen_portal"
-    if citizen_dir.exists() and (citizen_dir / "public").exists():
-        if (citizen_dir / "src").exists():
-            app.mount("/sos/src", StaticFiles(directory=str(citizen_dir / "src")), name="sos-src")
-        app.mount("/sos", StaticFiles(directory=str(citizen_dir / "public"), html=True), name="sos")
+    @app.get("/health/ready", tags=["health"], summary="Process can serve requests")
+    def ready() -> JSONResponse:
+        """Checks the database with a real query. Used by the frontend to detect an offline backend."""
+        started = time.perf_counter()
+        try:
+            with get_session_factory()() as session:
+                session.execute(text("SELECT 1")).scalar_one()
+        except Exception as exc:
+            logger.error("Readiness check failed: %s", type(exc).__name__)
+            return JSONResponse(
+                {"status": "unavailable", "database": "unreachable"},
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return JSONResponse(
+            {
+                "status": "ok",
+                "database": "ok",
+                "database_latency_ms": round((time.perf_counter() - started) * 1000, 1),
+                "version": __version__,
+                "server_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
-    # Mount React TypeScript Mission Control Dashboard
-    dashboard_dist = Path(__file__).resolve().parent.parent.parent.parent / "dashboard" / "dist"
-    if dashboard_dist.exists():
-        app.mount("/dashboard", StaticFiles(directory=str(dashboard_dist), html=True), name="dashboard")
-
-    @app.get("/", include_in_schema=False)
-    def root_redirect() -> RedirectResponse:
-        return RedirectResponse(url="/console/")
+    for router in (
+        auth.router,
+        users.router,
+        disasters.router,
+        reports.router,
+        incidents.router,
+        resources.router,
+        dispatch.router,
+        events.router,
+        audit.router,
+        system.router,
+    ):
+        app.include_router(router, prefix=API_PREFIX)
+    if settings.public_intake_enabled:
+        app.include_router(public.router, prefix=API_PREFIX)
 
     return app
 
 
-app = create_app()
-
+def app_factory() -> FastAPI:
+    """Entry point for ``uvicorn raahat.api.app:app_factory --factory``."""
+    return create_app()

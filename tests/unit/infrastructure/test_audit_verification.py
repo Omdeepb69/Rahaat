@@ -7,7 +7,6 @@ from typing import Any
 import pytest
 
 from raahat.infrastructure.audit import (
-    AuditService,
     AuditVerifier,
     InMemoryAuditRepository,
     compute_audit_hash,
@@ -315,48 +314,3 @@ class TestAuditVerifier:
         assert global_res_corrupted.all_valid is False
         assert len(global_res_corrupted.corrupted_chains) == 1
         assert global_res_corrupted.corrupted_chains[0].entity_id == e1
-
-
-class TestAuditService:
-    def test_query_events_with_filters_and_pagination(self) -> None:
-        repo = InMemoryAuditRepository()
-        service = AuditService(audit_repo=repo)
-
-        actor1 = uuid.uuid4()
-        actor2 = uuid.uuid4()
-        e_id1 = uuid.uuid4()
-        e_id2 = uuid.uuid4()
-
-        service.record_event("action.1", actor1, "type_a", e_id1, {"v": 1})
-        service.record_event("action.2", actor2, "type_a", e_id1, {"v": 2})
-        service.record_event("action.1", actor1, "type_b", e_id2, {"v": 3})
-
-        # Query all
-        items, total = service.query_events()
-        assert total == 3
-        assert len(items) == 3
-
-        # Filter by entity_type
-        items_a, total_a = service.query_events(entity_type="type_a")
-        assert total_a == 2
-        assert len(items_a) == 2
-
-        # Filter by actor_id
-        items_act1, total_act1 = service.query_events(actor_id=actor1)
-        assert total_act1 == 2
-
-        # Pagination
-        items_paged, total_paged = service.query_events(limit=1, offset=1)
-        assert total_paged == 3
-        assert len(items_paged) == 1
-
-    def test_get_event_by_id(self) -> None:
-        repo = InMemoryAuditRepository()
-        service = AuditService(audit_repo=repo)
-
-        created = service.record_event("action", None, "type", uuid.uuid4(), {})
-        fetched = service.get_event(created.id)
-        assert fetched is not None
-        assert fetched.id == created.id
-
-        assert service.get_event(uuid.uuid4()) is None

@@ -6,7 +6,7 @@ import json
 import uuid
 from typing import Any, Optional, Protocol, runtime_checkable
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from raahat.infrastructure.database.base import utc_now
@@ -30,6 +30,68 @@ def compute_audit_hash(
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
+# Every writer takes this transaction-scoped advisory lock before allocating a
+# sequence number. Holding it until commit makes sequence order equal commit
+# order, so a reader that has seen sequence N never misses a lower number
+# committing later, and hash-chain predecessors are read consistently.
+AUDIT_APPEND_LOCK_KEY = 0x52414148  # "RAAH"
+
+
+def append_audit(
+    session: Session,
+    *,
+    action: str,
+    actor_id: Optional[uuid.UUID],
+    entity_type: str,
+    entity_id: uuid.UUID,
+    payload: dict[str, Any],
+    disaster_id: Optional[uuid.UUID] = None,
+    incident_id: Optional[uuid.UUID] = None,
+) -> AuditEventModel:
+    """Append a hash-chained audit record inside the caller's transaction.
+
+    The record commits or rolls back with the change it describes. It is also
+    the realtime event: an insert trigger notifies stream subscribers.
+    """
+    session.execute(
+        text("SELECT pg_advisory_xact_lock(:key)"), {"key": AUDIT_APPEND_LOCK_KEY}
+    )
+    prev_hash = session.execute(
+        select(AuditEventModel.hash)
+        .where(
+            AuditEventModel.entity_type == entity_type,
+            AuditEventModel.entity_id == entity_id,
+        )
+        .order_by(AuditEventModel.seq.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if incident_id is None and entity_type == "incident":
+        incident_id = entity_id
+    event = AuditEventModel(
+        id=uuid.uuid4(),
+        action=action,
+        actor_id=actor_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        disaster_id=disaster_id,
+        incident_id=incident_id,
+        prev_hash=prev_hash,
+        hash=compute_audit_hash(
+            prev_hash=prev_hash,
+            action=action,
+            actor_id=actor_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=payload,
+        ),
+        payload=payload,
+        created_at=utc_now(),
+    )
+    session.add(event)
+    session.flush()
+    return event
+
+
 @runtime_checkable
 class AuditRepository(Protocol):
     """Protocol for tamper-evident audit logging."""
@@ -41,6 +103,9 @@ class AuditRepository(Protocol):
         entity_type: str,
         entity_id: uuid.UUID,
         payload: dict[str, Any],
+        session: Optional[Any] = None,
+        disaster_id: Optional[uuid.UUID] = None,
+        incident_id: Optional[uuid.UUID] = None,
     ) -> AuditEventModel: ...
 
     def get_latest_event(
@@ -99,7 +164,7 @@ class PostgresAuditRepository:
             return (
                 session.query(AuditEventModel)
                 .filter_by(entity_type=entity_type, entity_id=entity_id)
-                .order_by(AuditEventModel.created_at.desc(), AuditEventModel.id.desc())
+                .order_by(AuditEventModel.seq.desc())
                 .first()
             )
 
@@ -124,7 +189,7 @@ class PostgresAuditRepository:
                     AuditEventModel.entity_type == entity_type,
                     AuditEventModel.entity_id == entity_id,
                 )
-                .order_by(AuditEventModel.created_at.asc(), AuditEventModel.id.asc())
+                .order_by(AuditEventModel.seq.asc())
             )
             return list(session.scalars(stmt).all())
 
@@ -149,7 +214,7 @@ class PostgresAuditRepository:
             if actor_id is not None:
                 stmt = stmt.where(AuditEventModel.actor_id == actor_id)
 
-            stmt = stmt.order_by(AuditEventModel.created_at.desc(), AuditEventModel.id.desc())
+            stmt = stmt.order_by(AuditEventModel.seq.desc())
             stmt = stmt.limit(limit).offset(offset)
             return list(session.scalars(stmt).all())
 
@@ -193,39 +258,40 @@ class PostgresAuditRepository:
         entity_type: str,
         entity_id: uuid.UUID,
         payload: dict[str, Any],
+        session: Optional[Session] = None,
+        disaster_id: Optional[uuid.UUID] = None,
+        incident_id: Optional[uuid.UUID] = None,
     ) -> AuditEventModel:
-        """Create and persist a tamper-evident audit record."""
-        with self._session_factory() as session:
-            prev = (
-                session.query(AuditEventModel)
-                .filter_by(entity_type=entity_type, entity_id=entity_id)
-                .order_by(AuditEventModel.created_at.desc(), AuditEventModel.id.desc())
-                .first()
-            )
-            prev_hash = prev.hash if prev else None
-            event_hash = compute_audit_hash(
-                prev_hash=prev_hash,
-                action=action,
-                actor_id=actor_id,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                payload=payload,
-            )
+        """Append an audit record.
 
-            audit_event = AuditEventModel(
-                id=uuid.uuid4(),
+        With ``session`` the record joins the caller's transaction, which is
+        how application services use it. Without one it commits on its own.
+        """
+        if session is not None:
+            return append_audit(
+                session,
                 action=action,
                 actor_id=actor_id,
                 entity_type=entity_type,
                 entity_id=entity_id,
-                prev_hash=prev_hash,
-                hash=event_hash,
                 payload=payload,
+                disaster_id=disaster_id,
+                incident_id=incident_id,
             )
-            session.add(audit_event)
-            session.commit()
-            session.refresh(audit_event)
-            return audit_event
+        with self._session_factory() as own_session:
+            event = append_audit(
+                own_session,
+                action=action,
+                actor_id=actor_id,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                payload=payload,
+                disaster_id=disaster_id,
+                incident_id=incident_id,
+            )
+            own_session.commit()
+            own_session.refresh(event)
+            return event
 
 
 class InMemoryAuditRepository:
@@ -324,6 +390,9 @@ class InMemoryAuditRepository:
         entity_type: str,
         entity_id: uuid.UUID,
         payload: dict[str, Any],
+        session: Optional[Any] = None,
+        disaster_id: Optional[uuid.UUID] = None,
+        incident_id: Optional[uuid.UUID] = None,
     ) -> AuditEventModel:
         prev = self.get_latest_event(entity_type, entity_id)
         prev_hash = prev.hash if prev else None

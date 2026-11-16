@@ -9,12 +9,10 @@ from raahat.infrastructure.database.repositories.audit import (
 )
 
 from .models import ChainVerificationResult, GlobalVerificationResult
-from .service import AuditService
 from .verifier import AuditVerifier
 
 __all__ = [
     "AuditRepository",
-    "AuditService",
     "AuditVerifier",
     "ChainVerificationResult",
     "GlobalVerificationResult",

@@ -139,4 +139,4 @@ def test_worker_entrypoint_imports_cleanly() -> None:
     import importlib
 
     module = importlib.import_module("raahat.workers.main")
-    assert hasattr(module, "WorkerService")
+    assert hasattr(module, "Worker")

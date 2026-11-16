@@ -25,6 +25,10 @@ from raahat.domain.shared.enums import (
 
 from .models import IncidentCandidate, IncidentSnapshot, MatchSignal
 
+# Matching compares a new report against the most recent open incidents only,
+# which bounds memory and time per report.
+MAX_CANDIDATE_INCIDENTS = 300
+
 
 def normalize_phone(phone: Optional[str]) -> Optional[str]:
     """Normalize phone number to last 10 digits for conservative comparison."""
@@ -423,8 +427,14 @@ class ConservativeIncidentMatcher:
 
         stmt = select(IncidentModel).where(
             IncidentModel.disaster_id == disaster_id,
-            IncidentModel.status.not_in([IncidentStatus.RESOLVED.value, IncidentStatus.CLOSED.value]),
-        )
+            IncidentModel.status.not_in(
+                [
+                    IncidentStatus.RESOLVED.value,
+                    IncidentStatus.CLOSED.value,
+                    IncidentStatus.DUPLICATE.value,
+                ]
+            ),
+        ).order_by(IncidentModel.created_at.desc()).limit(MAX_CANDIDATE_INCIDENTS)
         incident_models = session.scalars(stmt).all()
         snapshots: list[IncidentSnapshot] = []
 

@@ -1,11 +1,6 @@
-"""Maps adapter: PostGIS landmark indexer and transliteration helpers."""
+"""Transliteration helpers for landmark name matching."""
 from __future__ import annotations
 
-from .indexer import LandmarkIndexer
 from .transliteration import generate_query_variants, normalize_transliteration
 
-__all__ = [
-    "LandmarkIndexer",
-    "generate_query_variants",
-    "normalize_transliteration",
-]
+__all__ = ["generate_query_variants", "normalize_transliteration"]

@@ -8,8 +8,6 @@ from typing import Generator
 import pytest
 from sqlalchemy.orm import Session, sessionmaker
 
-from raahat.adapters.maps import LandmarkIndexer
-from raahat.domain.geospatial.gazetteer import City
 from raahat.domain.geospatial.landmark import BoundingBox
 from raahat.domain.shared.coordinates import PointCoordinates
 from raahat.infrastructure.database.models.location import LandmarkModel
@@ -249,26 +247,3 @@ def test_kind_filter(
     assert len(results) == 1
     assert results[0].landmark.id == id_map["Saraswati Vidyalaya"]
     assert results[0].landmark.kind == "school"
-
-
-def test_indexer_seed_from_city(
-    session_factory: sessionmaker[Session],
-    db_session: Session,
-) -> None:
-    city = City(seed=42, n_pois=50)
-    indexer = LandmarkIndexer(session_factory)
-    inserted = indexer.seed_from_city(city)
-
-    assert inserted == 50
-
-    # Query the seeded landmarks via repository
-    repo = PostgresLandmarkRepository(session_factory)
-    sample_name = city.poi_names[0]
-    results = repo.search_by_text(
-        query=sample_name,
-        bounding_box=None,
-        max_results=5,
-        similarity_threshold=0.3,
-    )
-    assert len(results) >= 1
-    assert results[0].similarity > 0.5

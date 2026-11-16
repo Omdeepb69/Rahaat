@@ -79,23 +79,21 @@ class IncidentResolutionService:
         candidates = self.matcher.find_candidates(report, evidence_items, session=session)
         decision = self.resolver.evaluate(report, candidates)
 
-        # 1. High-confidence auto-link
+        # Attaching a report to an existing incident without review happens only
+        # when the resolver is explicitly configured to allow it. By default
+        # every match, however strong, is held for an operator.
         if decision.decision_type == ResolutionDecisionType.AUTO_LINK:
             assert decision.matched_incident_id is not None
             target_inc_id = decision.matched_incident_id
-
-            report_link = IncidentReportModel(
-                incident_id=target_inc_id,
-                report_id=report.id,
-                relationship=RelationshipType.DUPLICATE.value,
-                linked_by="system:conservative_matcher",
+            session.add(
+                IncidentReportModel(
+                    incident_id=target_inc_id,
+                    report_id=report.id,
+                    relationship=RelationshipType.DUPLICATE.value,
+                    linked_by="system:conservative_matcher",
+                )
             )
-            session.add(report_link)
-
-            inc_m = session.get(IncidentModel, target_inc_id)
-            if inc_m:
-                session.flush()
-
+            session.flush()
             logger.info(
                 "Report %s auto-linked to incident %s (score: %.2f)",
                 report.id,
@@ -109,114 +107,98 @@ class IncidentResolutionService:
                 link_id=None,
             )
 
-        # 2. Ambiguous match requiring human review
-        elif decision.decision_type == ResolutionDecisionType.REQUIRES_REVIEW:
-            new_inc_id = uuid.uuid4()
-            new_inc_m = IncidentModel(
+        new_inc_id = uuid.uuid4()
+        session.add(
+            IncidentModel(
                 id=new_inc_id,
                 disaster_id=report.disaster_id,
                 status=IncidentStatus.UNVERIFIED.value,
                 operational_priority=PriorityLevel.UNASSESSED.value,
                 severity_facts={},
+                source_channel=report.source_type.value,
             )
-            session.add(new_inc_m)
-            session.flush()
-
-            rep_link_m = IncidentReportModel(
+        )
+        session.flush()
+        session.add(
+            IncidentReportModel(
                 incident_id=new_inc_id,
                 report_id=report.id,
                 relationship=RelationshipType.DIRECT.value,
                 linked_by="system:resolution_service",
             )
-            session.add(rep_link_m)
-
-            coords = extract_coordinates(report)
-            if coords:
-                hyp_m = LocationHypothesisModel(
+        )
+        coords = extract_coordinates(report)
+        if coords:
+            session.add(
+                LocationHypothesisModel(
                     id=uuid.uuid4(),
                     incident_id=new_inc_id,
                     location=f"SRID=4326;{coords.to_wkt()}",
-                    candidate_label="report_initial_pin",
+                    candidate_label="Position supplied with the report",
                     probability=None,
                     uncertainty_radius_m=None,
                     verification_status="unverified",
+                    source="caller_gps",
+                    source_detail={"origin": "report_payload"},
+                    report_id=report.id,
                 )
-                session.add(hyp_m)
+            )
 
-            link_id: Optional[uuid.UUID] = None
-            if candidates and decision.matched_incident_id:
-                link_id = uuid.uuid4()
-                link_type_str = (
-                    decision.suggested_link_type.value
-                    if decision.suggested_link_type
-                    else IncidentLinkType.POSSIBLE_DUPLICATE.value
+        link_id: Optional[uuid.UUID] = None
+        if decision.decision_type == ResolutionDecisionType.REQUIRES_REVIEW:
+            # One pending link per plausible candidate, each carrying the
+            # signals that produced its score so the reviewer can see why.
+            reviewable = [c for c in candidates if c.score >= self.resolver.review_threshold]
+            for candidate in reviewable:
+                is_primary = candidate.incident_id == decision.matched_incident_id
+                link_type = (
+                    decision.suggested_link_type
+                    if is_primary and decision.suggested_link_type
+                    else candidate.suggested_link_type
                 )
-                inc_link_m = IncidentLinkModel(
-                    id=link_id,
-                    incident_a_id=new_inc_id,
-                    incident_b_id=decision.matched_incident_id,
-                    link_type=link_type_str,
-                    confidence=candidates[0].score,
-                    status="pending_review",
+                signals = [sig.model_dump() for sig in candidate.signals]
+                if candidate.spatial_distance_m is not None:
+                    signals.append(
+                        {
+                            "name": "distance_m",
+                            "weight": 0.0,
+                            "score": 0.0,
+                            "detail": f"{candidate.spatial_distance_m:.0f} m between positions",
+                        }
+                    )
+                for conflict in candidate.conflicts:
+                    signals.append(
+                        {"name": "conflict", "weight": 0.0, "score": 0.0, "detail": conflict}
+                    )
+                candidate_link_id = uuid.uuid4()
+                session.add(
+                    IncidentLinkModel(
+                        id=candidate_link_id,
+                        incident_a_id=new_inc_id,
+                        incident_b_id=candidate.incident_id,
+                        link_type=(link_type or IncidentLinkType.POSSIBLE_DUPLICATE).value,
+                        confidence=candidate.score,
+                        status="pending_review",
+                        signals=signals,
+                    )
                 )
-                session.add(inc_link_m)
+                if is_primary:
+                    link_id = candidate_link_id
 
-            session.flush()
-            logger.info(
-                "Report %s created incident %s; routed to review queue with link to %s",
-                report.id,
-                new_inc_id,
-                decision.matched_incident_id,
-            )
-            return ResolutionResult(
-                decision=decision,
-                incident_id=new_inc_id,
-                is_new_incident=True,
-                link_id=link_id,
-            )
-
-        # 3. Create new incident
-        else:
-            new_inc_id = uuid.uuid4()
-            new_inc_m = IncidentModel(
-                id=new_inc_id,
-                disaster_id=report.disaster_id,
-                status=IncidentStatus.UNVERIFIED.value,
-                operational_priority=PriorityLevel.UNASSESSED.value,
-                severity_facts={},
-            )
-            session.add(new_inc_m)
-            session.flush()
-
-            rep_link_m = IncidentReportModel(
-                incident_id=new_inc_id,
-                report_id=report.id,
-                relationship=RelationshipType.DIRECT.value,
-                linked_by="system:resolution_service",
-            )
-            session.add(rep_link_m)
-
-            coords = extract_coordinates(report)
-            if coords:
-                hyp_m = LocationHypothesisModel(
-                    id=uuid.uuid4(),
-                    incident_id=new_inc_id,
-                    location=f"SRID=4326;{coords.to_wkt()}",
-                    candidate_label="report_initial_pin",
-                    probability=None,
-                    uncertainty_radius_m=None,
-                    verification_status="unverified",
-                )
-                session.add(hyp_m)
-
-            session.flush()
-            logger.info("Report %s created independent incident %s", report.id, new_inc_id)
-            return ResolutionResult(
-                decision=decision,
-                incident_id=new_inc_id,
-                is_new_incident=True,
-                link_id=None,
-            )
+        session.flush()
+        logger.info(
+            "Report %s created incident %s (decision=%s, candidates=%d)",
+            report.id,
+            new_inc_id,
+            decision.decision_type.value,
+            len(candidates),
+        )
+        return ResolutionResult(
+            decision=decision,
+            incident_id=new_inc_id,
+            is_new_incident=True,
+            link_id=link_id,
+        )
 
     def _resolve_in_memory(
         self,
