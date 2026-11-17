@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from raahat.api import scope as access
 from raahat.api.deps import CurrentUser, get_db, get_session_factory, require
 from raahat.api.schemas import Page, Pagination
 from raahat.infrastructure.audit import AuditVerifier, PostgresAuditRepository
@@ -56,7 +57,11 @@ def list_events(
 ) -> Page[AuditEntry]:
     conditions = []
     if disaster_id is not None:
+        access.ensure_operation(session, disaster_id)
         conditions.append(AuditEventModel.disaster_id == disaster_id)
+    visible = access.visible_operations(access.of(session))
+    if visible is not None:
+        conditions.append(AuditEventModel.disaster_id.in_(visible))
     if entity_type:
         conditions.append(AuditEventModel.entity_type == entity_type)
     if action_prefix:

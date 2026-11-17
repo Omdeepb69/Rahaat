@@ -67,7 +67,7 @@ def test_env_example_documents_every_setting_the_app_reads() -> None:
     names = set(re.findall(r'"([A-Z][A-Z0-9_]{2,})"', config)) - {"ENVIRONMENT"}
     documented = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", example, re.M))
     internal = {"DATABASE_URL", "AUDIO_STORAGE_DIR", "MAX_REQUEST_BYTES", "MAX_AUDIO_UPLOAD_BYTES",
-                "API_RATE_PER_MINUTE", "PUBLIC_RATE_PER_MINUTE", "PRISMA_ENDPOINT",
+                "API_RATE_PER_MINUTE", "PUBLIC_RATE_PER_MINUTE", "PRISMA_ENDPOINT", "TIMBRE_ENDPOINT",
                 "GNANI_API_KEY", "GEOCODER_COUNTRY_CODES", "WORKER_STALE_AFTER_SECONDS",
                 "PROVIDER_TIMEOUT_SECONDS"}
     missing = names - documented - internal

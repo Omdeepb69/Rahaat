@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 — 2026-11-17
+
+Public reporting site and jurisdiction-based access.
+
+- Landing page at `/` with a voice reporting flow at `/report` and ticket status at `/report/status/:ticket`.
+- Guided voice call: questions spoken by Gnani Timbre in 10 languages, answers transcribed by Gnani Prisma with automatic language detection (Hindi when not recognised), already-answered questions skipped, optional GPS, typing at any step, abandoned calls sent automatically.
+- Calls are routed to the chosen district's operation (a standing one is created when none is active) and appear live on that control room's board with the full question-and-answer transcript and the joined recording.
+- Sign-in by state, district and password. National, state and district control room accounts; isolation enforced on every route and on the event stream.
+- `cli provision-accounts` and `cli warm-voice-prompts`; national administrators issue passwords from *Control room accounts*.
+- Operator dashboard moved to `/control`.
+- Fixed: `vercel.json` blocked the microphone; personal answers (phone, name) are kept out of the report text shown to roles without caller-data access.
+
 ## 0.3.1 — 2026-11-17
 
 Frontend redesign.

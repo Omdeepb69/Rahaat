@@ -11,6 +11,7 @@ from enum import Enum
 
 class Role(str, Enum):
     ADMIN = "admin"
+    CONTROL_ROOM = "control_room"
     OPERATOR = "operator"
     DISPATCHER = "dispatcher"
     RESOURCE_COORDINATOR = "resource_coordinator"
@@ -52,6 +53,9 @@ _READ_ONLY = frozenset(
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.ADMIN: frozenset(Permission),
+    # A state or district control room: runs the whole response inside its
+    # jurisdiction. Cannot manage accounts or system-wide settings.
+    Role.CONTROL_ROOM: frozenset(Permission) - {P.USERS_MANAGE, P.SYSTEM_MANAGE},
     # Takes reports, reviews and verifies incidents, confirms locations,
     # resolves duplicates. Sees recommendations but does not commit resources.
     Role.OPERATOR: _READ_ONLY

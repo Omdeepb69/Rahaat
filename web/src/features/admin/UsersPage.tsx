@@ -1,95 +1,147 @@
-import { KeyRound, Plus } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Check, Copy, KeyRound } from 'lucide-react';
+import { useState } from 'react';
 
-import { Badge, Button, Callout, Dialog, ErrorState, Field, Input, SkeletonList, PageHeader, Panel, Select, TimeAgo, useToast } from '../../components/ui';
+import { JurisdictionPicker, type Picked } from '../../components/JurisdictionPicker';
+import { Badge, Button, Callout, Dialog, ErrorState, Field, PageHeader, Panel, Select, SkeletonList, TimeAgo, useToast } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { ROLE } from '../../lib/labels';
 import { mutations, useUsers } from '../../lib/queries';
-import type { Role, UserAccount } from '../../lib/types';
+import type { IssuedPassword, JurisdictionLevel, UserAccount } from '../../lib/types';
 
-const ROLES = Object.keys(ROLE) as Role[];
+function levelOf(u: UserAccount): JurisdictionLevel {
+  if (!u.state_code) return 'national';
+  return u.district_code ? 'district' : 'state';
+}
 
-function CreateUser({ onClose }: { onClose: () => void }) {
-  const toast = useToast();
-  const create = mutations.useCreateUser();
-  const [username, setUsername] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<Role>('operator');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+function Issued({ issued, onClose }: { issued: IssuedPassword; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(issued.password);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
   return (
-    <Dialog open title="Create user" onClose={onClose} description="The user must replace this temporary password when they first sign in. Share it through a separate channel."
-      footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" busy={create.isPending} onClick={async () => {
-        try { await create.mutateAsync({ username, full_name: fullName, role, initial_password: password }); toast('success', `User ${username} created`); onClose(); } catch (e) { setError(errorMessage(e)); }
-      }}>Create</Button></>}>
-      <Field label="Username" required hint="Lowercase letters, digits, dot, dash, underscore">{(p) => <Input {...p} autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} />}</Field>
-      <Field label="Full name" required>{(p) => <Input {...p} value={fullName} onChange={(e) => setFullName(e.target.value)} />}</Field>
-      <Field label="Role" hint={ROLE[role].description}>{(p) => <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>{ROLES.map((r) => <option key={r} value={r}>{ROLE[r].label}</option>)}</Select>}</Field>
-      <Field label="Temporary password" required hint="At least 12 characters.">{(p) => <Input {...p} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}</Field>
-      {error && <Callout tone="bad">{error}</Callout>}
+    <Dialog open title={issued.created ? 'Account created' : 'New password issued'} onClose={onClose}
+      description={issued.user.jurisdiction}
+      footer={<Button variant="primary" onClick={onClose}>I have recorded it</Button>}>
+      <Callout tone="warn" title="Shown only once">
+        Give this password to the control room through a separate, trusted channel. It is stored only in scrambled form and cannot be shown again.
+        {!issued.created && ' The previous password has stopped working and anyone signed in with it has been signed out.'}
+      </Callout>
+      <div className="row" style={{ gap: 'var(--s-3)' }}>
+        <code className="mono" style={{ fontSize: '1.25rem', padding: 'var(--s-3) var(--s-4)', background: 'var(--surface-sunken)', borderRadius: 'var(--radius-sm)' }}>{issued.password}</code>
+        <Button icon={copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />} onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>
+      </div>
+      <p className="small muted">To sign in: choose {issued.user.jurisdiction.replace(/ control room.*$/, '')} on the sign-in page, then enter this password.</p>
     </Dialog>
   );
 }
 
-function EditUser({ user, onClose }: { user: UserAccount; onClose: () => void }) {
-  const toast = useToast();
-  const { user: me } = useAuth();
-  const update = mutations.useUpdateUser();
-  const reset = mutations.useResetPassword();
-  const [role, setRole] = useState<Role>(user.role);
-  const [active, setActive] = useState(user.is_active);
-  const [password, setPassword] = useState('');
-  const self = me?.id === user.id;
-  const save = async () => {
+function IssuePanel({ onIssued }: { onIssued: (issued: IssuedPassword) => void }) {
+  const issue = mutations.useIssuePassword();
+  const [level, setLevel] = useState<JurisdictionLevel>('district');
+  const [place, setPlace] = useState<Picked>({ state: '', district: '' });
+  const [error, setError] = useState<string | null>(null);
+  const ready = level === 'national' || (place.state && (level === 'state' || place.district));
+  const submit = async () => {
+    setError(null);
     try {
-      if (role !== user.role || active !== user.is_active) await update.mutateAsync({ id: user.id, role, is_active: active });
-      if (password) await reset.mutateAsync({ id: user.id, new_password: password });
-      toast('success', `${user.username} updated`);
-      onClose();
+      onIssued(await issue.mutateAsync({
+        level,
+        state_code: level === 'national' ? null : place.state,
+        district_code: level === 'district' ? place.district : null,
+      }));
     } catch (e) {
-      toast('error', errorMessage(e));
+      setError(errorMessage(e));
     }
   };
   return (
-    <Dialog open title={`Edit ${user.username}`} onClose={onClose}
-      footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" busy={update.isPending || reset.isPending} onClick={save}>Save</Button></>}>
-      <Field label="Role" hint={ROLE[role].description}>{(p) => <Select {...p} disabled={self} value={role} onChange={(e) => setRole(e.target.value as Role)}>{ROLES.map((r) => <option key={r} value={r}>{ROLE[r].label}</option>)}</Select>}</Field>
-      <label className="checkbox"><input type="checkbox" disabled={self} checked={active} onChange={(e) => setActive(e.target.checked)} />Account active</label>
-      {self && <span className="small muted">You cannot change your own role or deactivate yourself.</span>}
-      <Field label="Set temporary password" hint="Ends the user's current sessions and clears any lockout. They must change it at next sign-in.">
-        {(p) => <Input {...p} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
-      </Field>
-    </Dialog>
+    <Panel title="Issue a control room password">
+      <div className="stack">
+        <p className="small muted">Creates the account if it does not exist yet. Issuing again replaces the password.</p>
+        <Field label="Level">
+          {(p) => (
+            <Select {...p} value={level} onChange={(e) => setLevel(e.target.value as JurisdictionLevel)}>
+              <option value="district">District control room</option>
+              <option value="state">State control room</option>
+              <option value="national">National administration</option>
+            </Select>
+          )}
+        </Field>
+        {level !== 'national' && (
+          <JurisdictionPicker value={place} onChange={setPlace} allowStateWide={level === 'state'} stateWideLabel="Not needed for a state account" />
+        )}
+        {error && <Callout tone="bad">{error}</Callout>}
+        <div><Button variant="primary" icon={<KeyRound size={15} aria-hidden />} disabled={!ready} busy={issue.isPending} onClick={submit}>Issue password</Button></div>
+      </div>
+    </Panel>
+  );
+}
+
+function Reissue({ user, onIssued }: { user: UserAccount; onIssued: (issued: IssuedPassword) => void }) {
+  const toast = useToast();
+  const issue = mutations.useIssuePassword();
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <>
+      <Button size="sm" onClick={() => setConfirm(true)}>New password</Button>
+      <Dialog open={confirm} title={`Replace the password for ${user.jurisdiction}?`} onClose={() => setConfirm(false)}
+        description="Everyone signed in to this control room will be signed out and must use the new password."
+        footer={<><Button onClick={() => setConfirm(false)}>Cancel</Button><Button variant="primary" busy={issue.isPending} onClick={async () => {
+          try {
+            const issued = await issue.mutateAsync({ level: levelOf(user), state_code: user.state_code, district_code: user.district_code });
+            setConfirm(false);
+            onIssued(issued);
+          } catch (e) { toast('error', errorMessage(e)); }
+        }}>Replace password</Button></>}>
+        <p className="small muted">The new password is shown once, on the next screen.</p>
+      </Dialog>
+    </>
+  );
+}
+
+function ActiveToggle({ user }: { user: UserAccount }) {
+  const toast = useToast();
+  const { user: me } = useAuth();
+  const update = mutations.useUpdateUser();
+  if (me?.id === user.id) return null;
+  return (
+    <Button size="sm" variant="ghost" busy={update.isPending} onClick={async () => {
+      try { await update.mutateAsync({ id: user.id, is_active: !user.is_active }); toast('success', user.is_active ? 'Account suspended' : 'Account restored'); } catch (e) { toast('error', errorMessage(e)); }
+    }}>{user.is_active ? 'Suspend' : 'Restore'}</Button>
   );
 }
 
 export function UsersPage() {
   const users = useUsers(true);
-  const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<UserAccount | null>(null);
+  const [issued, setIssued] = useState<IssuedPassword | null>(null);
+  const accounts = [...(users.data ?? [])].sort((a, b) => levelOf(a).localeCompare(levelOf(b)) || a.jurisdiction.localeCompare(b.jurisdiction));
   return (
     <div className="page">
-      <PageHeader title="Users" description="Accounts and roles. Permissions are enforced by the server." actions={<Button variant="primary" icon={<Plus size={14} />} onClick={() => setCreating(true)}>Create user</Button>} />
-      <Panel flush>
+      <PageHeader title="Control room accounts" description="One account per control room. Each sees only the reports and operations of its own state or district; the server enforces this." />
+      <IssuePanel onIssued={setIssued} />
+      <Panel flush title={`Accounts${users.data ? ` (${users.data.length})` : ''}`}>
         {users.isLoading && <SkeletonList rows={6} />}
         {users.isError && <ErrorState error={users.error} />}
         {users.data && (
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>User</th><th>Role</th><th>State</th><th>Last sign-in</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Control room</th><th>Access</th><th>Status</th><th>Last sign-in</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
-                {users.data.map((u) => (
+                {accounts.map((u) => (
                   <tr key={u.id}>
-                    <td><strong>{u.full_name}</strong><div className="xs muted">{u.username}</div></td>
-                    <td>{ROLE[u.role].label}</td>
+                    <td><strong>{u.jurisdiction}</strong><div className="xs muted mono">{u.username}</div></td>
+                    <td className="small">{ROLE[u.role].label}</td>
                     <td className="row-wrap">
-                      <Badge tone={u.is_active ? 'tone-ok' : 'tone-idle'}>{u.is_active ? 'Active' : 'Deactivated'}</Badge>
-                      {u.must_change_password && <Badge tone="tone-warn"><KeyRound size={11} aria-hidden />Password change pending</Badge>}
+                      <Badge tone={u.is_active ? 'tone-ok' : 'tone-idle'}>{u.is_active ? 'Active' : 'Suspended'}</Badge>
                       {u.locked_until && Date.parse(u.locked_until) > Date.now() && <Badge tone="tone-bad">Locked</Badge>}
                     </td>
                     <td className="small">{u.last_login_at ? <TimeAgo value={u.last_login_at} /> : 'Never'}</td>
-                    <td><Button size="sm" onClick={() => setEditing(u)}>Edit</Button></td>
+                    <td><div className="row">{u.state_code || u.username === 'national' ? <Reissue user={u} onIssued={setIssued} /> : null}<ActiveToggle user={u} /></div></td>
                   </tr>
                 ))}
               </tbody>
@@ -97,11 +149,7 @@ export function UsersPage() {
           </div>
         )}
       </Panel>
-      <Panel title="Roles">
-        <dl className="kv">{ROLES.map((r) => <Fragment key={r}><dt>{ROLE[r].label}</dt><dd>{ROLE[r].description}</dd></Fragment>)}</dl>
-      </Panel>
-      {creating && <CreateUser onClose={() => setCreating(false)} />}
-      {editing && <EditUser user={editing} onClose={() => setEditing(null)} />}
+      {issued && <Issued issued={issued} onClose={() => setIssued(null)} />}
     </div>
   );
 }

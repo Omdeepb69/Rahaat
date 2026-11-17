@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from raahat.api import scope as access
 from raahat.api.deps import CurrentUser, get_db, require
 from raahat.api.schemas import Page, Pagination
 from raahat.api.services import providers
@@ -205,7 +206,7 @@ def _incident(session: Session, identifier: str) -> uuid.UUID:
     incident_id = resolve_incident_id(session, identifier)
     if incident_id is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
-    return incident_id
+    return access.ensure_incident(session, incident_id)
 
 
 @router.get("/queue", response_model=list[QueueEntry], summary="Verified incidents awaiting a resource, by priority score")
@@ -221,7 +222,7 @@ def queue(
             has_position=item["need"].position is not None, created_at=item["need"].created_at,
             priority_score=_score(item["score"]),
         )
-        for item in dispatch.priority_queue(session, disaster_id)
+        for item in dispatch.priority_queue(session, access.ensure_operation(session, disaster_id))
     ]
 
 
@@ -232,7 +233,7 @@ def plan(
     session: Session = Depends(get_db),
 ) -> PlanResponse:
     """A proposal across all waiting incidents. Each pairing still needs individual approval."""
-    entries = dispatch.build_plan(session, disaster_id)
+    entries = dispatch.build_plan(session, access.ensure_operation(session, disaster_id))
     return PlanResponse(
         entries=[
             PlanEntryResponse(
@@ -285,6 +286,7 @@ def approve(
 ) -> DecisionResponse:
     """The human decision. Choosing a resource other than the first-ranked one requires a reason."""
     incident_id = _incident(session, incident)
+    access.ensure_resource(session, body.resource_id)
     try:
         assignment, decision = dispatch.approve_assignment(
             session, incident_id=incident_id, resource_id=body.resource_id, actor_id=actor.id,
@@ -337,6 +339,7 @@ def list_assignments(
     _: CurrentUser = Depends(require(Permission.DISPATCH_READ)),
     session: Session = Depends(get_db),
 ) -> Page[AssignmentResponse]:
+    access.list_filter(session, disaster_id, incident_id)
     rows, total = dispatch.list_assignments(
         session, disaster_id=disaster_id, incident_id=incident_id, active_only=active_only,
         limit=page.limit, offset=page.offset,
@@ -354,6 +357,7 @@ def progress(
 ) -> AssignmentResponse:
     if body.stage == "cancelled" and not actor.can(Permission.DISPATCH_DECIDE):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Your role does not permit cancelling assignments")
+    access.ensure_assignment(session, assignment_id)
     try:
         assignment = dispatch.record_progress(
             session, assignment_id=assignment_id, stage=body.stage, actor_id=actor.id, note=body.note

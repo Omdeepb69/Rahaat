@@ -8,7 +8,7 @@ import { formatDateTime, humanize } from '../../lib/format';
 import { CHANNEL, LANGUAGES, RECEIVED_VIA } from '../../lib/labels';
 import { useReports } from '../../lib/queries';
 import { session } from '../../lib/session';
-import type { ReportSummary } from '../../lib/types';
+import type { CallTranscript, ReportSummary } from '../../lib/types';
 import { SectionHeading } from './SectionHeading';
 
 function AudioPlayer({ reportId }: { reportId: string }) {
@@ -38,6 +38,36 @@ function AudioPlayer({ reportId }: { reportId: string }) {
   );
 }
 
+const ENDED: Record<string, string> = {
+  completed: 'Caller answered every question',
+  caller_sent: 'Caller sent it early',
+  caller_left: 'Caller left before the end; sent automatically',
+};
+
+function CallDetails({ call }: { call: CallTranscript }) {
+  const answered = call.turns.filter((t) => t.answer);
+  return (
+    <details className="call-details">
+      <summary className="small">
+        Guided voice call: {answered.length} answer{answered.length === 1 ? '' : 's'}
+        {call.language && <> in {LANGUAGES[call.language] ?? call.language}{call.language_source === 'detected' ? ' (detected)' : call.language_source === 'chosen' ? ' (chosen by caller)' : ''}</>}
+        {call.ended && <span className="faint"> · {ENDED[call.ended] ?? humanize(call.ended)}</span>}
+      </summary>
+      <dl className="call-turns">
+        {call.turns.map((t, i) => (
+          <div key={i}>
+            <dt lang={call.language ?? undefined}>{t.question ?? humanize(t.step)}</dt>
+            <dd lang={t.detected_language?.split('-')[0] ?? call.language ?? undefined}>
+              {t.answer === null ? <Unknown>hidden for your role</Unknown> : t.answer ? t.answer : <Unknown>no answer</Unknown>}
+              {t.via === 'text' && t.answer ? <span className="xs faint"> (typed)</span> : null}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  );
+}
+
 export function ReportCard({ report, showIncident }: { report: ReportSummary; showIncident?: boolean }) {
   const [showTranslation, setShowTranslation] = useState(true);
   const language = report.original_language ? LANGUAGES[report.original_language] ?? report.original_language : null;
@@ -49,7 +79,7 @@ export function ReportCard({ report, showIncident }: { report: ReportSummary; sh
         <time className="num muted" dateTime={report.received_at} title={report.received_at}>{formatDateTime(report.received_at)}</time>
         <span className="faint">(<TimeAgo value={report.received_at} />)</span>
         {language && <Badge tone="tone-outline" title={`Identified by ${report.language_source ?? 'unknown'}`}>{language}</Badge>}
-        {showIncident && report.incident_reference && <Link to={`/incidents/${report.incident_reference}`} className="ref">{report.incident_reference}</Link>}
+        {showIncident && report.incident_reference && <Link to={`/control/incidents/${report.incident_reference}`} className="ref">{report.incident_reference}</Link>}
       </div>
       {(report.caller_name || report.caller_contact) && (
         <div className="small"><span className="muted">Caller:</span> {report.caller_name ?? <Unknown>name not given</Unknown>}{report.caller_contact && <span className="num"> · {report.caller_contact}</span>}</div>
@@ -73,6 +103,7 @@ export function ReportCard({ report, showIncident }: { report: ReportSummary; sh
       ) : (
         <Unknown>No text: {report.has_audio ? 'audio report not transcribed' : 'empty report'}</Unknown>
       )}
+      {report.call && <CallDetails call={report.call} />}
       {report.processing_error && <Callout tone="warn">{report.processing_error}</Callout>}
       {report.processing_status === 'pending' && <span className="small faint">Waiting for the background worker.</span>}
       {report.processing_status === 'pending_enrichment' && <span className="small faint">Translation and model extraction pending.</span>}

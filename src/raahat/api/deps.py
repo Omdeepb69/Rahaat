@@ -11,9 +11,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from raahat.api import scope
 from raahat.config import Settings, get_settings
 from raahat.infrastructure.database.models.user import UserModel
 from raahat.infrastructure.database.session import create_sync_engine, get_sync_sessionmaker
+from raahat.security.jurisdiction import Jurisdiction
 from raahat.security.permissions import Permission, Role, permissions_for
 from raahat.security.ratelimit import SlidingWindowLimiter
 from raahat.security.tokens import InvalidTokenError, TokenClaims, decode_access_token
@@ -82,6 +84,7 @@ class CurrentUser:
     role: Role
     permissions: frozenset[Permission]
     must_change_password: bool
+    jurisdiction: Jurisdiction = Jurisdiction()
     claims: Optional[TokenClaims] = None
 
     def can(self, permission: Permission) -> bool:
@@ -131,8 +134,10 @@ def current_user(
         role=role,
         permissions=permissions_for(role),
         must_change_password=user.must_change_password,
+        jurisdiction=Jurisdiction(user.state_code, user.district_code),
         claims=claims,
     )
+    scope.bind(session, resolved.jurisdiction)
     request.state.user_id = str(user.id)
     return resolved
 

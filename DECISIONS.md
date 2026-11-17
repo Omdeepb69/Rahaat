@@ -235,3 +235,40 @@ Required fields set `aria-required`; errors are linked with
 New incidents are announced through a polite live region. Submit buttons stay
 enabled and validate on press rather than being silently disabled. All motion
 stops under `prefers-reduced-motion`.
+
+## D22 — Jurisdiction accounts and server-side isolation
+
+**Decision.** Sign-in is by state, district and password; one account per
+national, state and district control room (LGD codes, bundled from the Local
+Government Directory: 36 states and union territories, 790 districts). Every
+operation carries a state and district; every authenticated route checks the
+operation it touches against the caller's jurisdiction, list endpoints require
+an operation for non-national accounts, and the event stream is filtered by a
+subquery of visible operations.
+
+**Why.** Reports from one state must never reach another state's staff, and
+hiding things in the interface is not enforcement. Passwords are generated per
+account rather than derived from the place, because a formula anyone can read
+would let anyone sign in anywhere.
+
+**Trade-off.** Shared accounts per control room mean the audit log records the
+control room, not the individual. Individual accounts can be added later
+under the same jurisdiction model.
+
+## D23 — Guided voice call built on Gnani Prisma and Timbre
+
+**Decision.** The public site runs its own short interview in the browser:
+Gnani Timbre speaks fixed questions (cached), the browser records each answer
+as 16 kHz WAV with simple end-of-speech detection, Gnani Prisma transcribes
+with automatic language identification, and the deterministic extraction rules
+decide which questions are already answered. Unrecognised languages fall back
+to Hindi. Typing works at every step.
+
+**Why.** It needs only the speech keys already provisioned, works on any phone
+browser, and every answer stays in the caller's own words. No language model
+is required to run the interview.
+
+**Limits.** Extraction rules cover English, Hindi and Malayalam best; in other
+languages questions are asked even when already answered. Prompt translations
+need review by native speakers. Konkani has no Prisma model and is usually
+identified as Hindi or Marathi.

@@ -30,7 +30,7 @@ export function IncidentPage() {
   return (
     <SectionLevel.Provider value={2}>
     <div className="page page-wide">
-      <Link to="/incidents" className="small row"><ArrowLeft size={14} aria-hidden /> All incidents</Link>
+      <Link to="/control/incidents" className="small row"><ArrowLeft size={14} aria-hidden /> All incidents</Link>
       <div className="panel"><IncidentHeader incident={incident} /></div>
       <div className="grid-2">
         <div className="panel">

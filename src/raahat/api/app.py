@@ -30,7 +30,9 @@ from raahat.api.routes import (
     resources,
     system,
     users,
+    voice,
 )
+from raahat.api.routes import jurisdictions as jurisdiction_routes
 from raahat.application.events import EventHub
 from raahat.config import Settings, get_settings
 from raahat.logging_config import configure_logging
@@ -40,6 +42,7 @@ access_logger = logging.getLogger("raahat.access")
 
 API_PREFIX = "/api/v1"
 AUDIO_UPLOAD_PATH = f"{API_PREFIX}/public/reports/voice"
+CALL_PATH_PREFIX = f"{API_PREFIX}/public/calls/"
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
@@ -55,6 +58,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         limit = (
             self._settings.max_audio_upload_bytes + 64 * 1024
             if request.url.path == AUDIO_UPLOAD_PATH
+            or (request.url.path.startswith(CALL_PATH_PREFIX) and request.url.path.endswith("/turns"))
             else self._settings.max_request_bytes
         )
         declared = request.headers.get("content-length")
@@ -142,7 +146,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             # Bearer tokens are sent in a header; no cookies are involved.
             allow_credentials=False,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-            allow_headers=["Authorization", "Content-Type", "Last-Event-ID"],
+            allow_headers=["Authorization", "Content-Type", "Last-Event-ID", "X-Call-Token"],
             expose_headers=["X-Request-ID", "Retry-After"],
             max_age=600,
         )
@@ -201,6 +205,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     for router in (
+        jurisdiction_routes.router,
         auth.router,
         users.router,
         disasters.router,
@@ -216,6 +221,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.include_router(router, prefix=API_PREFIX)
     if settings.public_intake_enabled:
         app.include_router(public.router, prefix=API_PREFIX)
+        app.include_router(voice.router, prefix=API_PREFIX)
 
     return app
 

@@ -61,7 +61,7 @@ function CandidateCard({ incident, candidate }: { incident: IncidentDetail; cand
     <li className="stack-sm" style={{ padding: '10px 0' }}>
       <div className="spread">
         <div className="row-wrap">
-          <Link to={`/incidents/${candidate.other.reference}`} className="ref" style={{ fontWeight: 600 }}>{candidate.other.reference}</Link>
+          <Link to={`/control/incidents/${candidate.other.reference}`} className="ref" style={{ fontWeight: 600 }}>{candidate.other.reference}</Link>
           <PriorityBadge priority={candidate.other.priority} />
           <StatusBadge status={candidate.other.status} />
         </div>

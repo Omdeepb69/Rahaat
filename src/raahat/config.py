@@ -76,6 +76,12 @@ class Settings(BaseModel):
     # Speech-to-text (Gnani Prisma, served from api.vachana.ai)
     gnani_api_key: Optional[str] = None
     prisma_endpoint: str = "https://api.vachana.ai/stt/v3"
+    # Text-to-speech (Gnani Timbre) for the guided voice call; same key.
+    timbre_endpoint: str = "https://api.vachana.ai/api/v1/tts/inference"
+    timbre_model: str = "timbre-v3.0"
+    timbre_voice: str = "Shivani"
+    # Requests per minute from one address during a guided call (turns and prompt audio).
+    voice_call_rate_per_minute: int = Field(default=90, ge=10)
 
     # Extraction / translation model
     llm_provider: Literal["none", "evon", "gemini"] = "none"
@@ -188,6 +194,10 @@ def load_settings() -> Settings:
         "MAX_FAILED_LOGINS": ("max_failed_logins", int),
         "LOCKOUT_SECONDS": ("lockout_seconds", int),
         "PRISMA_ENDPOINT": ("prisma_endpoint", str),
+        "TIMBRE_ENDPOINT": ("timbre_endpoint", str),
+        "TIMBRE_MODEL": ("timbre_model", str),
+        "TIMBRE_VOICE": ("timbre_voice", str),
+        "VOICE_CALL_RATE_PER_MINUTE": ("voice_call_rate_per_minute", int),
         "EVON_MODEL": ("evon_model", str),
         "GEMINI_MODEL": ("gemini_model", str),
         "NOMINATIM_BASE_URL": ("nominatim_base_url", str),

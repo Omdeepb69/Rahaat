@@ -33,20 +33,42 @@
 
 ## Accounts
 
-- First administrator: `docker compose exec api raahat-entrypoint cli create-admin ...`.
-- Further users: *Users* page. New users must replace their temporary
-  password at first sign-in.
-- Lost administrator password: `cli reset-password --username <name>` on the
-  laptop.
-- Deactivating a user or changing their role ends their sessions immediately.
+Staff sign in by choosing their **state**, then their **district** (or the
+state control room), then the password issued to that control room. There is
+one account per control room:
 
-| Role | Can |
-|---|---|
-| Administrator | Everything, including users and operations |
-| Control-room operator | Enter reports, verify and correct incidents, confirm locations, resolve duplicates |
-| Dispatcher | Enter reports, verify, commit resources, record progress |
-| Resource coordinator | Maintain resources and positions, record progress; no caller details |
-| Observer | Read only; no caller details |
+| Account | Sees | Role |
+|---|---|---|
+| National administration | Every operation in every state | Administrator: also issues passwords |
+| State control room | Every operation in its state, all districts | Control room |
+| District control room | Only operations in its district | Control room |
+
+The server enforces this on every request and on the live event stream;
+anything outside the account's area is answered as "not found".
+
+- **Create every account at once** (prints passwords once, as CSV):
+  `docker compose exec -T api raahat-entrypoint cli provision-accounts --all > secrets/control-room-passwords.csv`
+  Keep that file private (`secrets/` is git-ignored, mode 600) and hand each
+  control room only its own line. `--states 32,21` limits it to some states;
+  `--reset` replaces existing passwords.
+- **Replace one password**: national administration, *Control room accounts*
+  page, *New password*. The old password stops working and its sessions end.
+- **Suspend** a control room from the same page.
+- Passwords are random (four groups of four characters), never derived from the
+  state or district, and stored only as scrypt hashes.
+
+## Public reporting site
+
+- Requires `PUBLIC_INTAKE_ENABLED=true`.
+- After deploying, synthesise the spoken questions once so callers never wait:
+  `docker compose exec api raahat-entrypoint cli warm-voice-prompts`
+  (82 clips through Gnani Timbre, cached under the audio volume).
+- A call is routed by the state and district the caller chooses: to the newest
+  active operation for that district, else the newest state-wide one, else a
+  standing "<District>: public emergency reports" operation created on first
+  use. Open a named operation for the district and new calls go there.
+- A call the caller abandons is sent as a report by the worker three minutes
+  after its last answer.
 
 ## Running an operation
 

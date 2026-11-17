@@ -67,7 +67,7 @@ export function ActivityPage() {
                     <td className="num" title={formatFull(e.occurred_at)}>{formatDateTime(e.occurred_at)}</td>
                     <td>{actionLabel(e.action)}</td>
                     <td>{e.actor_name ?? (e.actor_id ? <Unknown>Unknown user</Unknown> : <Badge>System</Badge>)}</td>
-                    <td>{e.incident_id ? <Link className="num" to={`/incidents/${e.incident_id}`}>{String(e.payload.incident_reference ?? e.payload.reference ?? 'Incident')}</Link> : humanize(e.entity_type)}</td>
+                    <td>{e.incident_id ? <Link className="num" to={`/control/incidents/${e.incident_id}`}>{String(e.payload.incident_reference ?? e.payload.reference ?? 'Incident')}</Link> : humanize(e.entity_type)}</td>
                     <td style={{ maxWidth: 420 }}>{summary(e.payload)}</td>
                   </tr>
                 ))}

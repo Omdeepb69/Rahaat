@@ -29,7 +29,7 @@ function Queue() {
               {queue.data.map((q, i) => (
                 <tr key={q.incident_id}>
                   <td className="num">{i + 1}</td>
-                  <td><Link className="row-link ref" to={`/?incident=${q.incident_id}`}>{q.reference}</Link><div className="xs muted">{humanize(q.category)}</div></td>
+                  <td><Link className="row-link ref" to={`/control/control?incident=${q.incident_id}`}>{q.reference}</Link><div className="xs muted">{humanize(q.category)}</div></td>
                   <td><PriorityBadge priority={q.priority} /></td>
                   <td>
                     <details>
@@ -67,7 +67,7 @@ function PlanView() {
           <ul className="list">
             {plan.data.entries.map((e) => (
               <li key={e.incident_id} className="spread" style={{ padding: '8px 0' }}>
-                <span><Link className="ref" to={`/?incident=${e.incident_id}`}>{e.incident_reference}</Link> <span className="xs muted num">score {e.priority_score.toFixed(0)}</span></span>
+                <span><Link className="ref" to={`/control/control?incident=${e.incident_id}`}>{e.incident_reference}</Link> <span className="xs muted num">score {e.priority_score.toFixed(0)}</span></span>
                 {e.candidate ? (
                   <span className="small"><strong>{e.candidate.callsign}</strong> · {e.candidate.distance_m != null ? formatDistance(e.candidate.distance_m) : 'distance unknown'}{e.candidate.warnings.length > 0 && <Badge tone="tone-warn">{e.candidate.warnings.length} warning</Badge>}</span>
                 ) : <span className="small" style={{ color: 'var(--warn)' }}>{e.reason_unassigned}</span>}
@@ -93,7 +93,7 @@ function Active() {
           {assignments.data.items.map((a) => (
             <li key={a.id} className="stack-sm" style={{ padding: 'var(--s-3) var(--s-4)' }}>
               <div className="spread">
-                <span><strong>{a.callsign}</strong> → <Link className="ref" to={`/?incident=${a.incident_id}`}>{a.incident_reference}</Link> <PriorityBadge priority={a.incident_priority} /></span>
+                <span><strong>{a.callsign}</strong> → <Link className="ref" to={`/control/control?incident=${a.incident_id}`}>{a.incident_reference}</Link> <PriorityBadge priority={a.incident_priority} /></span>
                 <Badge tone="tone-accent">{STAGE[a.stage] ?? a.stage}</Badge>
               </div>
               <span className="xs muted">{a.incident_location_label ?? 'Position not established'} · updated <TimeAgo value={a.updated_at} /></span>

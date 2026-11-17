@@ -92,12 +92,21 @@ def read_events_after(
     after_seq: int,
     disaster_id: Optional[UUID] = None,
     limit: int = BATCH_LIMIT,
+    visible: Any = None,
 ) -> list[StreamEvent]:
+    """Events after ``after_seq``.
+
+    ``visible`` is a SELECT of the operation ids the reader may see (None for
+    an unrestricted reader). A restricted reader receives only events that
+    belong to one of those operations.
+    """
     stmt = select(AuditEventModel).where(AuditEventModel.seq > after_seq)
     if disaster_id is not None:
         stmt = stmt.where(
             (AuditEventModel.disaster_id == disaster_id) | (AuditEventModel.disaster_id.is_(None))
         )
+    if visible is not None:
+        stmt = stmt.where(AuditEventModel.disaster_id.in_(visible))
     for prefix in _NON_STREAMED_PREFIXES:
         stmt = stmt.where(~AuditEventModel.action.startswith(prefix))
     rows = session.execute(stmt.order_by(AuditEventModel.seq.asc()).limit(limit)).scalars().all()
@@ -200,12 +209,13 @@ async def subscribe(
     disaster_id: Optional[UUID],
     max_events: Optional[int] = None,
     max_seconds: Optional[float] = None,
+    visible: Any = None,
 ) -> AsyncGenerator[str, None]:
     """Yield Server-Sent Events: a handshake, any missed events, then live ones."""
 
     def _read(after: int) -> list[StreamEvent]:
         with session_factory() as session:
-            return read_events_after(session, after_seq=after, disaster_id=disaster_id)
+            return read_events_after(session, after_seq=after, disaster_id=disaster_id, visible=visible)
 
     def _head() -> int:
         with session_factory() as session:

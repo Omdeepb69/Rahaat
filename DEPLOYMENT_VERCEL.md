@@ -35,6 +35,12 @@ Permissions-Policy. The production build was served locally with these exact
 headers (with `connect-src` widened only to reach the local test API): no
 policy violations, all fonts and map tiles loaded.
 
+Routes: `/` public landing page, `/report` voice reporting, `/login`
+authority sign-in, `/control` the dashboard (sent with `X-Robots-Tag:
+noindex`). The Permissions-Policy allows the microphone and geolocation for
+the site itself only. The API must run with `PUBLIC_INTAKE_ENABLED=true` for
+reporting to work.
+
 ## Any static host
 
 ```bash

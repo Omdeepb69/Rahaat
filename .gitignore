@@ -58,3 +58,4 @@ backups/
 
 # Local run configuration (secrets)
 .env.run
+secrets/

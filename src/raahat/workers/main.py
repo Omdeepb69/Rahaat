@@ -188,9 +188,22 @@ class Worker:
         except Exception:
             logger.exception("Alert feed poll failed")
 
+    def send_abandoned_calls(self) -> None:
+        """Turn guided calls the caller left part-way into reports."""
+        from raahat.application.voicecall import service as calls
+
+        try:
+            with self._sessions() as session:
+                sent = calls.submit_abandoned(session, audio_dir=self._settings.audio_storage_dir)
+            if sent:
+                logger.info("Sent %d unfinished voice call(s) as reports", sent)
+        except Exception:
+            logger.exception("Sending unfinished voice calls failed")
+
     def run_once(self) -> int:
         self.heartbeat()
         self.poll_alerts()
+        self.send_abandoned_calls()
         handled = 0
         for report_id in self.claim():
             if self.process(report_id):

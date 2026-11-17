@@ -16,6 +16,7 @@ from raahat.adapters.channels import (
     SMSAdapter,
     SMSPayload,
 )
+from raahat.api import scope as access
 from raahat.api.deps import CurrentUser, get_db, require
 from raahat.api.schemas import Page, Pagination, split_csv
 from raahat.api.services import get_pipeline
@@ -49,6 +50,21 @@ class OperatorReportRequest(BaseModel):
     language_hint: Optional[str] = Field(default=None, pattern="^(ml|en|hi|kok)$")
 
 
+class CallTurn(BaseModel):
+    step: str
+    question: Optional[str]
+    answer: Optional[str]
+    via: Optional[str]
+    detected_language: Optional[str]
+
+
+class CallTranscript(BaseModel):
+    language: Optional[str]
+    language_source: Optional[str]
+    ended: Optional[str]
+    turns: list[CallTurn]
+
+
 class ReportSummary(BaseModel):
     id: uuid.UUID
     disaster_id: uuid.UUID
@@ -66,6 +82,7 @@ class ReportSummary(BaseModel):
     caller_name: Optional[str]
     caller_contact: Optional[str]
     caller_details_redacted: bool
+    call: Optional[CallTranscript] = None
     incident_id: Optional[uuid.UUID]
     incident_reference: Optional[str]
     incident_status: Optional[str]
@@ -105,6 +122,27 @@ class ChannelAccepted(BaseModel):
     processing_status: str
 
 
+_PERSONAL_STEPS = frozenset({"callback", "name"})
+
+
+def _call(raw: Any, *, pii: bool) -> Optional[CallTranscript]:
+    """The guided call's questions and answers. Name and phone answers need caller-data access."""
+    if not isinstance(raw, dict):
+        return None
+    turns = [
+        CallTurn(
+            step=str(t.get("step") or ""), question=t.get("question"),
+            answer=None if (t.get("step") in _PERSONAL_STEPS and not pii) else t.get("answer"),
+            via=t.get("via"), detected_language=t.get("detected_language"),
+        )
+        for t in raw.get("transcript") or [] if isinstance(t, dict)
+    ]
+    return CallTranscript(
+        language=raw.get("language"), language_source=raw.get("language_source"),
+        ended=raw.get("ended"), turns=turns,
+    )
+
+
 def _summary(row: dict[str, Any], *, pii: bool) -> ReportSummary:
     return ReportSummary(
         id=row["id"], disaster_id=row["disaster_id"], channel=row["source_type"],
@@ -116,6 +154,7 @@ def _summary(row: dict[str, Any], *, pii: bool) -> ReportSummary:
         caller_name=row["caller_name"] if pii else None,
         caller_contact=row["caller_contact"] if pii else None,
         caller_details_redacted=not pii and bool(row["caller_name"] or row["caller_contact"]),
+        call=_call(row.get("voice_call"), pii=pii),
         incident_id=row["incident_id"], incident_reference=row["incident_reference"],
         incident_status=row["incident_status"], entered_by=row["created_by"],
     )
@@ -134,6 +173,7 @@ def create_report(
     The response includes the incident it produced or was attached to, how many
     possible duplicates were found, and how many location candidates.
     """
+    access.ensure_operation(session, body.disaster_id)
     try:
         created = intake.create_operator_report(
             session,
@@ -170,6 +210,7 @@ def create_report(
 
 
 def _accept(session: Session, submission) -> ChannelAccepted:
+    access.ensure_operation(session, submission.disaster_id)
     try:
         report, existed = intake.store_channel_report(session, submission)
     except LookupError as exc:
@@ -213,6 +254,7 @@ def list_reports(
     actor: CurrentUser = Depends(require(Permission.REPORTS_READ)),
     session: Session = Depends(get_db),
 ) -> Page[ReportSummary]:
+    access.list_filter(session, disaster_id, incident_id)
     rows, total = intake.list_reports(
         session, disaster_id=disaster_id, channels=split_csv(channel),
         statuses=split_csv(processing_status), incident_id=incident_id, search=q,
@@ -228,6 +270,7 @@ def get_report(
     actor: CurrentUser = Depends(require(Permission.REPORTS_READ)),
     session: Session = Depends(get_db),
 ) -> ReportDetail:
+    access.ensure_report(session, report_id)
     row = intake.get_report_row(session, report_id)
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
@@ -250,6 +293,7 @@ def get_report_audio(
     session: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> FileResponse:
+    access.ensure_report(session, report_id)
     report = session.get(ReportModel, report_id)
     path = intake.audio_path(settings.audio_storage_dir, report) if report else None
     if path is None:

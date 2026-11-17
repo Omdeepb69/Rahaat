@@ -14,7 +14,7 @@ export function RequireOperation({ children }: { children: React.ReactNode }) {
   if (!operation) {
     return (
       <EmptyState icon={<FolderOpen size={22} />} title="No operation is open"
-        action={can('operations:manage') ? <Link className="btn btn-primary" to="/admin/operations">Open an operation</Link> : undefined}>
+        action={can('operations:manage') ? <Link className="btn btn-primary" to="/control/admin/operations">Open an operation</Link> : undefined}>
         Reports, incidents and resources belong to an operation, such as a flood response in one district.
         {can('operations:manage') ? ' Open one to begin.' : ' An administrator needs to open one before work can begin.'}
       </EmptyState>

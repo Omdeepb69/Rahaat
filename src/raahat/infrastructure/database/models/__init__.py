@@ -17,6 +17,7 @@ from .system import (
     WorkerHeartbeatModel,
 )
 from .user import UserModel
+from .voice_call import VoiceCallModel
 
 __all__ = [
     "Base",
@@ -38,6 +39,7 @@ __all__ = [
     "AuditEventModel",
     "EntityMergeEventModel",
     "UserModel",
+    "VoiceCallModel",
     "WorkerHeartbeatModel",
     "ProcessingRunModel",
     "IntegrationCheckModel",

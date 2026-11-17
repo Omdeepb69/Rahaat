@@ -90,14 +90,14 @@ export function IncidentHeader({ incident, onClose, compact }: { incident: Incid
           <StatusBadge status={incident.status} />
         </div>
         <div className="row">
-          {compact && <Link to={`/incidents/${incident.reference}`} className="btn btn-ghost btn-sm" title="Open full page"><ExternalLink size={14} /><span className="sr-only">Open full page</span></Link>}
+          {compact && <Link to={`/control/incidents/${incident.reference}`} className="btn btn-ghost btn-sm" title="Open full page"><ExternalLink size={14} /><span className="sr-only">Open full page</span></Link>}
           {onClose && <Button variant="ghost" size="sm" aria-label="Close details" icon={<X size={16} />} onClick={onClose} />}
         </div>
       </div>
       <span className="small muted">
         {humanize(incident.category)} · {incident.report_count} report{incident.report_count === 1 ? '' : 's'} · opened <TimeAgo value={incident.created_at} /> · updated <TimeAgo value={incident.updated_at} />
       </span>
-      {incident.merged_into_id && <Callout>Merged into another incident. <Link to={`/incidents/${incident.merged_into_id}`}>Open it</Link></Callout>}
+      {incident.merged_into_id && <Callout>Merged into another incident. <Link to={`/control/incidents/${incident.merged_into_id}`}>Open it</Link></Callout>}
       <StatusActions incident={incident} />
     </div>
   );

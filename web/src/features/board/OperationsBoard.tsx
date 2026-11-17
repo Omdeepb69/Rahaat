@@ -178,7 +178,7 @@ function Board() {
           <div className="ops-toolbar">
             <div className="spread">
               <h1 id="queue-h" style={{ fontSize: 'var(--text-lg)' }}>Incident queue</h1>
-              {can('reports:create') && <Link to="/intake" className="btn btn-primary btn-sm"><PlusCircle size={14} aria-hidden />New report</Link>}
+              {can('reports:create') && <Link to="/control/intake" className="btn btn-primary btn-sm"><PlusCircle size={14} aria-hidden />New report</Link>}
             </div>
             <Segmented<View> label="Show" value={view} onChange={setView} options={[
               { value: 'review', label: 'Needs review' }, { value: 'open', label: 'All open' }, { value: 'active', label: 'Verified' },

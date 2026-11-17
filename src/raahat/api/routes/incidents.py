@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from raahat.api import scope as access
 from raahat.api.deps import CurrentUser, get_db, get_session_factory, require
 from raahat.api.schemas import Coordinates, Page, Pagination, coordinates_or_none, split_csv
 from raahat.api.services import get_incident_commands, get_pipeline, providers
@@ -269,7 +270,7 @@ def _resolve(session: Session, identifier: str) -> uuid.UUID:
     incident_id = incidents.resolve_incident_id(session, identifier)
     if incident_id is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
-    return incident_id
+    return access.ensure_incident(session, incident_id)
 
 
 def _duplicates(session: Session, incident_id: uuid.UUID) -> list[DuplicateCandidate]:
@@ -360,6 +361,7 @@ def list_incidents(
     _: CurrentUser = Depends(require(Permission.INCIDENTS_READ)),
     session: Session = Depends(get_db),
 ) -> Page[IncidentSummary]:
+    access.list_filter(session, disaster_id)
     statuses = split_csv(status_filter)
     if "open" in statuses:
         statuses = ["unverified", "under_review", "verified", "assigned", "in_progress"]
@@ -392,6 +394,7 @@ def incident_counts(
     _: CurrentUser = Depends(require(Permission.INCIDENTS_READ)),
     session: Session = Depends(get_db),
 ) -> IncidentCounts:
+    access.list_filter(session, disaster_id)
     return IncidentCounts(**incidents.status_counts(session, disaster_id))
 
 
@@ -714,6 +717,7 @@ def pending_duplicates(
     _: CurrentUser = Depends(require(Permission.INCIDENTS_READ)),
     session: Session = Depends(get_db),
 ) -> Page[DuplicateCandidate]:
+    access.list_filter(session, disaster_id)
     scope = " AND i.disaster_id = :disaster_id" if disaster_id else ""
     params: dict[str, Any] = {"disaster_id": disaster_id} if disaster_id else {}
     total = session.execute(

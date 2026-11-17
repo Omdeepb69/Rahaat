@@ -10,10 +10,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from raahat.api import scope
 from raahat.api.deps import CurrentUser, get_db, require
 from raahat.api.schemas import Coordinates, coordinates_or_none
 from raahat.infrastructure.database.models.disaster import DisasterModel
 from raahat.infrastructure.database.repositories.audit import append_audit
+from raahat.security.jurisdiction import Jurisdiction, UnknownJurisdiction
 from raahat.security.permissions import Permission
 
 router = APIRouter(prefix="/disasters", tags=["operations"])
@@ -22,7 +24,7 @@ DISASTER_TYPES = ("flood", "cyclone", "landslide", "earthquake", "fire", "infras
 
 _SELECT = """
     SELECT d.id, d.name, d.disaster_type, d.status, d.description, d.area_name,
-           d.started_at, d.closed_at, d.created_at,
+           d.state_code, d.district_code, d.is_standing, d.started_at, d.closed_at, d.created_at,
            ST_Y(d.map_center::geometry) AS lat, ST_X(d.map_center::geometry) AS lon,
            (SELECT count(*) FROM incidents i WHERE i.disaster_id = d.id
               AND i.status IN ('unverified','under_review','verified','assigned','in_progress')) AS open_incidents,
@@ -38,6 +40,10 @@ class DisasterResponse(BaseModel):
     status: str
     description: Optional[str]
     area_name: Optional[str]
+    state_code: Optional[str]
+    district_code: Optional[str]
+    jurisdiction: str
+    is_standing: bool
     map_center: Optional[Coordinates]
     started_at: Optional[datetime]
     closed_at: Optional[datetime]
@@ -55,6 +61,10 @@ class CreateDisasterRequest(BaseModel):
     area_name: Optional[str] = Field(default=None, max_length=255)
     map_center: Optional[Coordinates] = None
     started_at: Optional[datetime] = None
+    # LGD codes. Omitted fields default to the creator's own jurisdiction; a
+    # state account may narrow to one of its districts.
+    state_code: Optional[str] = Field(default=None, max_length=8)
+    district_code: Optional[str] = Field(default=None, max_length=8)
 
 
 class UpdateDisasterRequest(BaseModel):
@@ -71,6 +81,10 @@ def _to_response(row) -> DisasterResponse:
     return DisasterResponse(
         id=row.id, name=row.name, disaster_type=row.disaster_type, status=row.status,
         description=row.description, area_name=row.area_name,
+        state_code=row.state_code, district_code=row.district_code,
+        jurisdiction=Jurisdiction(row.state_code, row.district_code).label if row.state_code
+        else "No jurisdiction assigned",
+        is_standing=row.is_standing,
         map_center=coordinates_or_none(row.lat, row.lon), started_at=row.started_at,
         closed_at=row.closed_at, created_at=row.created_at,
         open_incidents=row.open_incidents, resources=row.resources,
@@ -91,10 +105,14 @@ def list_disasters(
     _: CurrentUser = Depends(require(Permission.INCIDENTS_READ)),
     session: Session = Depends(get_db),
 ) -> list[DisasterResponse]:
-    where = " WHERE d.status = :status" if status_filter else ""
+    condition, params = scope.of(session).sql("d")
+    where = f" WHERE {condition}"
+    if status_filter:
+        where += " AND d.status = :status"
+        params["status"] = status_filter
     rows = session.execute(
         text(f"{_SELECT}{where} ORDER BY (d.status = 'active') DESC, d.created_at DESC LIMIT 200"),
-        {"status": status_filter} if status_filter else {},
+        params,
     ).all()
     return [_to_response(r) for r in rows]
 
@@ -105,6 +123,7 @@ def get_disaster(
     _: CurrentUser = Depends(require(Permission.INCIDENTS_READ)),
     session: Session = Depends(get_db),
 ) -> DisasterResponse:
+    scope.ensure_operation(session, disaster_id)
     row = session.execute(text(f"{_SELECT} WHERE d.id = :id"), {"id": disaster_id}).first()
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Operation not found")
@@ -122,19 +141,32 @@ def create_disaster(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY, f"Type must be one of: {', '.join(DISASTER_TYPES)}"
         )
+    own = actor.jurisdiction
+    try:
+        target = Jurisdiction.validated(
+            body.state_code or own.state_code, body.district_code or own.district_code
+        )
+    except UnknownJurisdiction as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from None
+    if not own.covers(target.state_code, target.district_code) or (
+        own.district_code is not None and target.district_code != own.district_code
+    ):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "That area is outside your jurisdiction")
     disaster = DisasterModel(
         id=uuid.uuid4(), name=body.name.strip(), disaster_type=body.disaster_type, status="active",
         description=(body.description or "").strip() or None,
         area_name=(body.area_name or "").strip() or None,
         map_center=_validate_center(body.map_center),
         started_at=body.started_at or datetime.now(timezone.utc),
+        state_code=target.state_code, district_code=target.district_code,
     )
     session.add(disaster)
     session.flush()
     append_audit(
         session, action="operation.opened", actor_id=actor.id, entity_type="disaster",
         entity_id=disaster.id, disaster_id=disaster.id,
-        payload={"name": disaster.name, "type": disaster.disaster_type},
+        payload={"name": disaster.name, "type": disaster.disaster_type,
+                 "state_code": target.state_code, "district_code": target.district_code},
     )
     session.commit()
     return get_disaster(disaster.id, actor, session)
@@ -147,6 +179,7 @@ def update_disaster(
     actor: CurrentUser = Depends(require(Permission.OPERATIONS_MANAGE)),
     session: Session = Depends(get_db),
 ) -> DisasterResponse:
+    scope.ensure_operation(session, disaster_id)
     disaster = session.get(DisasterModel, disaster_id)
     if disaster is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Operation not found")

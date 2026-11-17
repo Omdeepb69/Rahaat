@@ -18,7 +18,7 @@ APP_TABLES = (
     "dispatch_decisions, operation_events, assignments, entity_merge_events, incident_links, "
     "location_hypotheses, evidence_spans, evidence_items, incident_reports, processing_runs, "
     "incidents, reports, resources, landmarks, integration_checks, worker_heartbeats, "
-    "external_observations, audit_events, users, disasters"
+    "external_observations, audit_events, voice_calls, users, disasters"
 )
 
 

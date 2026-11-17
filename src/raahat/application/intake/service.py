@@ -233,6 +233,7 @@ _REPORT_LIST = """
            r.client_created_at, r.processing_status, r.processing_error, r.processed_at,
            r.original_text, r.original_language, r.language_source, r.translated_text,
            r.translation_provider, r.caller_name, r.caller_contact, r.created_by,
+           r.raw_payload -> 'voice_call' AS voice_call,
            (r.raw_payload ? 'audio') AS has_audio,
            ir.incident_id, i.reference AS incident_reference, i.status AS incident_status
     FROM reports r

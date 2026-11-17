@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from raahat.api import scope as access
 from raahat.api.deps import CurrentUser, get_db, require
 from raahat.api.schemas import Coordinates, Page, Pagination, coordinates_or_none, split_csv
 from raahat.application.resources import service as resources
@@ -185,6 +186,7 @@ def list_resources(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_READ)),
     session: Session = Depends(get_db),
 ) -> Page[ResourceResponse]:
+    access.list_filter(session, disaster_id)
     rows, total = resources.list_resources(
         session, disaster_id=disaster_id, statuses=split_csv(status_filter),
         types=split_csv(resource_type), search=q, include_retired=include_retired,
@@ -203,6 +205,7 @@ def get_resource(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_READ)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_resource(session, resource_id)
     return _one(session, resource_id, actor)
 
 
@@ -213,6 +216,7 @@ def create_resource(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_operation(session, body.disaster_id)
     created = _run(session, lambda: resources.create_resource(session, actor_id=actor.id, **body.model_dump()))
     return _one(session, created.id, actor)
 
@@ -224,6 +228,7 @@ def update_resource(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_resource(session, resource_id)
     _run(
         session,
         lambda: resources.update_resource(
@@ -241,6 +246,7 @@ def set_status(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_resource(session, resource_id)
     _run(
         session,
         lambda: resources.set_status(
@@ -257,6 +263,7 @@ def update_position(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_resource(session, resource_id)
     _run(
         session,
         lambda: resources.update_position(
@@ -275,5 +282,6 @@ def retire(
     actor: CurrentUser = Depends(require(Permission.RESOURCES_MANAGE)),
     session: Session = Depends(get_db),
 ) -> ResourceResponse:
+    access.ensure_resource(session, resource_id)
     _run(session, lambda: resources.retire(session, resource_id=resource_id, actor_id=actor.id, reason=body.reason))
     return _one(session, resource_id, actor)

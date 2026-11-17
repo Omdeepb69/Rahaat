@@ -5,7 +5,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -23,6 +23,9 @@ from raahat.security.passwords import (
 from raahat.security.permissions import Role
 
 USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{2,63}$")
+
+if TYPE_CHECKING:
+    from raahat.security.jurisdiction import Jurisdiction
 
 
 class IdentityError(Exception):
@@ -59,6 +62,8 @@ class AuthenticatedUser:
     role: Role
     token_version: int
     must_change_password: bool
+    state_code: Optional[str] = None
+    district_code: Optional[str] = None
 
 
 def _now() -> datetime:
@@ -88,6 +93,8 @@ def to_authenticated(user: UserModel) -> AuthenticatedUser:
         role=Role(user.role),
         token_version=user.token_version,
         must_change_password=user.must_change_password,
+        state_code=user.state_code,
+        district_code=user.district_code,
     )
 
 
@@ -152,6 +159,8 @@ def create_user(
     password: str,
     created_by: Optional[uuid.UUID],
     must_change_password: bool = True,
+    state_code: Optional[str] = None,
+    district_code: Optional[str] = None,
 ) -> UserModel:
     username = normalise_username(username)
     full_name = full_name.strip()
@@ -168,6 +177,8 @@ def create_user(
         password_hash=hash_password(password),
         must_change_password=must_change_password,
         created_by=created_by,
+        state_code=state_code,
+        district_code=district_code,
     )
     session.add(user)
     session.flush()
@@ -177,7 +188,8 @@ def create_user(
         actor_id=created_by,
         entity_type="user",
         entity_id=user.id,
-        payload={"username": username, "role": role.value},
+        payload={"username": username, "role": role.value,
+                 "state_code": state_code, "district_code": district_code},
     )
     return user
 
@@ -280,3 +292,70 @@ def change_own_password(
         require_change_on_next_login=False,
     )
     return user
+
+
+_PASSWORD_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def generate_password() -> str:
+    """A random password in four groups of four characters (about 91 bits).
+
+    Look-alike characters (0/O, 1/l/I) are left out so it can be read aloud
+    or copied from paper.
+    """
+    import secrets
+
+    return "-".join(
+        "".join(secrets.choice(_PASSWORD_ALPHABET) for _ in range(4)) for _ in range(4)
+    )
+
+
+@dataclass(frozen=True)
+class IssuedCredential:
+    username: str
+    label: str
+    state_code: Optional[str]
+    district_code: Optional[str]
+    password: Optional[str]  # None when the account already existed and was left alone
+
+
+def provision_jurisdiction_account(
+    session: Session,
+    *,
+    jurisdiction: "Jurisdiction",
+    created_by: Optional[uuid.UUID],
+    reset_existing: bool = False,
+) -> IssuedCredential:
+    """Create (or, if asked, re-key) the control room account for a jurisdiction.
+
+    National accounts are administrators; state and district accounts are
+    control rooms limited to their area. Does not commit.
+    """
+    username = jurisdiction.username
+    existing = get_user_by_username(session, username)
+    role = Role.ADMIN if jurisdiction.is_national else Role.CONTROL_ROOM
+    if existing is not None:
+        if not reset_existing:
+            return IssuedCredential(username, jurisdiction.label, jurisdiction.state_code,
+                                    jurisdiction.district_code, None)
+        password = generate_password()
+        existing.password_hash = hash_password(password)
+        existing.token_version += 1
+        existing.failed_login_count = 0
+        existing.locked_until = None
+        existing.is_active = True
+        existing.must_change_password = False
+        append_audit(
+            session, action="user.password_reset", actor_id=created_by, entity_type="user",
+            entity_id=existing.id, payload={"username": username, "issued": True},
+        )
+        return IssuedCredential(username, jurisdiction.label, jurisdiction.state_code,
+                                jurisdiction.district_code, password)
+    password = generate_password()
+    create_user(
+        session, username=username, full_name=jurisdiction.label, role=role, password=password,
+        created_by=created_by, must_change_password=False,
+        state_code=jurisdiction.state_code, district_code=jurisdiction.district_code,
+    )
+    return IssuedCredential(username, jurisdiction.label, jurisdiction.state_code,
+                            jurisdiction.district_code, password)

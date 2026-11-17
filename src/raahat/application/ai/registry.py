@@ -9,6 +9,7 @@ from raahat.config import Settings, get_settings
 from raahat.infrastructure.providers.cap import CapFeedClient
 from raahat.infrastructure.providers.geo import NominatimClient, OsrmClient
 from raahat.infrastructure.providers.gnani_prisma import GnaniPrismaClient
+from raahat.infrastructure.providers.gnani_timbre import GnaniTimbreClient
 from raahat.infrastructure.providers.llm import (
     GeminiClient,
     JsonModelClient,
@@ -23,6 +24,7 @@ class Providers:
     geocoder: NominatimClient
     routing: OsrmClient
     alerts: CapFeedClient
+    voice: Optional[GnaniTimbreClient] = None
 
 
 def build_providers(settings: Settings) -> Providers:
@@ -55,6 +57,14 @@ def build_providers(settings: Settings) -> Providers:
         ),
         routing=OsrmClient(base_url=settings.osrm_base_url if settings.routing_provider == "osrm" else None),
         alerts=CapFeedClient(feed_url=settings.cap_alert_feed_url, user_agent=settings.http_user_agent),
+        voice=GnaniTimbreClient(
+            api_key=settings.gnani_api_key,
+            endpoint=settings.timbre_endpoint,
+            model=settings.timbre_model,
+            voice=settings.timbre_voice,
+            cache_dir=settings.audio_storage_dir / "prompts",
+            timeout_seconds=settings.provider_timeout_seconds,
+        ),
     )
 
 

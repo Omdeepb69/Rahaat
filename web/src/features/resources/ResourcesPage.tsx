@@ -191,7 +191,7 @@ function Register() {
                         <td><strong>{r.callsign}</strong><div className="xs muted">{r.name} · {humanize(r.resource_type)}</div>{r.contact && <div className="xs num">{r.contact}</div>}</td>
                         <td>
                           <Badge tone={RESOURCE_STATUS[r.status].tone}>{r.is_retired ? 'Retired' : RESOURCE_STATUS[r.status].label}</Badge>
-                          {r.current_assignment && <div className="xs"><Link to={`/?incident=${r.current_assignment.incident_id}`} className="num">{r.current_assignment.incident_reference}</Link></div>}
+                          {r.current_assignment && <div className="xs"><Link to={`/control/control?incident=${r.current_assignment.incident_id}`} className="num">{r.current_assignment.incident_reference}</Link></div>}
                           {r.status_note && <div className="xs muted">{r.status_note}</div>}
                         </td>
                         <td className="xs">{r.capabilities.map(humanize).join(', ') || <Unknown>none</Unknown>}{!r.declared_capabilities.length && r.capabilities.length > 0 && <div className="faint">type defaults</div>}</td>

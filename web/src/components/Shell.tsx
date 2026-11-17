@@ -106,6 +106,8 @@ function ThemeSwitch() {
   );
 }
 
+const LEVEL_LABEL = { national: 'National administration', state: 'State control room', district: 'District control room' } as const;
+
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
 }
@@ -131,22 +133,22 @@ export function Shell({ children }: { children: ReactNode }) {
     {
       section: 'Response',
       links: [
-        { to: '/', label: 'Operations board', icon: <LayoutDashboard size={17} />, permission: 'incidents:read', end: true },
-        { to: '/intake', label: 'New report', icon: <PlusCircle size={17} />, permission: 'reports:create' },
-        { to: '/incidents', label: 'Incidents', icon: <ClipboardList size={17} />, permission: 'incidents:read', count: review },
-        { to: '/dispatch', label: 'Dispatch', icon: <Radio size={17} />, permission: 'dispatch:read' },
-        { to: '/resources', label: 'Resources', icon: <Truck size={17} />, permission: 'resources:read' },
-        { to: '/reports', label: 'Reports', icon: <FileText size={17} />, permission: 'reports:read' },
-        { to: '/alerts', label: 'Official alerts', icon: <Megaphone size={17} />, permission: 'incidents:read' },
+        { to: '/control/control', label: 'Operations board', icon: <LayoutDashboard size={17} />, permission: 'incidents:read', end: true },
+        { to: '/control/intake', label: 'New report', icon: <PlusCircle size={17} />, permission: 'reports:create' },
+        { to: '/control/incidents', label: 'Incidents', icon: <ClipboardList size={17} />, permission: 'incidents:read', count: review },
+        { to: '/control/dispatch', label: 'Dispatch', icon: <Radio size={17} />, permission: 'dispatch:read' },
+        { to: '/control/resources', label: 'Resources', icon: <Truck size={17} />, permission: 'resources:read' },
+        { to: '/control/reports', label: 'Reports', icon: <FileText size={17} />, permission: 'reports:read' },
+        { to: '/control/alerts', label: 'Official alerts', icon: <Megaphone size={17} />, permission: 'incidents:read' },
       ],
     },
     {
       section: 'Oversight',
       links: [
-        { to: '/activity', label: 'Activity log', icon: <Activity size={17} />, permission: 'audit:read' },
-        { to: '/system', label: 'System status', icon: <ServerCog size={17} />, permission: 'system:read' },
-        { to: '/admin/operations', label: 'Operations setup', icon: <Settings size={17} />, permission: 'operations:manage' },
-        { to: '/admin/users', label: 'Users', icon: <Users size={17} />, permission: 'users:manage' },
+        { to: '/control/activity', label: 'Activity log', icon: <Activity size={17} />, permission: 'audit:read' },
+        { to: '/control/system', label: 'System status', icon: <ServerCog size={17} />, permission: 'system:read' },
+        { to: '/control/admin/operations', label: 'Operations setup', icon: <Settings size={17} />, permission: 'operations:manage' },
+        { to: '/control/admin/users', label: 'Control room accounts', icon: <Users size={17} />, permission: 'users:manage' },
       ],
     },
   ];
@@ -157,16 +159,16 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="shell-header">
         <Button variant="ghost" className="menu-toggle" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="main-nav"
           onClick={() => setOpen((v) => !v)} icon={open ? <X size={18} /> : <Menu size={18} />} />
-        <NavLink to="/" className="brand" aria-label="RAAHAT, operations board"><Logo /><span className="brand-name">RAAHAT</span></NavLink>
+        <NavLink to="/control/control" className="brand" aria-label="RAAHAT, operations board"><Logo /><span className="brand-name">RAAHAT</span></NavLink>
         <OperationSelect />
         <ConnectionIndicator />
         <ThemeSwitch />
         {user && (
-          <div className="user-chip hide-narrow" title={ROLE[user.role].description}>
-            <span className="avatar" aria-hidden>{initials(user.full_name)}</span>
+          <div className="user-chip hide-narrow" title={`${user.jurisdiction.label}. ${ROLE[user.role].description}`}>
+            <span className="avatar" aria-hidden>{initials(user.jurisdiction.district_name ?? user.jurisdiction.state_name ?? 'India')}</span>
             <span className="stack-sm" style={{ gap: 0 }}>
-              <span className="small" style={{ fontWeight: 650, lineHeight: 1.25 }}>{user.full_name}</span>
-              <span className="xs muted" style={{ lineHeight: 1.25 }}>{ROLE[user.role].label}</span>
+              <span className="small" style={{ fontWeight: 650, lineHeight: 1.25 }}>{user.jurisdiction.district_name ?? user.jurisdiction.state_name ?? 'National'}</span>
+              <span className="xs muted" style={{ lineHeight: 1.25 }}>{LEVEL_LABEL[user.jurisdiction.level]}</span>
             </span>
           </div>
         )}

@@ -61,7 +61,7 @@ describe('api client', () => {
       access_token: 't', token_type: 'bearer',
       expires_at: new Date(Date.now() + 60_000).toISOString(),
       session_expires_at: new Date(Date.now() + 3_600_000).toISOString(),
-      user: { id: 'u', username: 'a', full_name: 'A', role: 'observer', permissions: [], must_change_password: false },
+      user: { id: 'u', username: 'a', full_name: 'A', role: 'observer', permissions: [], must_change_password: false, jurisdiction: { level: 'national', state_code: null, state_name: null, district_code: null, district_name: null, label: 'National control room' } },
     });
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(401, { detail: 'Authentication required' }));
     await request('/x', { method: 'POST', body: {} }).catch(() => undefined);
@@ -82,7 +82,7 @@ describe('change stream', () => {
       access_token: 't', token_type: 'bearer',
       expires_at: new Date(Date.now() + 60_000).toISOString(),
       session_expires_at: new Date(Date.now() + 3_600_000).toISOString(),
-      user: { id: 'u', username: 'a', full_name: 'A', role: 'observer', permissions: [], must_change_password: false },
+      user: { id: 'u', username: 'a', full_name: 'A', role: 'observer', permissions: [], must_change_password: false, jurisdiction: { level: 'national', state_code: null, state_name: null, district_code: null, district_name: null, label: 'National control room' } },
     });
     const first = 'retry: 3000\nevent: ready\ndata: {"seq": 10, "resync": false}\n\n'
       + 'id: 11\nevent: change\ndata: {"seq": 11, "action": "incident.created", "entity_type": "incident"}\n\n';

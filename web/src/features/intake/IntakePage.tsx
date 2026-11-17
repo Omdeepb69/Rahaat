@@ -36,7 +36,7 @@ function Result({ result, onAnother }: { result: CreatedReport; onAnother: () =>
           <span>
             {result.already_existed ? 'This report had already been recorded; nothing was duplicated. ' : ''}
             {result.is_new_incident ? 'A new incident was opened: ' : 'The report was attached to incident '}
-            <Link to={`/incidents/${result.incident_reference}`} className="ref" style={{ fontWeight: 700 }}>{result.incident_reference}</Link>
+            <Link to={`/control/incidents/${result.incident_reference}`} className="ref" style={{ fontWeight: 700 }}>{result.incident_reference}</Link>
           </span>
         </div>
         <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
@@ -46,7 +46,7 @@ function Result({ result, onAnother }: { result: CreatedReport; onAnother: () =>
           {result.enrichment_pending && <li>Translation and model extraction will be added shortly by the background worker.</li>}
         </ul>
         <div className="row-wrap">
-          <Link className="btn btn-primary" to={`/?incident=${result.incident_id}`}>Open on board</Link>
+          <Link className="btn btn-primary" to={`/control/control?incident=${result.incident_id}`}>Open on board</Link>
           <Button onClick={onAnother}>Enter another report</Button>
         </div>
       </div>

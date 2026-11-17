@@ -11,14 +11,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..base import Base, TimestampMixin, UUIDPrimaryKeyMixin, utc_now
 
-USER_ROLES = ("admin", "operator", "dispatcher", "resource_coordinator", "observer")
+USER_ROLES = ("admin", "control_room", "operator", "dispatcher", "resource_coordinator", "observer")
 
 
 class UserModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint(
-            "role IN ('admin','operator','dispatcher','resource_coordinator','observer')",
+            "role IN ('admin','control_room','operator','dispatcher','resource_coordinator','observer')",
             name="users_role_valid",
         ),
         Index("users_username_lower_key", func.lower(text("username")), unique=True),
@@ -27,6 +27,10 @@ class UserModel(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     username: Mapped[str] = mapped_column(String(64), nullable=False)
     full_name: Mapped[str] = mapped_column(String(160), nullable=False)
     role: Mapped[str] = mapped_column(String(32), nullable=False)
+    # Jurisdiction: both NULL for a national account; state only for a state
+    # control room; state and district for a district control room.
+    state_code: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    district_code: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

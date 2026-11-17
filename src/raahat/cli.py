@@ -1,5 +1,7 @@
 """Host-side administration commands.
 
+    python -m raahat.cli provision-accounts --all > credentials.csv
+    python -m raahat.cli provision-accounts --states 32,30 --reset
     python -m raahat.cli create-admin --username NAME --full-name "Full Name"
     python -m raahat.cli reset-password --username NAME
     python -m raahat.cli import-landmarks --bbox SOUTH,WEST,NORTH,EAST
@@ -167,6 +169,79 @@ def check_config(_: argparse.Namespace) -> int:
     return 0
 
 
+def provision_accounts(args: argparse.Namespace) -> int:
+    """Create control room accounts and print their generated passwords as CSV.
+
+    Passwords are printed once and stored only as hashes. Existing accounts
+    keep their password unless --reset is given.
+    """
+    import csv
+
+    from raahat.security.jurisdiction import Jurisdiction, directory
+
+    ref = directory()
+    wanted = {c.strip() for c in (args.states or "").split(",") if c.strip()}
+    unknown = wanted - set(ref.by_state)
+    if unknown:
+        print(f"Unknown state codes: {', '.join(sorted(unknown))}", file=sys.stderr)
+        return 1
+    targets: list[Jurisdiction] = []
+    if args.national or args.all:
+        targets.append(Jurisdiction())
+    for state in ref.states:
+        if not (args.all or state.code in wanted):
+            continue
+        targets.append(Jurisdiction(state.code))
+        if not args.no_districts:
+            targets.extend(Jurisdiction(state.code, d.code) for d in state.districts)
+    if not targets:
+        print("Nothing selected: pass --all, --national or --states", file=sys.stderr)
+        return 1
+
+    writer = csv.writer(sys.stdout)
+    writer.writerow(["level", "state", "district", "account", "password"])
+    created = kept = 0
+    with _sessions()() as session:
+        for target in targets:
+            issued = identity.provision_jurisdiction_account(
+                session, jurisdiction=target, created_by=None, reset_existing=args.reset
+            )
+            if issued.password is None:
+                kept += 1
+                continue
+            created += 1
+            writer.writerow([
+                target.level, target.state_name or "", target.district_name or "",
+                issued.username, issued.password,
+            ])
+        session.commit()
+    print(f"{created} passwords issued, {kept} existing accounts left unchanged.", file=sys.stderr)
+    return 0
+
+
+def warm_voice_prompts(args: argparse.Namespace) -> int:
+    """Synthesise every spoken prompt once so callers never wait for the voice service."""
+    from raahat.application.ai.registry import build_providers
+    from raahat.application.voicecall import script
+
+    voice = build_providers(get_settings()).voice
+    if voice is None or not voice.configured:
+        print("Speech is not configured (GNANI_API_KEY_TTS_STT)", file=sys.stderr)
+        return 1
+    failures = 0
+    keys = [*script.STEPS, "done", "retry"]
+    jobs = [(line.language, line.spoken) for line in script.opening()]
+    jobs += [(lang, script.line(lang, key).spoken) for lang in sorted(script.SUPPORTED) for key in keys]
+    for language, spoken in jobs:
+        try:
+            voice.synthesize(spoken, language=language)
+        except ProviderError as exc:
+            failures += 1
+            print(f"{language}: {exc}", file=sys.stderr)
+    print(f"{len(jobs) - failures} of {len(jobs)} prompts ready.")
+    return 0 if failures == 0 else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m raahat.cli", description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -177,6 +252,16 @@ def main(argv: list[str] | None = None) -> int:
     admin.add_argument("--password-stdin", action="store_true", help="Read the password from standard input")
     admin.set_defaults(handler=create_admin)
 
+    provision = commands.add_parser(
+        "provision-accounts", help="Create state and district control room accounts (CSV of passwords on stdout)"
+    )
+    provision.add_argument("--all", action="store_true", help="National, every state and every district")
+    provision.add_argument("--national", action="store_true", help="The national administration account")
+    provision.add_argument("--states", help="Comma-separated LGD state codes, e.g. 32 for Kerala")
+    provision.add_argument("--no-districts", action="store_true", help="State accounts only")
+    provision.add_argument("--reset", action="store_true", help="Issue new passwords for existing accounts too")
+    provision.set_defaults(handler=provision_accounts)
+
     reset = commands.add_parser("reset-password", help="Set a user's password and end their sessions")
     reset.add_argument("--username", required=True)
     reset.add_argument("--password-stdin", action="store_true")
@@ -186,6 +271,9 @@ def main(argv: list[str] | None = None) -> int:
     landmarks.add_argument("--bbox", required=True, help="SOUTH,WEST,NORTH,EAST (at most 1 square degree)")
     landmarks.add_argument("--overpass-url", default="https://overpass-api.de/api/interpreter")
     landmarks.set_defaults(handler=import_landmarks)
+
+    warm = commands.add_parser("warm-voice-prompts", help="Synthesise the voice call prompts in every language")
+    warm.set_defaults(handler=warm_voice_prompts)
 
     check = commands.add_parser("check-config", help="Show which settings are present (no secrets printed)")
     check.set_defaults(handler=check_config)

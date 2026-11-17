@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from raahat.api.deps import CurrentUser, client_ip, current_user, get_db, rate_limiter
 from raahat.application.identity import service as identity
 from raahat.config import Settings, get_settings
+from raahat.security.jurisdiction import Jurisdiction, UnknownJurisdiction
 from raahat.security.passwords import WeakPasswordError
 from raahat.security.tokens import issue_access_token
 
@@ -19,10 +20,38 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class LoginRequest(BaseModel):
+    """Sign in as a jurisdiction's control room (``level`` with LGD codes), or by username."""
+
     model_config = ConfigDict(extra="forbid")
 
-    username: str = Field(min_length=1, max_length=64)
+    level: Optional[Literal["national", "state", "district"]] = None
+    state_code: Optional[str] = Field(default=None, max_length=8)
+    district_code: Optional[str] = Field(default=None, max_length=8)
+    username: Optional[str] = Field(default=None, min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=256)
+
+    def account(self) -> str:
+        if self.level is None:
+            if not self.username:
+                raise ValueError("Choose your jurisdiction")
+            return self.username
+        if self.level == "national":
+            return Jurisdiction().username
+        if not self.state_code:
+            raise ValueError("Choose a state")
+        if self.level == "district" and not self.district_code:
+            raise ValueError("Choose a district")
+        district = self.district_code if self.level == "district" else None
+        return Jurisdiction.validated(self.state_code, district).username
+
+
+class JurisdictionInfo(BaseModel):
+    level: str
+    state_code: Optional[str]
+    state_name: Optional[str]
+    district_code: Optional[str]
+    district_name: Optional[str]
+    label: str
 
 
 class UserProfile(BaseModel):
@@ -32,6 +61,14 @@ class UserProfile(BaseModel):
     role: str
     permissions: list[str]
     must_change_password: bool
+    jurisdiction: JurisdictionInfo
+
+
+def jurisdiction_info(j: Jurisdiction) -> JurisdictionInfo:
+    return JurisdictionInfo(
+        level=j.level, state_code=j.state_code, state_name=j.state_name,
+        district_code=j.district_code, district_name=j.district_name, label=j.label,
+    )
 
 
 class TokenResponse(BaseModel):
@@ -57,6 +94,7 @@ def _profile(user: CurrentUser) -> UserProfile:
         role=user.role.value,
         permissions=sorted(p.value for p in user.permissions),
         must_change_password=user.must_change_password,
+        jurisdiction=jurisdiction_info(user.jurisdiction),
     )
 
 
@@ -101,8 +139,12 @@ def login(
             headers={"Retry-After": str(decision.retry_after_seconds)},
         )
     try:
+        account = body.account()
+    except (ValueError, UnknownJurisdiction) as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from None
+    try:
         user = identity.authenticate(
-            session, username=body.username, password=body.password, settings=settings
+            session, username=account, password=body.password, settings=settings
         )
     except identity.AccountLockedError as exc:
         retry = max(1, int((exc.until - datetime.now(timezone.utc)).total_seconds()))
@@ -113,7 +155,8 @@ def login(
         ) from None
     except identity.InvalidCredentialsError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password, or no control room account exists for this area",
         ) from None
 
     from raahat.security.permissions import permissions_for
@@ -125,6 +168,7 @@ def login(
         role=user.role.value,
         permissions=sorted(p.value for p in permissions_for(user.role)),
         must_change_password=user.must_change_password,
+        jurisdiction=jurisdiction_info(Jurisdiction(user.state_code, user.district_code)),
     )
     return _token_response(
         settings=settings, user_id=user.id, token_version=user.token_version, profile=profile

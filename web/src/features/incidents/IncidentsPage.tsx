@@ -104,7 +104,7 @@ function List() {
               <tbody>
                 {incidents.data.items.map((i) => (
                   <tr key={i.id}>
-                    <td><Link className="row-link ref" to={`/incidents/${i.reference}`}>{i.reference}</Link></td>
+                    <td><Link className="row-link ref" to={`/control/incidents/${i.reference}`}>{i.reference}</Link></td>
                     <td><PriorityBadge priority={i.priority} source={i.priority_source} /></td>
                     <td><div className="stack-sm" style={{ gap: 2 }}><StatusBadge status={i.status} />{i.pending_duplicates > 0 && <Badge tone="tone-warn">possible duplicate</Badge>}</div></td>
                     <td style={{ maxWidth: 360 }}><div>{i.summary ?? humanize(i.category)}</div>{(i.trapped || i.medical_emergency) && <div className="xs" style={{ color: 'var(--sev-urgent)' }}>{[i.trapped && 'trapped', i.medical_emergency && 'medical need'].filter(Boolean).join(', ')}</div>}</td>

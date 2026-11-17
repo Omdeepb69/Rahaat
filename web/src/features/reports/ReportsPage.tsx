@@ -96,7 +96,7 @@ function List() {
                       </button>
                     </td>
                     <td className="small">{r.original_language ? LANGUAGES[r.original_language] ?? r.original_language : <Unknown>—</Unknown>}{r.translated_text && <div className="xs" style={{ color: 'var(--machine)' }}>translated</div>}</td>
-                    <td>{r.incident_reference ? <Link className="ref" to={`/incidents/${r.incident_reference}`}>{r.incident_reference}</Link> : <Unknown>none yet</Unknown>}</td>
+                    <td>{r.incident_reference ? <Link className="ref" to={`/control/incidents/${r.incident_reference}`}>{r.incident_reference}</Link> : <Unknown>none yet</Unknown>}</td>
                     <td><Badge tone={PROCESSING[r.processing_status]?.tone}>{PROCESSING[r.processing_status]?.label ?? r.processing_status}</Badge></td>
                   </tr>
                 ))}
