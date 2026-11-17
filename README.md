@@ -29,7 +29,7 @@ emergency services or field teams, and it does not replace 112.
 7. [Configuration](#configuration)
 8. [Running on the laptop (Docker)](#running-on-the-laptop-docker)
 9. [Public access: HTTPS tunnel](#public-access-https-tunnel)
-10. [Deploying the web app (Vercel)](#deploying-the-web-app-vercel)
+10. [Deploying the web app](#deploying-the-web-app)
 11. [Day-to-day operation](#day-to-day-operation)
 12. [Backup and recovery](#backup-and-recovery)
 13. [Security](#security)
@@ -287,7 +287,8 @@ src/raahat/          Python package (API, worker, domain, providers)
 web/                 web app (Vite, React, TypeScript)
 tests/               backend tests (pytest, real PostGIS)
 evaluation/          synthetic benchmark harness (generated data only)
-scripts/             dev-up, dev-down, health-check, backup, restore, tunnel-up
+scripts/             dev-up, dev-down, health-check, backup, restore, ngrok-up, tunnel-up
+.github/workflows/   GitHub Pages deployment of the web app
 compose.yaml         database, API, worker for one host
 ```
 
@@ -339,7 +340,7 @@ The most important:
 | `LLM_PROVIDER` | `none`, `evon` or `gemini` for translation and model extraction. |
 | `GEOCODER_PROVIDER`, `ROUTING_PROVIDER`, `OSRM_BASE_URL` | Optional Nominatim geocoding and OSRM road routing. |
 | `CAP_ALERT_FEED_URL` | Official alert feed, e.g. NDMA SACHET RSS for a state. |
-| `TRUST_FORWARDED_HEADERS` | Honour `X-Forwarded-For` from the local tunnel agent only. |
+| `TRUST_FORWARDED_HEADERS`, `TRUSTED_PROXIES` | Honour `X-Forwarded-For` only from the local tunnel agent (loopback or the listed networks, e.g. the Docker bridge `172.16.0.0/12`). |
 
 Check without printing secrets: `docker compose exec api raahat-entrypoint cli check-config`.
 
@@ -389,44 +390,85 @@ python -m raahat.workers.main    # worker
 
 ## Public access: HTTPS tunnel
 
+The web app calls the API **directly from the visitor's browser**, so the
+laptop must be reachable over HTTPS from the internet (an HTTPS page cannot
+call `http://` addresses, and a caller's phone cannot reach `127.0.0.1` on the
+laptop).
+
 ```
-Browser ──HTTPS──> Vercel (static files only)
-Browser ──HTTPS──> https://<machine>.<tailnet>.ts.net  (Tailscale Funnel, TLS on the laptop)
+Browser ──HTTPS──> GitHub Pages (static files only)
+Browser ──HTTPS──> https://<name>.ngrok-free.dev   (ngrok agent on the laptop)
                         ▼
-                   127.0.0.1:8000 api ── internal network ── db, worker
+                   127.0.0.1:8000 api ── internal Docker network ── db, worker
 ```
 
-Tailscale Funnel gives a stable `*.ts.net` HTTPS name without owning a domain
-and supports long-lived SSE connections; Cloudflare quick tunnels have random
-names and do not support SSE.
+### ngrok (default)
+
+A free ngrok account includes one permanent `*.ngrok-free.dev` address.
 
 ```bash
-sudo tailscale up                 # once: log in
-# Tailscale admin console: enable HTTPS certificates and allow Funnel for this device
-./scripts/tunnel-up.sh            # publish 127.0.0.1:8000 on :443  (--off to stop)
-./scripts/health-check.sh https://<machine>.<tailnet>.ts.net
+ngrok config add-authtoken <token>     # once; stored in ~/.config/ngrok/ngrok.yml, never in the repo
+./scripts/ngrok-up.sh                  # publish 127.0.0.1:8000; prints the public URL
+./scripts/ngrok-up.sh --off            # stop
+./scripts/health-check.sh https://<name>.ngrok-free.dev
 ```
 
+- On its free plan ngrok shows a warning page to browsers. The web app sends
+  `ngrok-skip-browser-warning` on every API request automatically when the API
+  address is an ngrok one, and the API allows that header in CORS.
+- In `.env`: `TRUST_FORWARDED_HEADERS=true` and `TRUSTED_PROXIES=172.16.0.0/12`,
+  so rate limits apply per caller (the agent reaches the API container through
+  the Docker bridge) and callers cannot spoof their address (the right-most
+  `X-Forwarded-For` entry, added by ngrok, is used).
+- The free plan has monthly usage limits; check the ngrok dashboard.
+- The agent stops when the laptop restarts: run `./scripts/ngrok-up.sh` again.
+
+### Alternatives
+
+| Option | Notes |
+|---|---|
+| Tailscale Funnel (`./scripts/tunnel-up.sh`) | Free, stable `*.ts.net` name, needs a Tailscale login |
+| Cloudflare named tunnel | Free tunnel, needs a domain on Cloudflare |
+| Router port forwarding + dynamic DNS + Let's Encrypt | Often impossible behind carrier-grade NAT; exposes the home IP |
+
 Only `127.0.0.1:8000` is published on the host; PostgreSQL has no published
-port. Starting the tunnel exposes the API to the internet; protection is in the
-API (see [Security](#security)).
+port. Any tunnel exposes the API to the internet; protection is in the API
+(see [Security](#security)).
 
 ---
 
-## Deploying the web app (Vercel)
+## Deploying the web app
+
+### GitHub Pages (configured)
+
+`.github/workflows/pages.yml` builds `web/` and publishes it on every push to
+`main` that touches `web/`, at `https://omdeepb69.github.io/Rahaat/`.
+
+- One-time: repository **Settings → Pages → Source: GitHub Actions**, then run
+  the workflow (Actions → *Deploy web app to GitHub Pages* → *Run workflow*).
+- The API address comes from the repository variable `VITE_API_BASE_URL`
+  (Settings → Secrets and variables → Actions → Variables), falling back to the
+  ngrok address in the workflow. It is public: it is compiled into the bundle.
+- The site is served under `/Rahaat/` (`VITE_BASE_PATH`); `404.html` is a copy
+  of `index.html` so links like `/Rahaat/report` work when opened directly.
+- `https://omdeepb69.github.io` must be in `CORS_ALLOWED_ORIGINS` on the laptop.
+- Pages cannot send custom response headers, so the CSP, HSTS and noindex
+  headers from `vercel.json` do not apply there. The microphone and location
+  work because Pages is served over HTTPS.
+
+### Vercel
 
 1. Import the repository in Vercel; set **Root Directory** to `web`.
    `web/vercel.json` sets the framework, SPA rewrites and security headers.
-2. Environment variable `VITE_API_BASE_URL` = the tunnel's HTTPS address (no
-   trailing slash).
+2. Environment variable `VITE_API_BASE_URL` = the tunnel's HTTPS address.
 3. Deploy, then add the deployment's exact origin to `CORS_ALLOWED_ORIGINS` on
    the laptop and restart the API (`docker compose up -d api`).
 
-Headers from `vercel.json`: a Content-Security-Policy (scripts and fonts from
-the site only, network requests to HTTPS origins, no framing), HSTS, `nosniff`,
-`no-referrer`, and a Permissions-Policy that allows the **microphone and
-geolocation for the site itself only** (needed for voice calls). `/control`
-and `/login` are sent with `X-Robots-Tag: noindex`.
+`vercel.json` sends a Content-Security-Policy (scripts and fonts from the site
+only, network requests to HTTPS origins, no framing), HSTS, `nosniff`,
+`no-referrer`, a Permissions-Policy allowing the **microphone and geolocation
+for the site itself only**, and `X-Robots-Tag: noindex` on `/control` and
+`/login`.
 
 Any static host works: `VITE_API_BASE_URL=https://<api> npm run build`, then
 serve `web/dist` with a fallback to `index.html`.
@@ -556,8 +598,11 @@ Checked in a real browser (Chrome) on the running stack:
 - no horizontal overflow from 360 to 1920 px;
 - keyboard path and reduced motion work.
 
+Also checked: the GitHub Pages build (served under `/Rahaat/`) working through
+the ngrok tunnel, including the voice call prompts and the live event stream.
+
 Not verified: a physical phone with a real voice, a screen reader, Lighthouse,
-and the live Vercel and Tailscale deployment.
+and the live Vercel deployment.
 
 ---
 

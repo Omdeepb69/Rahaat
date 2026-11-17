@@ -61,6 +61,10 @@ class Settings(BaseModel):
 
     cors_allowed_origins: tuple[str, ...] = ()
     trust_forwarded_headers: bool = False
+    # Networks the local tunnel agent's connections arrive from. Loopback is
+    # always trusted; behind Docker's port publishing the agent appears as the
+    # bridge gateway, so its network must be listed (e.g. 172.16.0.0/12).
+    trusted_proxies: tuple[str, ...] = ()
     public_intake_enabled: bool = False
 
     max_request_bytes: int = Field(default=1 * 1024 * 1024, ge=1024)
@@ -170,6 +174,9 @@ def load_settings() -> Settings:
         "secret_key_is_ephemeral": ephemeral,
         "cors_allowed_origins": origins,
         "trust_forwarded_headers": _flag("TRUST_FORWARDED_HEADERS"),
+        "trusted_proxies": tuple(
+            n.strip() for n in (os.getenv("TRUSTED_PROXIES") or "").split(",") if n.strip()
+        ),
         "public_intake_enabled": _flag("PUBLIC_INTAKE_ENABLED"),
         "gnani_api_key": _optional("GNANI_API_KEY_TTS_STT") or _optional("GNANI_API_KEY"),
         "llm_provider": llm_provider,

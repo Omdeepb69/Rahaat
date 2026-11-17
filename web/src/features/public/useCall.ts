@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
 import { ApiError, buildUrl, errorMessage, request } from '../../lib/api';
+import { apiHeaders } from '../../lib/config';
 import { VoiceLine } from './voice/line';
 
 export interface PromptLine { language: string; key: string; text: string }
@@ -97,7 +98,7 @@ export class CallController {
     const key = `${line.language}/${line.key}`;
     let pending = this.prompts.get(key);
     if (!pending) {
-      pending = fetch(buildUrl(`/api/v1/public/voice/${line.language}/${line.key}.wav`), { mode: 'cors', credentials: 'omit' })
+      pending = fetch(buildUrl(`/api/v1/public/voice/${line.language}/${line.key}.wav`), { mode: 'cors', credentials: 'omit', headers: apiHeaders })
         .then((r) => (r.ok ? r.arrayBuffer() : null))
         .catch(() => null);
       this.prompts.set(key, pending);

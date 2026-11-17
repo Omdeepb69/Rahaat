@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { Badge, Button, Callout, TimeAgo, Unknown } from '../../components/ui';
 import { buildUrl } from '../../lib/api';
+import { apiHeaders } from '../../lib/config';
 import { formatDateTime, humanize } from '../../lib/format';
 import { CHANNEL, LANGUAGES, RECEIVED_VIA } from '../../lib/labels';
 import { useReports } from '../../lib/queries';
@@ -19,7 +20,7 @@ function AudioPlayer({ reportId }: { reportId: string }) {
     setBusy(true);
     try {
       const response = await fetch(buildUrl(`/api/v1/reports/${reportId}/audio`), {
-        headers: { Authorization: `Bearer ${session.token() ?? ''}` },
+        headers: { ...apiHeaders, Authorization: `Bearer ${session.token() ?? ''}` },
       });
       if (!response.ok) throw new Error(response.status === 403 ? 'Your role cannot play recordings.' : 'Recording not available.');
       setUrl(URL.createObjectURL(await response.blob()));

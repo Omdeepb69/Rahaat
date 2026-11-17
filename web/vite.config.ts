@@ -23,6 +23,7 @@ function checkApiBase(mode: string, command: string): void {
 export default defineConfig(({ mode, command }) => {
   checkApiBase(mode, command);
   return {
+    base: process.env.VITE_BASE_PATH || '/',
     plugins: [react()],
     server: { port: 5173, strictPort: true },
     preview: { port: 4173, strictPort: true },

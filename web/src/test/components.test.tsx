@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../lib/config', () => ({ config: { apiBaseUrl: 'http://api.test', mapTileUrl: '', mapAttribution: '' } }));
+vi.mock('../lib/config', () => ({ apiHeaders: {}, config: { apiBaseUrl: 'http://api.test', mapTileUrl: '', mapAttribution: '' } }));
 vi.mock('../components/LazyMap', () => ({ LazyMap: () => null }));
 vi.mock('../lib/operation', () => ({
   useOperation: () => ({

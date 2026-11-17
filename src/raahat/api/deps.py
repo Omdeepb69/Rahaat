@@ -60,20 +60,24 @@ def client_ip(request: Request, settings: Settings) -> str:
     """Best available client address.
 
     Forwarded headers are honoured only when enabled and only when the direct
-    peer is loopback (the local tunnel agent), so a remote client cannot spoof
-    its address to evade rate limits.
+    peer is the local tunnel agent (loopback, or a network listed in
+    TRUSTED_PROXIES). The right-most address is used: the tunnel appends the
+    address it saw, so a client cannot choose its own by sending the header.
     """
     peer = request.client.host if request.client else "unknown"
     if not settings.trust_forwarded_headers:
         return peer
     try:
-        if not ipaddress.ip_address(peer).is_loopback:
-            return peer
+        address = ipaddress.ip_address(peer)
     except ValueError:
         return peer
-    forwarded = request.headers.get("x-forwarded-for", "")
-    first = forwarded.split(",")[0].strip()
-    return first or peer
+    trusted = address.is_loopback or any(
+        address in ipaddress.ip_network(n, strict=False) for n in settings.trusted_proxies
+    )
+    if not trusted:
+        return peer
+    forwarded = [a.strip() for a in request.headers.get("x-forwarded-for", "").split(",") if a.strip()]
+    return forwarded[-1] if forwarded else peer
 
 
 @dataclass(frozen=True)

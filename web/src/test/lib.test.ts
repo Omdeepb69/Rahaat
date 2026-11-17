@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../lib/config', () => ({ config: { apiBaseUrl: 'http://api.test', mapTileUrl: '', mapAttribution: '' } }));
+vi.mock('../lib/config', () => ({ apiHeaders: {}, config: { apiBaseUrl: 'http://api.test', mapTileUrl: '', mapAttribution: '' } }));
 
 import { ApiError, buildUrl, errorMessage, NetworkError, request } from '../lib/api';
 import { connection } from '../lib/connection';

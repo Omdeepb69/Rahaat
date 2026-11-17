@@ -146,7 +146,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             # Bearer tokens are sent in a header; no cookies are involved.
             allow_credentials=False,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-            allow_headers=["Authorization", "Content-Type", "Last-Event-ID", "X-Call-Token"],
+            allow_headers=["Authorization", "Content-Type", "Last-Event-ID", "X-Call-Token", "ngrok-skip-browser-warning"],
             expose_headers=["X-Request-ID", "Retry-After"],
             max_age=600,
         )
