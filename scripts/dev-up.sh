@@ -30,4 +30,4 @@ if [[ "$users" == "0" ]]; then
   warn "No user accounts exist yet. Create the first administrator:"
   echo "      docker compose exec api raahat-entrypoint cli create-admin --username <name> --full-name \"<Full Name>\""
 fi
-echo "Next: ./scripts/health-check.sh   ·   public access: see NETWORK_CONNECTIVITY.md"
+echo "Next: ./scripts/health-check.sh   ·   public access: see README.md (Public access)"

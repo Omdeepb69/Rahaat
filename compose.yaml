@@ -6,10 +6,10 @@
 # Network exposure:
 #   - PostgreSQL has no published port. Only the api and worker containers reach it.
 #   - The API is published on 127.0.0.1 only. The public HTTPS tunnel
-#     (Tailscale Funnel, see NETWORK_CONNECTIVITY.md) connects to it locally.
+#     (Tailscale Funnel, see README.md) connects to it locally.
 #
 # Memory limits are sized for an 8 GB laptop that is also used for other work;
-# see RESOURCE_BUDGET.md for measurements.
+# see README.md (Measured performance).
 name: raahat
 
 x-app: &app

@@ -3,7 +3,7 @@
     python -m raahat.serve
 
 One process (rate limits, the event listener and the connection pool are
-per process; see RESOURCE_BUDGET.md). Listens on 127.0.0.1 unless HOST says
+per process; see README.md). Listens on 127.0.0.1 unless HOST says
 otherwise, because the public tunnel connects locally.
 
 Graceful shutdown is bounded: open event streams never finish on their own,

@@ -1,6 +1,6 @@
 """In-process sliding-window rate limiter.
 
-The API runs as a single process (see RESOURCE_BUDGET.md), so process-local
+The API runs as a single process (see README.md, Measured performance), so process-local
 state is authoritative. Memory is bounded: idle keys are pruned and the key
 table is capped.
 """

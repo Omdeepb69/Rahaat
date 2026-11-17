@@ -6,7 +6,7 @@
 #
 # This makes the API reachable from the internet. Authentication, CORS and
 # rate limits in the API are what protect it; the tunnel only carries traffic.
-# See NETWORK_CONNECTIVITY.md before running this.
+# See "Public access: HTTPS tunnel" in README.md before running this.
 source "$(dirname "$0")/lib.sh"
 require_env_file
 command -v tailscale >/dev/null || die "tailscale is not installed: https://tailscale.com/download/linux"
