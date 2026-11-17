@@ -55,3 +55,6 @@ demo/audio/
 
 # Database backups (contain caller details)
 backups/
+
+# Local run configuration (secrets)
+.env.run
